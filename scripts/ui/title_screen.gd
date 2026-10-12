@@ -39,7 +39,7 @@ func _ready() -> void:
 	var title := Style.label("SPIRITWRIGHT", 54, Style.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
-	var pitch := Style.wrapped("Collect spirits. Build them vessels of stone, wood, ice and stranger things. Arrange your team and watch the battle play out on its own: the fight is decided in the workshop.", 17, Style.MUTED)
+	var pitch := Style.wrapped("Collect spirits. Build them vessels of stone, wood, ice and stranger things. Arrange your team and watch the battle play out on its own: the fight is decided in the laboratory.", 17, Style.MUTED)
 	pitch.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(pitch)
 	var buttons := Style.vbox(10)
@@ -56,7 +56,7 @@ func _ready() -> void:
 		_new_button.call_deferred("grab_focus")
 	_confirm = Style.hbox(10)
 	_confirm.alignment = BoxContainer.ALIGNMENT_CENTER
-	_confirm.add_child(Style.label("Erase your workshop?", 15, Style.BAD))
+	_confirm.add_child(Style.label("Erase your laboratory?", 15, Style.BAD))
 	_confirm.add_child(Style.button("Erase and start", func(): new_game_requested.emit(), 15))
 	_confirm.add_child(Style.button("Keep it", func(): _confirm.hide(), 15))
 	_confirm.hide()

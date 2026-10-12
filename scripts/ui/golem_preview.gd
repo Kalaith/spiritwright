@@ -7,6 +7,8 @@ var look: Dictionary = {}
 var facing: float = 1.0
 var art_scale: float = 1.0
 var backdrop: Color = Color(0, 0, 0, 0)
+## Below 1 the golem is a faint outline, as for a body not yet built.
+var alpha: float = 1.0
 ## Redraw every frame so material sparkle and reaction auras move.
 var animated: bool = false
 
@@ -29,4 +31,4 @@ func _draw() -> void:
 	if look.is_empty():
 		return
 	GolemArt.draw(self, Vector2(size.x / 2.0, size.y - 14.0 * art_scale), art_scale, facing, look,
-		{"time": Time.get_ticks_msec() / 1000.0 if animated else 0.0})
+		{"time": Time.get_ticks_msec() / 1000.0 if animated else 0.0, "alpha": alpha})

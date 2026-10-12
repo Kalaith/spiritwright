@@ -1,12 +1,15 @@
 extends Control
-## The workshop: three golem cards and the spirit roster. Every change goes
-## through Progression (which validates it) and is saved immediately.
+## The golem laboratory: a card for every golem built so far, an empty cradle
+## for each one still to come (built by spending a golem core) and the spirit
+## roster. Every change goes through Progression (which validates it) and is
+## saved immediately.
 
 signal map_requested
 signal fight_requested(stage_id: String)
 
 const Style = preload("res://scripts/ui/style.gd")
 const SlotCard = preload("res://scripts/ui/slot_card.gd")
+const CradleCard = preload("res://scripts/ui/cradle_card.gd")
 const Catalog = preload("res://scripts/core/catalog.gd")
 
 var catalog: RefCounted
@@ -29,7 +32,7 @@ func _ready() -> void:
 	margin.add_child(column)
 	var bar := Style.hbox(12)
 	column.add_child(bar)
-	bar.add_child(Style.label("Workshop", 26, Style.GOLD))
+	bar.add_child(Style.label("Golem Laboratory", 26, Style.GOLD))
 	_status = Style.wrapped("Hover a stat to see where it comes from. Changes save automatically.", 14)
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
@@ -71,6 +74,17 @@ func _rebuild() -> void:
 		card.custom_minimum_size.x = 270
 		card.changed.connect(_on_changed)
 		_cards.add_child(card)
+	var slots: int = int(catalog.num("team_size"))
+	for slot in range(progression.team.size(), slots):
+		var cradle := CradleCard.new()
+		cradle.catalog = catalog
+		cradle.progression = progression
+		cradle.slot = slot
+		cradle.ready_to_build = progression.can_build() and slot - progression.team.size() < progression.cores
+		cradle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		cradle.custom_minimum_size.x = 270
+		cradle.build_requested.connect(_on_build)
+		_cards.add_child(cradle)
 	for child in _roster.get_children():
 		child.queue_free()
 	_roster.add_child(Style.label("Spirits", 20, Style.GOLD))
@@ -93,6 +107,17 @@ func _on_changed(slot: int, key: String, value: String) -> void:
 	_rebuild()
 
 
+func _on_build() -> void:
+	if not progression.build_golem():
+		_status.text = "There is no golem core to build with."
+		return
+	var spirit: Dictionary = catalog.spirit(progression.team[-1].spirit)
+	_status.text = "Golem %d stands! %s wakes in its new body." % [progression.team.size(), spirit.name]
+	if not progression.save_game():
+		_status.text = progression.last_error
+	_rebuild()
+
+
 func _roster_entry(id: String) -> Control:
 	var spirit: Dictionary = catalog.spirit(id)
 	var entry: Dictionary = progression.spirits[id]
@@ -102,7 +127,7 @@ func _roster_entry(id: String) -> Control:
 	var name_label := Style.label("%s %s" % [spirit.name, spirit.title], 16, Style.TEXT)
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(name_label)
-	head.add_child(Style.label("IN TEAM" if in_team else "resting", 12, Style.GOOD if in_team else Style.MUTED))
+	head.add_child(Style.label("IN A GOLEM" if in_team else "resting", 12, Style.GOOD if in_team else Style.MUTED))
 	box.add_child(head)
 	var element_color: Color = catalog.element_color(spirit.element)
 	var temperament: Dictionary = catalog.temperaments[spirit.temperament]

@@ -1,7 +1,7 @@
 extends RefCounted
 ## Turns a loadout (spirit + frame + arms + legs + material + sigil + row) into the
 ## resolved golem the battle simulation consumes. The breakdown keeps every
-## stat source so the workshop can show exactly where a number comes from.
+## stat source so the laboratory can show exactly where a number comes from.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 

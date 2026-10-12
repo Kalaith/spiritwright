@@ -1,5 +1,5 @@
 extends PanelContainer
-## One golem in the workshop: pick the spirit, its row, every part and the
+## One golem in the laboratory: pick the spirit, its row, every part and the
 ## material the body is made of, and see the resolved stats with where each
 ## number comes from.
 

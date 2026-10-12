@@ -25,9 +25,9 @@ func _run() -> void:
 	await _frames(10)
 	await _shot("02_map")
 	main.selected_stage = "ruins_gate"
-	main.show_workshop()
+	main.show_laboratory()
 	await _frames(10)
-	await _shot("03_workshop")
+	await _shot("03_laboratory")
 	main.start_battle("ruins_gate")
 	for i in range(4):
 		await _seconds(1.6)
@@ -38,16 +38,29 @@ func _run() -> void:
 	main.screen.finished.emit()
 	await _frames(10)
 	await _shot("06_result")
+	# The gate's golem core waits in the laboratory.
+	main.selected_stage = "ruins_court"
+	main.show_map()
+	await _seconds(1.0)
+	await _shot("06b_map_core_ready")
+	main.show_laboratory()
+	await _frames(10)
+	await _shot("06c_laboratory_core_ready")
+	main.screen._on_build()
+	await _frames(10)
+	await _shot("06d_laboratory_built")
 	# A later stage with more systems on screen.
 	for id in ["ruins_court", "ruins_stair", "ruins_vault"]:
 		main.progression.apply_battle(main.catalog.stages[id], "win")
+	while main.progression.build_golem():
+		pass
 	main.selected_stage = "ruins_heart"
 	main.show_map()
-	await _frames(10)
+	await _seconds(2.5)
 	await _shot("07_map_late")
-	main.show_workshop()
+	main.show_laboratory()
 	await _frames(10)
-	await _shot("08_workshop_late")
+	await _shot("08_laboratory_late")
 	main.start_battle("ruins_heart")
 	await _seconds(6.0)
 	await _shot("09_boss_battle")
@@ -69,9 +82,9 @@ func _run() -> void:
 	main.screen.finished.emit()
 	await _frames(10)
 	await _shot("11_spirits_result")
-	main.show_workshop()
+	main.show_laboratory()
 	await _frames(10)
-	await _shot("12_workshop_materials")
+	await _shot("12_laboratory_materials")
 	await _gallery()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)

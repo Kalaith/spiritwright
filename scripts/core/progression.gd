@@ -1,18 +1,21 @@
 extends RefCounted
 ## Single owner of the persistent collection: spirits, unlocked parts, the
-## team loadout and cleared stages. Every change goes through here and is
-## validated against the catalog; the UI never edits this state directly.
+## golems (the team loadout), unspent golem cores and cleared stages. Every
+## change goes through here and is validated against the catalog; the UI never edits this state directly.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
-const SAVE_SCHEMA: int = 3
+const SAVE_SCHEMA: int = 4
 
 var catalog: Catalog
 ## spirit id -> {"level", "xp", "last_frame", "last_allies"}
 var spirits: Dictionary = {}
 ## catalog kind -> Array of unlocked ids, in catalog order.
 var unlocks: Dictionary = {}
+## One loadout per built golem: the campaign starts with one and the
+## laboratory builds more, up to team_size, by spending golem cores.
 var team: Array = []
+var cores: int = 0
 var cleared: Array = []
 var battles: int = 0
 var save_path: String = "user://spiritwright_save.json"
@@ -36,6 +39,7 @@ func new_game() -> void:
 			if id in start.unlocks.get(kind, []):
 				unlocks[kind].append(id)
 	team = start.team.duplicate(true)
+	cores = 0
 	cleared = []
 	battles = 0
 
@@ -50,7 +54,7 @@ func load_game() -> bool:
 		parsed = migrate(parsed)
 		if valid(parsed):
 			_apply(parsed)
-			last_error = "" if path == save_path else "Recovered your workshop from the backup save."
+			last_error = "" if path == save_path else "Recovered your laboratory from the backup save."
 			return true
 	last_error = "The save could not be read."
 	return false
@@ -84,13 +88,14 @@ func save_game() -> bool:
 
 func to_dict() -> Dictionary:
 	return {"schema": SAVE_SCHEMA, "spirits": spirits, "unlocks": unlocks, "team": team,
-		"cleared": cleared, "battles": battles}
+		"cores": cores, "cleared": cleared, "battles": battles}
 
 
 ## Brings an older save up to SAVE_SCHEMA one step at a time. Schema 1
 ## predates Loyal spirits remembering their allies: they start with none.
 ## Schema 2 predates materials: every golem is rebuilt in the first starting
 ## material, and the materials the start and cleared stages grant unlock.
+## Schema 3 predates golem cores: those saves already field a full team.
 func migrate(data: Variant) -> Variant:
 	if not data is Dictionary or not data.get("spirits") is Dictionary:
 		return data
@@ -110,6 +115,9 @@ func migrate(data: Variant) -> Variant:
 			if loadout is Dictionary and not start.is_empty():
 				loadout["material"] = start[0]
 		data["schema"] = 3
+	if int(data.get("schema", 0)) == 3:
+		data["cores"] = 0
+		data["schema"] = 4
 	return data
 
 
@@ -143,7 +151,11 @@ func valid(data: Variant) -> bool:
 	for id in data.cleared:
 		if not catalog.stages.has(id):
 			return false
-	if not data.get("team") is Array or data.team.size() != int(catalog.num("team_size")):
+	if not (data.get("cores") is int or data.get("cores") is float) or int(data.cores) < 0:
+		return false
+	if not data.get("team") is Array or data.team.is_empty():
+		return false
+	if data.team.size() + int(data.cores) > int(catalog.num("team_size")):
 		return false
 	var used: Dictionary = {}
 	for loadout in data.team:
@@ -176,6 +188,7 @@ func _apply(data: Dictionary) -> void:
 	team = data.team.duplicate(true)
 	for loadout in team:
 		loadout["sigil"] = String(loadout.get("sigil", ""))
+	cores = int(data.cores)
 	cleared = data.cleared.duplicate()
 	battles = int(data.battles)
 
@@ -280,8 +293,14 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 		report.xp.append(line)
 	if first_clear:
 		cleared.append(stage.id)
-		for kind in stage.get("rewards", {}):
-			for id in stage.rewards[kind]:
+		var rewards: Dictionary = stage.get("rewards", {})
+		if int(rewards.get("cores", 0)) > 0:
+			cores += int(rewards.cores)
+			report.rewards.append({"kind": "cores", "id": str(int(rewards.cores))})
+		for kind in rewards:
+			if kind == "cores":
+				continue
+			for id in rewards[kind]:
 				if kind == "spirits":
 					if not spirits.has(id):
 						spirits[id] = _fresh_spirit(_join_level())
@@ -296,6 +315,33 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 					ordered.append(id)
 			unlocks[kind] = ordered
 	return report
+
+
+func can_build() -> bool:
+	return cores > 0 and team.size() < int(catalog.num("team_size")) and not resting_spirits().is_empty()
+
+
+## Spirits with no golem, in catalog order.
+func resting_spirits() -> Array:
+	var resting: Array = []
+	for id in catalog.player_spirit_ids:
+		if spirits.has(id) and not team.any(func(loadout): return loadout.spirit == id):
+			resting.append(id)
+	return resting
+
+
+## The laboratory spends a golem core on a new body for the first resting
+## spirit, built from the first unlocked part of each kind. A golem joins the
+## back row when the front row already has someone in it.
+func build_golem() -> bool:
+	if not can_build():
+		return false
+	var front_taken: bool = team.any(func(loadout): return loadout.row == "front")
+	team.append({"spirit": resting_spirits()[0], "frame": unlocks.frames[0], "arms": unlocks.arms[0],
+		"legs": unlocks.legs[0], "material": unlocks.materials[0], "sigil": "",
+		"row": "back" if front_taken else "front"})
+	cores -= 1
+	return true
 
 
 func _fresh_spirit(level: int) -> Dictionary:

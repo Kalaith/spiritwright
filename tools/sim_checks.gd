@@ -66,12 +66,24 @@ func _check_progression(catalog: Catalog) -> void:
 	progression.save_path = "user://sim_checks_save.json"
 	progression.new_game()
 	_check("new game is a valid save", progression.valid(progression.to_dict()))
+	_check("the campaign starts with one golem", progression.team.size() == 1 and progression.cores == 0)
 	_check("locked part is refused", not progression.set_slot(0, "arms", "cannon"))
-	_check("swapping spirits keeps them unique", progression.set_slot(0, "spirit", "pyra")
-		and progression.team[1].spirit == "odo")
+	_check("a resting spirit can take the golem", progression.set_slot(0, "spirit", "neris")
+		and progression.team[0].spirit == "neris" and progression.resting_spirits() == ["pyra", "odo"])
+	_check("no golem is built without a core", not progression.build_golem() and progression.team.size() == 1)
 	var report: Dictionary = progression.apply_battle(catalog.stages["ruins_gate"], "win")
 	_check("first clear unlocks the cannon", "cannon" in progression.unlocks.arms and report.first_clear)
+	_check("the gate yields a golem core", progression.cores == 1 and report.rewards.any(func(r): return r.kind == "cores"))
 	_check("stage two opens", progression.stage_state("ruins_court") == "open")
+	_check("the laboratory builds a second golem", progression.build_golem() and progression.team.size() == 2
+		and progression.cores == 0 and progression.team[1].spirit == "pyra" and progression.team[1].row == "back")
+	_check("swapping spirits keeps them unique", progression.set_slot(0, "spirit", "pyra")
+		and progression.team[1].spirit == "neris")
+	progression.cores = 2
+	_check("a save cannot hold more golems than team_size", not progression.valid(progression.to_dict()))
+	progression.cores = 0
+	progression.apply_battle(catalog.stages["ruins_gate"], "win")
+	_check("a replay grants no second core", progression.cores == 0)
 	_check("save writes", progression.save_game(), progression.last_error)
 	var reloaded := Progression.new(catalog)
 	reloaded.save_path = progression.save_path
@@ -175,7 +187,8 @@ func _check_materials(catalog: Catalog) -> void:
 			_strip(_loadout("pyra", "bulwark", "shield", "pillar", "front")),
 			_strip(_loadout("neris", "bulwark", "shield", "pillar", "back"))]}
 	var migrated: Variant = progression.migrate(old)
-	_check("schema 2 saves migrate to materials", progression.valid(migrated)
+	_check("schema 2 saves migrate to materials and keep their three golems", progression.valid(migrated)
+		and migrated.team.size() == 3 and migrated.cores == 0
 		and migrated.unlocks.materials == ["stone", "wood", "ice"] and migrated.team[0].material == "stone",
 		JSON.stringify(migrated.get("unlocks", {})))
 
@@ -216,6 +229,8 @@ func _report(catalog: Catalog) -> void:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1
 	for stage in catalog.region().stages:
+		while progression.build_golem():
+			pass
 		var enemies: Array = progression.enemy_team(stage)
 		var wins: int = 0
 		var samples: int = 1500
@@ -250,7 +265,8 @@ func _report(catalog: Catalog) -> void:
 					best_margin = margin
 					best = trial
 		var levels: Array = progression.spirits.keys().map(func(id): return "%s%d" % [id, progression.spirits[id].level])
-		print("  %-20s random-build win rate %5.1f%%  levels %s" % [stage.name, 100.0 * wins / samples, levels])
+		print("  %-20s %d golem(s), random-build win rate %5.1f%%  levels %s" % [stage.name, progression.team.size(),
+			100.0 * wins / samples, levels])
 		print("    avg hit %.1f, hits of 1-2 %.0f%%, turns per battle %.1f, timeouts %d" % [
 			float(hit_total) / max(hits, 1), 100.0 * chip_hits / max(hits, 1), float(turns) / samples, timeouts])
 		if best.is_empty():
@@ -272,7 +288,7 @@ func _random_team(progression: Progression, rng: RandomNumberGenerator) -> Array
 		ids[i] = ids[j]
 		ids[j] = swap
 	var team: Array = []
-	for slot in range(3):
+	for slot in range(progression.team.size()):
 		var sigils: Array = [""] + progression.unlocks.sigils
 		team.append({
 			"spirit": ids[slot],
@@ -281,7 +297,7 @@ func _random_team(progression: Progression, rng: RandomNumberGenerator) -> Array
 			"legs": _pick(progression.unlocks.legs, rng),
 			"material": _pick(progression.unlocks.materials, rng),
 			"sigil": _pick(sigils, rng),
-			"row": _pick(["front", "back"], rng),
+			"row": "front" if slot == 0 else _pick(["front", "back"], rng),
 		})
 	return team
 

@@ -1,6 +1,6 @@
 extends Control
 ## Owns the catalog and the persistent progression and swaps between screens:
-## title, region map, workshop, battle playback and results.
+## title, region map, golem laboratory, battle playback and results.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Progression = preload("res://scripts/core/progression.gd")
@@ -8,7 +8,7 @@ const BattleSim = preload("res://scripts/sim/battle_sim.gd")
 const Style = preload("res://scripts/ui/style.gd")
 const TitleScreen = preload("res://scripts/ui/title_screen.gd")
 const CampaignScreen = preload("res://scripts/ui/campaign_screen.gd")
-const WorkshopScreen = preload("res://scripts/ui/workshop_screen.gd")
+const LaboratoryScreen = preload("res://scripts/ui/laboratory_screen.gd")
 const BattleView = preload("res://scripts/ui/battle_view.gd")
 const ResultScreen = preload("res://scripts/ui/result_screen.gd")
 
@@ -73,25 +73,25 @@ func show_map(_notice: String = "") -> void:
 	map.catalog = catalog
 	map.progression = progression
 	map.selected = selected_stage
-	map.workshop_requested.connect(func(): _workshop_from(map))
+	map.laboratory_requested.connect(func(): _laboratory_from(map))
 	map.fight_requested.connect(start_battle)
 	map.title_requested.connect(show_title)
 	_swap(map, show_title)
 
 
-func _workshop_from(map: Control) -> void:
+func _laboratory_from(map: Control) -> void:
 	selected_stage = map.selected
-	show_workshop()
+	show_laboratory()
 
 
-func show_workshop() -> void:
-	var workshop := WorkshopScreen.new()
-	workshop.catalog = catalog
-	workshop.progression = progression
-	workshop.stage_id = selected_stage
-	workshop.map_requested.connect(show_map)
-	workshop.fight_requested.connect(start_battle)
-	_swap(workshop, show_map)
+func show_laboratory() -> void:
+	var laboratory := LaboratoryScreen.new()
+	laboratory.catalog = catalog
+	laboratory.progression = progression
+	laboratory.stage_id = selected_stage
+	laboratory.map_requested.connect(show_map)
+	laboratory.fight_requested.connect(start_battle)
+	_swap(laboratory, show_map)
 
 
 func start_battle(stage_id: String) -> void:
@@ -118,6 +118,6 @@ func _show_result(stage: Dictionary, outcome: Dictionary) -> void:
 	if not progression.save_game():
 		result.save_error = progression.last_error
 	result.map_requested.connect(show_map)
-	result.workshop_requested.connect(show_workshop)
+	result.laboratory_requested.connect(show_laboratory)
 	result.retry_requested.connect(func(): start_battle(stage.id))
 	_swap(result, show_map)

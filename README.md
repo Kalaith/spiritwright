@@ -9,7 +9,8 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 - **3 frames** (Bulwark, Strider, Conduit), **3 arms** (Hammer, Shield, Spirit Cannon), **2 legs** (Pillar, Spider) and **4 sigils** (Ember Sigil, Guard Bell, Surge Lens, Moss Charm). Every part changes behaviour, not just stats.
 - **5 body materials**: Stone and Wood from the start, Ice (Sunken Court), Bronze (Thorn Cloister) and Crystal (Echo Vault). Each shifts stats and changes the golem's look. Some react with the spirit's element: Kindling (Fire in Wood: high STR/MAG, almost no DEF/RES, singes attackers), Steam (Fire in Ice), Glacier (Water in Ice), Heartwood (Nature in Wood), Living Rock (Earth in Stone), Live Wire (Lightning in Bronze) and Wind Chime (Wind in Crystal). Wild spirits use them too: the lead cinder motes are kindling, the brine sprite is ice and the Root Warden is heartwood.
 - **3v3 automated battles** with front and back rows, Burn, Soaked, Ward, Stun, Taunt and Regen, interceptions, chained damage and a readable combat log.
-- **One region**, the Ancient Ruins: five stages (one an optional branch) and the Root Warden boss. First clears unlock parts and a spirit; replays give XP.
+- **One golem to start**: the campaign opens with a single golem (Pyra in a kindling body) while Neris and Odo rest. The Mossy Gate and the Sunken Court each yield a **golem core**; spend it in the **Golem Laboratory** to build another body for a resting spirit, up to a team of three.
+- **One region**, the Ancient Ruins, drawn as an illustrated map: a landmark for every stage (the broken gate, the flooded court, the crumbling stair, the bramble cloister, the belled vault and the Warden's tree), fog over places not yet reached, and your golems walking to whichever stage is selected. The laboratory stands at the start of the trail. Five stages (one an optional branch) and the Root Warden boss. First clears unlock parts, cores and a spirit; replays give XP.
 - **Persistent saves** (IndexedDB in the browser, `user://` on desktop) with a backup.
 
 ## Prototype answers to the GDD's open questions
@@ -22,7 +23,7 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 | Growth variance | Smoothed, not rolled: each level adds the growth % to a running total and every 100 is +1. No unlucky spirits. |
 | Arms vs weapon | Arms define the attack; there is no separate weapon slot. One sigil slot. |
 | Rebuild economy | Free. Unlocked parts are blueprints usable by any number of golems. |
-| Team size | 3. |
+| Team size | Up to 3. The campaign starts with one golem; `"cores"` stage rewards let the laboratory build more. Save schema 4 adds unspent `cores`; schema 3 saves keep their three golems. |
 | Affinity | Both: universal status rules (Soaked puts out Burn, blocks new Burn, slows and takes +30% magic damage) plus per-spirit traits. |
 | Compatibility | Simple temperament bonuses only (no Resonance yet). Tags (Brash, Calm, Stubborn), a new frame (Curious), the back row (Patient) or an ally from the last battle (Loyal). |
 | Materials | One per golem (`material` in a loadout), from `parts.json` `materials`. Reactions are data: `reactions.<element>` holds stats and effects in the same vocabulary as traits. Save schema 3 adds materials; schema 2 saves rebuild every golem in stone and unlock what the start and cleared stages grant. |
@@ -40,7 +41,7 @@ data/                 catalogs: spirits, parts, campaign, balance
 scenes/main.tscn      single scene; scripts/main.gd swaps screens
 scripts/core/         catalog (load + validate), builds (stat resolution, growth), progression (save state)
 scripts/sim/          battle_sim.gd: deterministic simulation and event log
-scripts/ui/           title, campaign map, workshop, battle playback and backdrop, results, golem art and reaction fx
+scripts/ui/           title, campaign map (terrain, landmarks), golem laboratory, battle playback and backdrop, results, golem art and reaction fx
 tools/                sim_checks.gd (headless checks + balance report), capture.gd (screenshots), publishing/
 ```
 

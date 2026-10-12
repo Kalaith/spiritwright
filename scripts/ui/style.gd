@@ -130,6 +130,10 @@ static func backdrop(parent: Control, color: Color = BG) -> void:
 
 ## "Spirit: Sefa the Zephra" / "Arms: Spirit Cannon" plus what it does.
 static func reward_text(catalog: RefCounted, kind: String, id: String) -> Array:
+	if kind == "cores":
+		var count: int = int(id)
+		return ["Golem core" if count == 1 else "%d golem cores" % count,
+			"Take it to the Golem Laboratory to build a new golem for a resting spirit."]
 	if kind == "spirits":
 		var spirit: Dictionary = catalog.spirit(id)
 		return ["New spirit: %s %s" % [spirit.name, spirit.get("title", "")], String(spirit.get("description", ""))]

@@ -3,7 +3,7 @@ extends Control
 ## experience and level-ups, and anything unlocked.
 
 signal map_requested
-signal workshop_requested
+signal laboratory_requested
 signal retry_requested
 
 const Style = preload("res://scripts/ui/style.gd")
@@ -34,7 +34,7 @@ func _ready() -> void:
 	if report.first_clear:
 		subtitle += " cleared for the first time!"
 	elif not won:
-		subtitle += ": your spirits return to the workshop, wiser for it."
+		subtitle += ": your spirits return to the laboratory, wiser for it."
 	var sub := Style.label(subtitle, 17, Style.MUTED)
 	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	heading.add_child(sub)
@@ -63,7 +63,7 @@ func _ready() -> void:
 	var buttons := Style.hbox(10)
 	buttons.alignment = BoxContainer.ALIGNMENT_END
 	buttons.add_child(Style.button("Retry", func(): retry_requested.emit()))
-	buttons.add_child(Style.button("Workshop", func(): workshop_requested.emit()))
+	buttons.add_child(Style.button("Laboratory", func(): laboratory_requested.emit()))
 	var map := Style.button("Map", func(): map_requested.emit(), 18)
 	buttons.add_child(map)
 	column.add_child(buttons)

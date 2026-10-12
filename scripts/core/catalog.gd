@@ -8,6 +8,8 @@ const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils", "material
 ## Catalog kind -> the key a loadout uses for it.
 const LOADOUT_KEYS: Dictionary = {"frames": "frame", "arms": "arms", "legs": "legs", "materials": "material"}
 const ROWS: Array[String] = ["front", "back"]
+## Map illustrations a stage can stand beside (drawn by map_landmarks.gd).
+const LANDMARKS: Array[String] = ["gate", "court", "stair", "cloister", "vault", "heart"]
 const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp", "kill"]
 const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste"]
 const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen", "stun"]
@@ -257,8 +259,16 @@ func _validate_campaign() -> void:
 		for id in start.get("unlocks", {}).get(kind, []):
 			if part(kind, id).is_empty():
 				errors.append("Start unlock %s %s does not exist" % [kind, id])
-	for loadout in start.get("team", []):
+	var team: Variant = start.get("team")
+	if not team is Array or team.is_empty():
+		errors.append("The start team needs at least one golem")
+		return
+	for loadout in team:
 		_validate_loadout("start team", loadout, false)
+	var lab: Variant = region().get("laboratory")
+	if not lab is Dictionary or not _is_point(lab.get("map_pos")) or not lab.get("name") is String:
+		errors.append("The region needs a laboratory with a name and map_pos")
+	var golems: int = team.size()
 	for stage in region().get("stages", []):
 		var id: String = String(stage.get("id", ""))
 		if id.is_empty() or stages.has(id):
@@ -273,15 +283,29 @@ func _validate_campaign() -> void:
 			_validate_loadout("stage " + id, enemy, true)
 			if int(enemy.get("level", 0)) < 1:
 				errors.append("Stage %s enemy needs a level" % id)
+		if not _is_point(stage.get("map_pos")) or not stage.get("landmark") in LANDMARKS:
+			errors.append("Stage %s needs a map_pos and a landmark (%s)" % [id, ", ".join(LANDMARKS)])
 		for kind in stage.get("rewards", {}):
+			if kind == "cores":
+				if not (stage.rewards.cores is float or stage.rewards.cores is int) or int(stage.rewards.cores) < 1:
+					errors.append("Stage %s rewards cores as a positive count" % id)
+				else:
+					golems += int(stage.rewards.cores)
+				continue
 			for reward in stage.rewards[kind]:
 				var known: bool = spirit(reward).get("playable", false) if kind == "spirits" else not part(kind, reward).is_empty()
 				if not known:
 					errors.append("Stage %s rewards unknown %s %s" % [id, kind, reward])
+	if golems > int(num("team_size")):
+		errors.append("The start team plus every golem core is %d golems, more than team_size" % golems)
 	for stage in stages.values():
 		for required in stage.get("requires", []):
 			if not stages.has(required):
 				errors.append("Stage %s requires unknown stage %s" % [stage.id, required])
+
+
+func _is_point(value: Variant) -> bool:
+	return value is Array and value.size() == 2 and value.all(func(v): return v is float or v is int)
 
 
 func _validate_balance() -> void:

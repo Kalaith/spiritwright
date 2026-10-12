@@ -1,8 +1,8 @@
 extends Control
 ## Region map plus the selected stage's scouting report: enemy builds, traits
-## and first-clear rewards, so the player can plan a counter in the workshop.
+## and first-clear rewards, so the player can plan a counter in the laboratory.
 
-signal workshop_requested
+signal laboratory_requested
 signal fight_requested(stage_id: String)
 signal title_requested
 
@@ -36,7 +36,7 @@ func _ready() -> void:
 	blurb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	blurb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(blurb)
-	bar.add_child(Style.button("Workshop", func(): workshop_requested.emit()))
+	bar.add_child(_lab_button())
 	bar.add_child(Style.button("Title", func(): title_requested.emit()))
 	var body := Style.hbox(12)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -45,9 +45,15 @@ func _ready() -> void:
 	_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	_map.stages = region.stages
+	_map.laboratory = region.laboratory
+	_map.golem_slots = int(catalog.num("team_size"))
+	_map.core_ready = progression.can_build()
+	for slot in range(progression.team.size()):
+		_map.party_looks.append(GolemArt.look_for(catalog, progression.team[slot], Style.ALLY))
 	for stage in region.stages:
 		_map.states[stage.id] = progression.stage_state(stage.id)
 	_map.stage_selected.connect(_select)
+	_map.laboratory_selected.connect(func(): laboratory_requested.emit())
 	body.add_child(_map)
 	var side := Style.panel(14)
 	side.custom_minimum_size.x = 410
@@ -95,17 +101,19 @@ func _select(stage_id: String) -> void:
 	else:
 		_details.add_child(Style.label("First-clear rewards", 17, Style.MUTED))
 		for kind in stage.rewards:
-			for id in stage.rewards[kind]:
+			for id in ([str(stage.rewards[kind])] if kind == "cores" else stage.rewards[kind]):
 				var lines: Array = Style.reward_text(catalog, kind, id)
 				_details.add_child(Style.wrapped(lines[0], 15, Style.GOLD))
 				_details.add_child(Style.wrapped(lines[1], 13))
 	var buttons := Style.hbox(10)
-	buttons.add_child(Style.button("Workshop", func(): workshop_requested.emit()))
+	buttons.add_child(_lab_button())
 	var fight := Style.button("Fight!", func(): fight_requested.emit(selected), 20)
 	fight.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	buttons.add_child(fight)
 	_details.add_child(buttons)
 	_details.add_child(Style.wrapped(_team_line(), 13))
+	if progression.can_build():
+		_details.add_child(Style.wrapped("A golem core waits in the laboratory: build another golem before you set out.", 13, Style.GOLD))
 
 
 func _enemy_row(golem: Dictionary) -> Control:
@@ -138,4 +146,9 @@ func _team_line() -> String:
 	for loadout in progression.team:
 		var spirit: Dictionary = catalog.spirit(loadout.spirit)
 		names.append("%s Lv %d" % [spirit.name, progression.spirits[loadout.spirit].level])
-	return "Your team: " + ", ".join(names)
+	return "Your golems (%d of %d built): %s" % [progression.team.size(), int(catalog.num("team_size")), ", ".join(names)]
+
+
+func _lab_button() -> Button:
+	var text: String = "Laboratory (core ready!)" if progression.can_build() else "Laboratory"
+	return Style.button(text, func(): laboratory_requested.emit())
