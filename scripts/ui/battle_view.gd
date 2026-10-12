@@ -7,9 +7,12 @@ signal finished
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
+const Backdrop = preload("res://scripts/ui/battle_backdrop.gd")
 const BEAT_SECONDS: float = 0.85
 const IMPACT: float = 0.4
 const ART_SCALE: float = 0.85
+## Bosses stand a head taller than everyone else.
+const BOSS_SCALE: float = 1.25
 const SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 
 var catalog: RefCounted
@@ -45,6 +48,7 @@ func _ready() -> void:
 			"row": unit.row, "hp": unit.max_hp, "max_hp": unit.max_hp, "ward": 0, "burn": 0, "soaked": 0,
 			"taunt": 0, "regen": 0, "stun": 0, "alive": true, "flash": 0.0, "alpha": 1.0, "offset": Vector2.ZERO,
 			"look": GolemArt.look_for(catalog, unit, Style.ALLY if unit.side == 0 else Style.ENEMY),
+			"scale": ART_SCALE * (BOSS_SCALE if catalog.spirit(unit.spirit).get("boss", false) else 1.0),
 		}
 	var current: Array = []
 	for event in outcome.events:
@@ -260,7 +264,7 @@ func _float(unit: Dictionary, text: String, color: Color) -> void:
 		return
 	var recent: int = _floaters.filter(func(f): return f.unit == unit.id and f.t < 0.6).size()
 	var width: float = ThemeDB.fallback_font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20).x
-	var at: Vector2 = _home(unit) + Vector2(-width / 2.0, -156.0 * ART_SCALE - 22.0 * recent)
+	var at: Vector2 = _home(unit) + Vector2(-width / 2.0, -176.0 * unit.scale - 22.0 * recent)
 	_floaters.append({"unit": unit.id, "text": text, "pos": at, "color": color, "t": 0.0})
 
 
@@ -278,25 +282,23 @@ func _home(unit: Dictionary) -> Vector2:
 
 
 func _draw() -> void:
-	draw_rect(Rect2(Vector2.ZERO, size), Color("141820"))
 	var horizon: float = 70.0 + (size.y - 220.0) * 0.25
-	draw_rect(Rect2(0, horizon, size.x, size.y - horizon), Color("1c2119"))
-	for i in range(9):
-		var y: float = horizon + pow(i / 8.0, 1.6) * (size.y - 150.0 - horizon)
-		draw_line(Vector2(0, y), Vector2(size.x, y), Color(1, 1, 1, 0.04), 1.0)
+	Backdrop.draw(self, size, horizon, size.y - 150.0)
 	draw_line(Vector2(size.x / 2.0, horizon), Vector2(size.x / 2.0, size.y - 150.0), Color(1, 1, 1, 0.06), 2.0)
 	var order: Array = units.values()
 	order.sort_custom(func(a, b): return a.slot < b.slot or (a.slot == b.slot and a.side < b.side))
 	for unit in order:
 		var at: Vector2 = _home(unit) + unit.offset
 		if not _attack.is_empty() and _attack.unit == unit.id and unit.alive:
-			draw_arc(at, 50.0 * ART_SCALE, 0, TAU, 32, Style.GOLD, 2.0, true)
-		GolemArt.draw(self, at, ART_SCALE, _facing(unit), unit.look, {"flash": unit.flash, "alpha": unit.alpha})
+			draw_arc(at, 50.0 * unit.scale, 0, TAU, 32, Style.GOLD, 2.0, true)
+		GolemArt.draw(self, at, unit.scale, _facing(unit), unit.look, {"flash": unit.flash, "alpha": unit.alpha,
+			"time": Time.get_ticks_msec() / 1000.0 if unit.alive else 0.0})
 		_draw_hud(unit, _home(unit))
 	if not _attack.is_empty() and _attack.range != "melee" and not _impact_done:
 		var t: float = clampf(_beat_time / IMPACT, 0.0, 1.0)
-		var from: Vector2 = _home(units[_attack.unit]) + Vector2(55 * _facing(units[_attack.unit]), -70) * ART_SCALE
-		var to: Vector2 = _home(units[_attack.target]) + Vector2(0, -60) * ART_SCALE
+		var shooter: Dictionary = units[_attack.unit]
+		var from: Vector2 = _home(shooter) + Vector2(70 * _facing(shooter), -70) * shooter.scale
+		var to: Vector2 = _home(units[_attack.target]) + Vector2(0, -60) * units[_attack.target].scale
 		var color: Color = units[_attack.unit].look.element_color
 		draw_circle(from.lerp(to, t), 7.0, color)
 		draw_circle(from.lerp(to, max(0.0, t - 0.08)), 4.0, Color(color.r, color.g, color.b, 0.5))
@@ -312,7 +314,8 @@ func _draw() -> void:
 
 func _draw_hud(unit: Dictionary, feet: Vector2) -> void:
 	var font: Font = ThemeDB.fallback_font
-	var top: float = feet.y - 132.0 * ART_SCALE
+	# Clear of the tallest head plus its reaction aura, with room for badges.
+	var top: float = feet.y - 120.0 * unit.scale - 30.0
 	var bar := Rect2(feet.x - 46, top, 92, 9)
 	var name_text: String = "%s  Lv %d" % [unit.label, unit.level]
 	var width: float = font.get_string_size(name_text, HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x

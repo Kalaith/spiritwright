@@ -39,7 +39,7 @@ func _ready() -> void:
 	var title := Style.label("SPIRITWRIGHT", 54, Style.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(title)
-	var pitch := Style.wrapped("Collect spirits. Build them stone vessels. Arrange your team and watch the battle play out on its own: the fight is decided in the workshop.", 17, Style.MUTED)
+	var pitch := Style.wrapped("Collect spirits. Build them vessels of stone, wood, ice and stranger things. Arrange your team and watch the battle play out on its own: the fight is decided in the workshop.", 17, Style.MUTED)
 	pitch.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	column.add_child(pitch)
 	var buttons := Style.vbox(10)

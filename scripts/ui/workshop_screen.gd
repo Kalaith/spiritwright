@@ -123,5 +123,19 @@ func _roster_entry(id: String) -> Control:
 	else:
 		box.add_child(Style.wrapped("Awakens at Lv %d - %s: %s" % [awaken_level, awakening.name, awakening.text], 12))
 	box.add_child(Style.wrapped("Prefers: " + temperament.text, 12))
+	var reactions: Array[String] = []
+	var hidden: int = 0
+	for material_id in catalog.part_order.materials:
+		var reaction: Dictionary = catalog.reaction(material_id, spirit.element)
+		if reaction.is_empty():
+			continue
+		if material_id in progression.unlocks.materials:
+			reactions.append("%s (%s)" % [catalog.part("materials", material_id).name, reaction.name])
+		else:
+			hidden += 1
+	if hidden > 0:
+		reactions.append("%d material(s) not yet found" % hidden)
+	if not reactions.is_empty():
+		box.add_child(Style.wrapped("Reacts with: " + ", ".join(reactions), 12, element_color.lerp(Style.TEXT, 0.35)))
 	box.add_child(HSeparator.new())
 	return box

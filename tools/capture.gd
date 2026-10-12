@@ -53,12 +53,13 @@ func _run() -> void:
 	await _shot("09_boss_battle")
 	# The newer spirits, one win away from awakening.
 	main.progression.apply_battle(main.catalog.stages["ruins_cloister"], "win")
-	var builds: Array = [["briar", "bulwark", "shield", "pillar", "front"],
-		["sefa", "conduit", "cannon", "pillar", "back"], ["volta", "conduit", "cannon", "spider", "back"]]
+	main.progression.apply_battle(main.catalog.stages["ruins_vault"], "win")
+	var builds: Array = [["briar", "bulwark", "shield", "pillar", "front", "wood"],
+		["sefa", "conduit", "cannon", "pillar", "back", "crystal"], ["volta", "conduit", "cannon", "spider", "back", "bronze"]]
 	for slot in range(builds.size()):
 		var build: Array = builds[slot]
 		main.progression.team[slot] = {"spirit": build[0], "frame": build[1], "arms": build[2],
-			"legs": build[3], "sigil": "", "row": build[4]}
+			"legs": build[3], "material": build[5], "sigil": "", "row": build[4]}
 		main.progression.spirits[build[0]].level = 4
 		main.progression.spirits[build[0]].xp = 90
 	main.start_battle("ruins_stair")
@@ -68,9 +69,57 @@ func _run() -> void:
 	main.screen.finished.emit()
 	await _frames(10)
 	await _shot("11_spirits_result")
+	main.show_workshop()
+	await _frames(10)
+	await _shot("12_workshop_materials")
+	await _gallery()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)
 	quit()
+
+
+## Every material in every frame, then every element reaction, side by side.
+func _gallery() -> void:
+	var GolemArt: GDScript = load("res://scripts/ui/golem_art.gd")
+	var GolemPreview: GDScript = load("res://scripts/ui/golem_preview.gd")
+	var catalog: RefCounted = main.catalog
+	var sheet := ColorRect.new()
+	sheet.color = Color("16151f")
+	sheet.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	root.add_child(sheet)
+	var grid := GridContainer.new()
+	grid.columns = 6
+	grid.position = Vector2(10, 10)
+	sheet.add_child(grid)
+	var looks: Array = []
+	var builds: Array = [["bulwark", "shield", "pillar"], ["strider", "hammer", "spider"], ["conduit", "cannon", "pillar"]]
+	for id in catalog.part_order.materials:
+		var reactions: Dictionary = catalog.part("materials", id).reactions
+		var plain: String = catalog.player_spirit_ids.filter(func(s): return not reactions.has(catalog.spirit(s).element))[0]
+		for build in builds:
+			looks.append([plain, id, build])
+	for id in catalog.part_order.materials:
+		var reactions: Dictionary = catalog.part("materials", id).reactions
+		for element in reactions:
+			var spirit: String = catalog.player_spirit_ids.filter(func(s): return catalog.spirit(s).element == element)[0]
+			looks.append([spirit, id, builds[looks.size() % 3]])
+	for entry in looks:
+		var golem: Dictionary = {"spirit": entry[0], "material": entry[1], "frame": entry[2][0], "arms": entry[2][1], "legs": entry[2][2]}
+		var cell := VBoxContainer.new()
+		var preview: Control = GolemPreview.new()
+		preview.custom_minimum_size = Vector2(208, 150)
+		preview.animated = true
+		preview.setup(GolemArt.look_for(catalog, golem, Color("4cc9c0")), 1.05)
+		cell.add_child(preview)
+		var reaction: Dictionary = catalog.reaction(entry[1], catalog.spirit(entry[0]).element)
+		var caption := Label.new()
+		caption.text = "%s %s" % [catalog.part("materials", entry[1]).name, reaction.get("name", "")]
+		caption.add_theme_font_size_override("font_size", 12)
+		cell.add_child(caption)
+		grid.add_child(cell)
+	await _seconds(0.7)
+	await _shot("13_material_gallery")
+	sheet.queue_free()
 
 
 func _frames(count: int) -> void:

@@ -134,5 +134,16 @@ static func reward_text(catalog: RefCounted, kind: String, id: String) -> Array:
 		var spirit: Dictionary = catalog.spirit(id)
 		return ["New spirit: %s %s" % [spirit.name, spirit.get("title", "")], String(spirit.get("description", ""))]
 	var part: Dictionary = catalog.part(kind, id)
-	var kinds: Dictionary = {"frames": "Frame", "arms": "Arms", "legs": "Legs", "sigils": "Sigil"}
-	return ["%s: %s" % [kinds.get(kind, kind), part.name], String(part.get("text", ""))]
+	var kinds: Dictionary = {"frames": "Frame", "arms": "Arms", "legs": "Legs", "sigils": "Sigil", "materials": "Material"}
+	var text: String = material_text(catalog, part) if kind == "materials" else String(part.get("text", ""))
+	return ["%s: %s" % [kinds.get(kind, kind), part.name], text]
+
+
+## A material's description, stats and every element it reacts with.
+static func material_text(catalog: RefCounted, material: Dictionary) -> String:
+	var lines: Array[String] = [String(material.text) + " " + stat_line(material.get("stats", {}))]
+	var reactions: Dictionary = material.get("reactions", {})
+	for element in reactions:
+		lines.append("With %s: %s - %s" % [catalog.element_label(element), reactions[element].name, reactions[element].text])
+	return "
+".join(lines)

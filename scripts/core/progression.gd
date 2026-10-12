@@ -5,7 +5,7 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
-const SAVE_SCHEMA: int = 2
+const SAVE_SCHEMA: int = 3
 
 var catalog: Catalog
 ## spirit id -> {"level", "xp", "last_frame", "last_allies"}
@@ -87,15 +87,29 @@ func to_dict() -> Dictionary:
 		"cleared": cleared, "battles": battles}
 
 
-## Brings an older save up to SAVE_SCHEMA. Schema 1 predates Loyal spirits
-## remembering their allies: they start with no remembered allies.
+## Brings an older save up to SAVE_SCHEMA one step at a time. Schema 1
+## predates Loyal spirits remembering their allies: they start with none.
+## Schema 2 predates materials: every golem is rebuilt in the first starting
+## material, and the materials the start and cleared stages grant unlock.
 func migrate(data: Variant) -> Variant:
-	if not data is Dictionary or int(data.get("schema", 0)) != 1 or not data.get("spirits") is Dictionary:
+	if not data is Dictionary or not data.get("spirits") is Dictionary:
 		return data
-	for id in data.spirits:
-		if data.spirits[id] is Dictionary:
-			data.spirits[id]["last_allies"] = []
-	data["schema"] = 2
+	if int(data.get("schema", 0)) == 1:
+		for id in data.spirits:
+			if data.spirits[id] is Dictionary:
+				data.spirits[id]["last_allies"] = []
+		data["schema"] = 2
+	if int(data.get("schema", 0)) == 2 and data.get("unlocks") is Dictionary and data.get("team") is Array 			and data.get("cleared") is Array:
+		var start: Array = catalog.campaign.start.unlocks.get("materials", [])
+		var granted: Array = start.duplicate()
+		for id in data.cleared:
+			for material in catalog.stages.get(String(id), {}).get("rewards", {}).get("materials", []):
+				granted.append(material)
+		data.unlocks["materials"] = catalog.part_order.materials.filter(func(id): return id in granted)
+		for loadout in data.team:
+			if loadout is Dictionary and not start.is_empty():
+				loadout["material"] = start[0]
+		data["schema"] = 3
 	return data
 
 
@@ -136,7 +150,7 @@ func valid(data: Variant) -> bool:
 		if not loadout is Dictionary or not data.spirits.has(loadout.get("spirit", "")) or used.has(loadout.spirit):
 			return false
 		used[loadout.spirit] = true
-		for key in ["frames", "arms", "legs"]:
+		for key in Catalog.LOADOUT_KEYS:
 			if not loadout.get(Catalog.LOADOUT_KEYS[key], "") in data.unlocks[key]:
 				return false
 		var sigil: Variant = loadout.get("sigil", "")
@@ -217,8 +231,8 @@ func set_slot(slot: int, key: String, value: String) -> bool:
 			for other in range(team.size()):
 				if other != slot and team[other].spirit == value:
 					team[other].spirit = team[slot].spirit
-		"frame", "arms", "legs":
-			var kind: String = "frames" if key == "frame" else key
+		"frame", "arms", "legs", "material":
+			var kind: String = {"frame": "frames", "material": "materials"}.get(key, key)
 			if not value in unlocks[kind]:
 				return false
 		"sigil":

@@ -1,5 +1,5 @@
 extends RefCounted
-## Turns a loadout (spirit + frame + arms + legs + sigil + row) into the
+## Turns a loadout (spirit + frame + arms + legs + material + sigil + row) into the
 ## resolved golem the battle simulation consumes. The breakdown keeps every
 ## stat source so the workshop can show exactly where a number comes from.
 
@@ -76,6 +76,8 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 	var arms: Dictionary = catalog.part("arms", String(loadout.arms))
 	var legs: Dictionary = catalog.part("legs", String(loadout.legs))
 	var sigil: Dictionary = catalog.part("sigils", String(loadout.get("sigil", "")))
+	var material: Dictionary = catalog.part("materials", String(loadout.material))
+	var reaction: Dictionary = catalog.reaction(material.id, String(spirit_def.element))
 	var trait_def: Dictionary = spirit_def["trait"]
 	var row: String = String(loadout.row)
 	var breakdown: Array = []
@@ -83,6 +85,9 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 	breakdown.append({"label": frame.name, "stats": frame.get("stats", {})})
 	breakdown.append({"label": arms.name, "stats": arms.get("stats", {})})
 	breakdown.append({"label": legs.name, "stats": legs.get("stats", {})})
+	breakdown.append({"label": material.name + " body", "stats": material.get("stats", {})})
+	if not reaction.is_empty():
+		breakdown.append({"label": reaction.name + " reaction", "stats": reaction.get("stats", {})})
 	var pref: Dictionary = preference(catalog, spirit_def, loadout, history)
 	if pref.active:
 		breakdown.append({"label": pref.label + " preference", "stats": pref.bonus})
@@ -97,6 +102,8 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 	var effects: Array = []
 	for effect in trait_def.get("effects", []):
 		effects.append(_tagged(effect, trait_def.name))
+	for effect in reaction.get("effects", []):
+		effects.append(_tagged(effect, reaction.name))
 	var is_awake: bool = awakened(catalog, spirit_def, level)
 	if is_awake:
 		for effect in spirit_def.awakening.effects:
@@ -113,6 +120,8 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		"frame": frame.id,
 		"arms": arms.id,
 		"legs": legs.id,
+		"material": material.id,
+		"reaction": reaction,
 		"sigil": sigil.get("id", ""),
 		"stats": stats,
 		"breakdown": breakdown,

@@ -21,6 +21,7 @@ func _init() -> void:
 		_check_progression(catalog)
 		_check_slice(catalog)
 		_check_spirits(catalog)
+		_check_materials(catalog)
 		if "--report" in OS.get_cmdline_user_args():
 			_report(catalog)
 	print("%s (%d failure(s))" % ["ALL PASS" if failures == 0 else "FAILED", failures])
@@ -132,8 +133,55 @@ func _check_spirits(catalog: Catalog) -> void:
 	_check("catalog rejects an unreachable receiver", not strict.errors.is_empty())
 
 
-func _loadout(spirit: String, frame: String, arms: String, legs: String, row: String) -> Dictionary:
-	return {"spirit": spirit, "frame": frame, "arms": arms, "legs": legs, "sigil": "", "row": row}
+## Materials: stats from the body, element reactions, their effects in battle
+## and the schema 2 save migration.
+func _check_materials(catalog: Catalog) -> void:
+	var stone: Dictionary = Builds.resolve(catalog, _loadout("pyra", "strider", "hammer", "pillar", "front"), 3)
+	var wood: Dictionary = Builds.resolve(catalog, _loadout("pyra", "strider", "hammer", "pillar", "front", "wood"), 3)
+	var kindling: Dictionary = catalog.reaction("wood", "fire")
+	_check("fire in wood is Kindling", wood.reaction.get("id") == "kindling"
+		and wood.effects.any(func(e): return e.source == kindling.name))
+	_check("kindling trades defence for attack", wood.stats.str > stone.stats.str and wood.stats.def < stone.stats.def,
+		"%s vs %s" % [wood.stats, stone.stats])
+	var plain: Dictionary = Builds.resolve(catalog, _loadout("neris", "strider", "hammer", "pillar", "front", "wood"), 3)
+	_check("a material only reacts with its elements", plain.reaction.is_empty()
+		and not plain.breakdown.any(func(b): return String(b.label).ends_with("reaction")))
+
+	var singe: Dictionary = _duel(catalog, [["pyra", 3, _loadout("pyra", "strider", "hammer", "pillar", "front", "wood")]],
+		[["rubble_imp", 3, _loadout("rubble_imp", "strider", "hammer", "pillar", "front")]])
+	_check("kindling singes its attacker", _has(singe, {"type": "status", "status": "burn", "unit": "b0", "cause": kindling.name}))
+	var glacier: Dictionary = _duel(catalog, [["neris", 3, _loadout("neris", "bulwark", "shield", "pillar", "front", "ice")]],
+		[["rubble_imp", 3, _loadout("rubble_imp", "strider", "hammer", "pillar", "front")]])
+	_check("glacier soaks its attacker", _has(glacier, {"type": "status", "status": "soaked", "unit": "b0", "cause": "Glacier"}))
+	var wire: Dictionary = _duel(catalog, [["volta", 3, _loadout("volta", "conduit", "cannon", "pillar", "back", "bronze")]],
+		[["rubble_imp", 3, _loadout("rubble_imp", "bulwark", "shield", "pillar", "front")],
+			["moss_wisp", 3, _loadout("moss_wisp", "bulwark", "shield", "pillar", "front")]])
+	_check("live wire arcs every hit", _has(wire, {"type": "chain", "unit": "a0"}))
+
+	var progression := Progression.new(catalog)
+	progression.save_enabled = false
+	_check("locked material is refused", progression.set_slot(0, "material", "crystal") == false)
+	var old: Dictionary = {"schema": 2, "battles": 3, "cleared": ["ruins_gate", "ruins_court"],
+		"spirits": {"pyra": {"level": 2, "xp": 0, "last_frame": "", "last_allies": []},
+			"neris": {"level": 2, "xp": 0, "last_frame": "", "last_allies": []},
+			"odo": {"level": 2, "xp": 0, "last_frame": "", "last_allies": []}},
+		"unlocks": {"frames": ["bulwark"], "arms": ["shield"], "legs": ["pillar"], "sigils": []},
+		"team": [_strip(_loadout("odo", "bulwark", "shield", "pillar", "front")),
+			_strip(_loadout("pyra", "bulwark", "shield", "pillar", "front")),
+			_strip(_loadout("neris", "bulwark", "shield", "pillar", "back"))]}
+	var migrated: Variant = progression.migrate(old)
+	_check("schema 2 saves migrate to materials", progression.valid(migrated)
+		and migrated.unlocks.materials == ["stone", "wood", "ice"] and migrated.team[0].material == "stone",
+		JSON.stringify(migrated.get("unlocks", {})))
+
+
+func _strip(loadout: Dictionary) -> Dictionary:
+	loadout.erase("material")
+	return loadout
+
+
+func _loadout(spirit: String, frame: String, arms: String, legs: String, row: String, material: String = "stone") -> Dictionary:
+	return {"spirit": spirit, "frame": frame, "arms": arms, "legs": legs, "material": material, "sigil": "", "row": row}
 
 
 func _has(outcome: Dictionary, fields: Dictionary) -> bool:
@@ -209,6 +257,7 @@ func _random_team(progression: Progression, rng: RandomNumberGenerator) -> Array
 			"frame": _pick(progression.unlocks.frames, rng),
 			"arms": _pick(progression.unlocks.arms, rng),
 			"legs": _pick(progression.unlocks.legs, rng),
+			"material": _pick(progression.unlocks.materials, rng),
 			"sigil": _pick(sigils, rng),
 			"row": _pick(["front", "back"], rng),
 		})

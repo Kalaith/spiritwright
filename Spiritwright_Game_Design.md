@@ -178,6 +178,24 @@ These are body configurations, **not classes assigned to spirits**.
 
 Every major part should contribute an **understandable combat behaviour**, not only a flat stat increment. Exact behaviour is to be balanced once the simulation model is chosen.
 
+### Body materials
+
+Vessels are not always stone. Each golem is built from one **material** (stone, wood, ice, bronze, crystal and stranger things later), which shifts its stats and appearance: wood is light and roomy but splinters, ice is hard and slow, crystal focuses magic but is brittle.
+
+A material can **react** with the element of the spirit inside it. A reaction is a named bonus with its own trade-off and, often, a behaviour:
+
+| Spirit + material | Reaction | Effect |
+| --- | --- | --- |
+| Fire in Wood | Kindling | The body burns as it fights: much higher STR/MAG, much lower DEF/RES; attackers are singed |
+| Fire in Ice | Steam | The ice melts: faster and stronger magic, weaker plating; a scalding mist Soaks every enemy |
+| Water in Ice | Glacier | Tougher, and attackers are Soaked |
+| Nature in Wood | Heartwood | The timber takes root: more HP and early Regen |
+| Earth in Stone | Living Rock | The stone knits around its own kind |
+| Lightning in Bronze | Live Wire | Current runs through the metal: every hit arcs to another enemy |
+| Wind in Crystal | Wind Chime | The wind sings through the facets: the whole team surges forward |
+
+Reactions follow the same rule as preferences: they reward a pairing, they never lock a spirit out of a material. A reaction may trade one strength for another (Kindling), but no material is unusable for any spirit.
+
 ### Equipment
 
 Keep the prototype to **one weapon and one accessory/sigil at most**, or fewer if the arm component already defines the weapon.

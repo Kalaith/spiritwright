@@ -250,6 +250,7 @@
 		{
 			"id": "root_warden",
 			"name": "Root Warden",
+			"boss": true,
 			"element": "nature",
 			"base": { "hp": 60, "str": 6, "mag": 3, "spd": 3, "def": 5, "res": 4 },
 			"growth": { "hp": 70, "str": 50, "mag": 30, "spd": 25, "def": 50, "res": 40 },

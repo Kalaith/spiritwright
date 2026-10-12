@@ -7,6 +7,7 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 - **6 spirits**: Pyra (Fire, Brash), Neris (Water, Calm), Odo (Earth, Stubborn), plus three rescued in the campaign: Volta (Lightning, Patient) at the Sunken Court, Sefa (Wind, Curious) at the Broken Stair and Briar (Nature, Loyal) in the optional Thorn Cloister. Each has its own base stats, growth rates, a trait and a temperament preference.
 - **Awakenings**: at Lv 5 every spirit grows a second trait (Pyra's Wildfire, Neris's Floodwall, Odo's Rumble, Sefa's Tailwind, Volta's Overcharge, Briar's Bloom). The roster shows what each will become; the result screen announces it.
 - **3 frames** (Bulwark, Strider, Conduit), **3 arms** (Hammer, Shield, Spirit Cannon), **2 legs** (Pillar, Spider) and **4 sigils** (Ember Sigil, Guard Bell, Surge Lens, Moss Charm). Every part changes behaviour, not just stats.
+- **5 body materials**: Stone and Wood from the start, Ice (Sunken Court), Bronze (Thorn Cloister) and Crystal (Echo Vault). Each shifts stats and changes the golem's look. Some react with the spirit's element: Kindling (Fire in Wood: high STR/MAG, almost no DEF/RES, singes attackers), Steam (Fire in Ice), Glacier (Water in Ice), Heartwood (Nature in Wood), Living Rock (Earth in Stone), Live Wire (Lightning in Bronze) and Wind Chime (Wind in Crystal). Wild spirits use them too: cinder motes are kindling, the brine sprite is ice and the Root Warden is heartwood.
 - **3v3 automated battles** with front and back rows, Burn, Soaked, Ward, Stun, Taunt and Regen, interceptions, chained damage and a readable combat log.
 - **One region**, the Ancient Ruins: five stages (one an optional branch) and the Root Warden boss. First clears unlock parts and a spirit; replays give XP.
 - **Persistent saves** (IndexedDB in the browser, `user://` on desktop) with a backup.
@@ -24,8 +25,9 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 | Team size | 3. |
 | Affinity | Both: universal status rules (Soaked puts out Burn, blocks new Burn, slows and takes +30% magic damage) plus per-spirit traits. |
 | Compatibility | Simple temperament bonuses only (no Resonance yet). Tags (Brash, Calm, Stubborn), a new frame (Curious), the back row (Patient) or an ally from the last battle (Loyal). |
+| Materials | One per golem (`material` in a loadout), from `parts.json` `materials`. Reactions are data: `reactions.<element>` holds stats and effects in the same vocabulary as traits. Save schema 3 adds materials; schema 2 saves rebuild every golem in stone and unlock what the start and cleared stages grant. |
 | Unlocked traits | One Awakening per spirit at `balance.awaken_level` (5): a second data-driven trait, never a stat penalty. |
-| Visuals | Procedural 2D golems assembled from part silhouettes at runtime; the element shows as core colour plus a letter. |
+| Visuals | Procedural 2D golems assembled from part silhouettes at runtime, shaded and textured by material (cracks, grain, sheen, rivets, facets); the element shows as core and eye colour plus a letter; reactions add an animated aura (`golem_fx.gd`). Battles play in front of a drawn ruins backdrop; bosses (`"boss": true` on a wild spirit) stand larger. |
 
 Targeting rules: melee hits the first front-row enemy (back row only when the front is empty); Spider Legs and cannons go for the enemy with the lowest HP; a Taunting enemy overrides both; front-row Shield Arms take one hit aimed at a back-row ally between their turns.
 
@@ -38,7 +40,7 @@ data/                 catalogs: spirits, parts, campaign, balance
 scenes/main.tscn      single scene; scripts/main.gd swaps screens
 scripts/core/         catalog (load + validate), builds (stat resolution, growth), progression (save state)
 scripts/sim/          battle_sim.gd: deterministic simulation and event log
-scripts/ui/           title, campaign map, workshop, battle playback, results, golem art
+scripts/ui/           title, campaign map, workshop, battle playback and backdrop, results, golem art and reaction fx
 tools/                sim_checks.gd (headless checks + balance report), capture.gd (screenshots), publishing/
 ```
 

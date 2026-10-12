@@ -1,6 +1,7 @@
 extends PanelContainer
-## One golem in the workshop: pick the spirit, its row and every part, and
-## see the resolved stats with where each number comes from.
+## One golem in the workshop: pick the spirit, its row, every part and the
+## material the body is made of, and see the resolved stats with where each
+## number comes from.
 
 signal changed(slot: int, key: String, value: String)
 
@@ -33,6 +34,7 @@ func _ready() -> void:
 	var preview := GolemPreview.new()
 	preview.custom_minimum_size = Vector2(0, 128)
 	preview.backdrop = Color("16151f")
+	preview.animated = true
 	preview.setup(GolemArt.look_for(catalog, golem, Style.ALLY), 0.9)
 	column.add_child(preview)
 	var grid := GridContainer.new()
@@ -44,6 +46,7 @@ func _ready() -> void:
 	_selector(grid, "Frame", "frame", _part_options("frames"), loadout.frame)
 	_selector(grid, "Arms", "arms", _part_options("arms"), loadout.arms)
 	_selector(grid, "Legs", "legs", _part_options("legs"), loadout.legs)
+	_selector(grid, "Material", "material", _material_options(String(golem.element)), loadout.material)
 	var sigils: Array = [["", "None", "No sigil."]]
 	sigils.append_array(_part_options("sigils"))
 	_selector(grid, "Sigil", "sigil", sigils, loadout.sigil)
@@ -54,6 +57,11 @@ func _ready() -> void:
 		column.add_child(Style.wrapped("%s: %s" % [pref.label, state], 13, Style.GOOD if pref.active else Style.MUTED))
 		column.get_child(-1).tooltip_text = pref.text
 		column.get_child(-1).mouse_filter = Control.MOUSE_FILTER_PASS
+	var reaction: Dictionary = golem.reaction
+	if not reaction.is_empty():
+		var reacts := Style.wrapped("%s (%s in %s): %s" % [reaction.name, catalog.element_label(golem.element),
+			catalog.part("materials", loadout.material).name, reaction.text], 13, catalog.element_color(golem.element))
+		column.add_child(reacts)
 	var spirit: Dictionary = catalog.spirit(loadout.spirit)
 	var notes: Array[String] = [
 		catalog.part("arms", loadout.arms).text,
@@ -101,6 +109,17 @@ func _part_options(kind: String) -> Array:
 		var part: Dictionary = catalog.part(kind, id)
 		var stats: String = Style.stat_line(part.get("stats", {}))
 		options.append([id, part.name, part.text + ("\n" + stats if not stats.is_empty() else "")])
+	return options
+
+
+## Materials name the reaction they would cause with this spirit's element.
+func _material_options(element: String) -> Array:
+	var options: Array = []
+	for id in progression.unlocks.materials:
+		var material: Dictionary = catalog.part("materials", id)
+		var reaction: Dictionary = catalog.reaction(id, element)
+		var label: String = material.name if reaction.is_empty() else "%s - %s!" % [material.name, reaction.name]
+		options.append([id, label, Style.material_text(catalog, material)])
 	return options
 
 

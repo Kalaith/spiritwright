@@ -101,5 +101,108 @@
 				{ "on": "low_hp", "do": "status", "status": "regen", "amount": 3, "to": "self" }
 			]
 		}
+	],
+	"materials": [
+		{
+			"id": "stone",
+			"name": "Stone",
+			"text": "Old ruin stone. Sturdy and plain.",
+			"stats": { "def": 1 },
+			"reactions": {
+				"earth": {
+					"id": "living_rock",
+					"name": "Living Rock",
+					"text": "The stone answers its own kind and knits around the spirit: HP +6, DEF +1.",
+					"stats": { "hp": 6, "def": 1 },
+					"effects": []
+				}
+			}
+		},
+		{
+			"id": "wood",
+			"name": "Wood",
+			"text": "Light, springy timber. Quicker and roomier than stone, but it splinters.",
+			"stats": { "hp": 4, "spd": 1, "def": -1 },
+			"reactions": {
+				"fire": {
+					"id": "kindling",
+					"name": "Kindling",
+					"text": "The body burns as it fights: STR +3, MAG +3, DEF -3, RES -1. Anyone who strikes it is singed (+1 Burn).",
+					"stats": { "str": 3, "mag": 3, "def": -3, "res": -1 },
+					"effects": [
+						{ "on": "hurt", "do": "status", "status": "burn", "amount": 1, "to": "attacker" }
+					]
+				},
+				"nature": {
+					"id": "heartwood",
+					"name": "Heartwood",
+					"text": "The timber takes root again: HP +6, RES +1 and Regen for its first 3 turns.",
+					"stats": { "hp": 6, "res": 1 },
+					"effects": [
+						{ "on": "battle_start", "do": "status", "status": "regen", "amount": 3, "to": "self" }
+					]
+				}
+			}
+		},
+		{
+			"id": "ice",
+			"name": "Ice",
+			"text": "Hard, cold and slow to move. Shrugs off blows and spells alike.",
+			"stats": { "def": 2, "res": 1, "spd": -2 },
+			"reactions": {
+				"water": {
+					"id": "glacier",
+					"name": "Glacier",
+					"text": "The spirit keeps the ice whole: DEF +2, RES +2, and whoever strikes it is Soaked for 2 turns.",
+					"stats": { "def": 2, "res": 2 },
+					"effects": [
+						{ "on": "hurt", "do": "status", "status": "soaked", "amount": 2, "to": "attacker" }
+					]
+				},
+				"fire": {
+					"id": "steam",
+					"name": "Steam",
+					"text": "The ice melts around the flame: DEF -3, SPD +4, MAG +2, and a scalding mist Soaks every enemy at the start of battle.",
+					"stats": { "def": -3, "spd": 4, "mag": 2 },
+					"effects": [
+						{ "on": "battle_start", "do": "status", "status": "soaked", "amount": 1, "to": "enemies" }
+					]
+				}
+			}
+		},
+		{
+			"id": "bronze",
+			"name": "Bronze",
+			"text": "Heavy cast metal from the old bells. Hits hard and holds, but conducts spells.",
+			"stats": { "def": 2, "str": 1, "spd": -1, "res": -1 },
+			"reactions": {
+				"lightning": {
+					"id": "live_wire",
+					"name": "Live Wire",
+					"text": "Current runs through the metal: MAG +3, SPD +2, RES -2, and every hit arcs 40% of its damage to another enemy.",
+					"stats": { "mag": 3, "spd": 2, "res": -2 },
+					"effects": [
+						{ "on": "hit", "do": "chain", "fraction": 0.4 }
+					]
+				}
+			}
+		},
+		{
+			"id": "crystal",
+			"name": "Crystal",
+			"text": "Strange humming crystal grown in the vault. Focuses spirit power, but it is brittle.",
+			"stats": { "mag": 2, "res": 2, "hp": -6 },
+			"reactions": {
+				"wind": {
+					"id": "wind_chime",
+					"name": "Wind Chime",
+					"text": "The wind sings through the facets: SPD +2, and the whole team surges forward at the start of battle (+40 gauge).",
+					"stats": { "spd": 2 },
+					"effects": [
+						{ "on": "battle_start", "do": "haste", "flat": 40, "to": "team" }
+					]
+				}
+			}
+		}
 	]
 }

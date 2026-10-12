@@ -4,9 +4,9 @@ extends RefCounted
 ## silent defaults in code.
 
 const STATS: Array[String] = ["hp", "str", "mag", "spd", "def", "res"]
-const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils"]
+const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils", "materials"]
 ## Catalog kind -> the key a loadout uses for it.
-const LOADOUT_KEYS: Dictionary = {"frames": "frame", "arms": "arms", "legs": "legs"}
+const LOADOUT_KEYS: Dictionary = {"frames": "frame", "arms": "arms", "legs": "legs", "materials": "material"}
 const ROWS: Array[String] = ["front", "back"]
 const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp", "kill"]
 const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste"]
@@ -23,7 +23,7 @@ var temperaments: Dictionary = {}
 ## id -> definition, for player spirits and wild spirits alike.
 var spirits: Dictionary = {}
 var player_spirit_ids: Array[String] = []
-## kind ("frames", "arms", "legs", "sigils") -> id -> definition.
+## kind ("frames", "arms", "legs", "sigils", "materials") -> id -> definition.
 var parts: Dictionary = {}
 ## Ordered id lists per kind, so menus keep catalog order.
 var part_order: Dictionary = {}
@@ -76,6 +76,11 @@ func element_label(element: String) -> String:
 
 func element_glyph(element: String) -> String:
 	return String(elements.get(element, {}).get("glyph", "?"))
+
+
+## What a spirit of `element` becomes in a body of `material_id`, or {}.
+func reaction(material_id: String, element: String) -> Dictionary:
+	return part("materials", material_id).get("reactions", {}).get(element, {})
 
 
 func region() -> Dictionary:
@@ -155,8 +160,28 @@ func _add_part(kind: String, entry: Variant) -> void:
 			errors.append("Arms %s need a valid attack" % id)
 	if kind == "sigils":
 		_validate_effects("sigil " + id, entry.get("effects", []))
+	if kind == "materials":
+		_validate_reactions(id, entry.get("reactions"))
 	parts[kind][id] = entry
 	part_order[kind].append(id)
+
+
+## A material reacts with some elements: a named bundle of stats and effects
+## that applies only while a spirit of that element inhabits it.
+func _validate_reactions(material_id: String, reactions: Variant) -> void:
+	if not reactions is Dictionary:
+		errors.append("Material %s needs a reactions object" % material_id)
+		return
+	for element in reactions:
+		var owner: String = "material %s reaction %s" % [material_id, element]
+		var entry: Variant = reactions[element]
+		if not elements.has(element):
+			errors.append(owner + " names an unknown element")
+		if not entry is Dictionary or not entry.get("id") is String or not entry.get("name") is String 				or not entry.get("text") is String:
+			errors.append(owner + " needs an id, name and text")
+			continue
+		_validate_stat_block(owner, entry.get("stats", {}))
+		_validate_effects(owner, entry.get("effects", []))
 
 
 func _validate_stat_block(owner: String, block: Variant) -> void:
