@@ -17,7 +17,9 @@
 		"gauge_threshold": 100,
 		"gauge_base": 4,
 		"max_ticks": 4000,
-		"damage_variance": 1
+		"damage_variance": 1,
+		"armour_factor": 0.5,
+		"min_damage_fraction": 0.35
 	},
 	"status": {
 		"burn_damage_per_stack": 2,

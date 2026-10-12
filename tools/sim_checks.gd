@@ -54,6 +54,11 @@ func _check_determinism(catalog: Catalog) -> void:
 	var second: Dictionary = BattleSim.new().run(catalog, progression.resolved_team(), progression.enemy_team(stage), 7)
 	_check("same seed gives the same battle", JSON.stringify(first.events) == JSON.stringify(second.events))
 	_check("battle ends", first.result in ["win", "loss", "timeout"])
+	# Armour blunts blows rather than cancelling them: even the plated Rubble Imp takes real hits.
+	var imp_hits: Array = first.events.filter(func(e): return e.type == "damage" and e.cause == "attack" and e.unit == "b0")
+	var imp_total: int = imp_hits.reduce(func(sum, e): return sum + int(e.amount), 0)
+	_check("armour does not reduce hits to chip damage", not imp_hits.is_empty() and imp_total >= 3 * imp_hits.size(),
+		"%d damage over %d hits" % [imp_total, imp_hits.size()])
 
 
 func _check_progression(catalog: Catalog) -> void:
@@ -216,10 +221,25 @@ func _report(catalog: Catalog) -> void:
 		var samples: int = 1500
 		var best: Array = []
 		var best_margin: int = -1
+		var hits: int = 0
+		var hit_total: int = 0
+		var chip_hits: int = 0
+		var turns: int = 0
+		var timeouts: int = 0
 		for i in range(samples):
 			var trial: Array = _random_team(progression, rng)
 			progression.team = trial
 			var outcome: Dictionary = BattleSim.new().run(catalog, progression.resolved_team(), enemies, int(stage.seed))
+			for event in outcome.events:
+				if event.type == "turn":
+					turns += 1
+				elif event.type == "damage" and event.cause == "attack":
+					hits += 1
+					hit_total += int(event.amount)
+					if int(event.amount) <= 2:
+						chip_hits += 1
+			if outcome.result == "timeout":
+				timeouts += 1
 			if outcome.result == "win":
 				wins += 1
 				var margin: int = 0
@@ -231,6 +251,8 @@ func _report(catalog: Catalog) -> void:
 					best = trial
 		var levels: Array = progression.spirits.keys().map(func(id): return "%s%d" % [id, progression.spirits[id].level])
 		print("  %-20s random-build win rate %5.1f%%  levels %s" % [stage.name, 100.0 * wins / samples, levels])
+		print("    avg hit %.1f, hits of 1-2 %.0f%%, turns per battle %.1f, timeouts %d" % [
+			float(hit_total) / max(hits, 1), 100.0 * chip_hits / max(hits, 1), float(turns) / samples, timeouts])
 		if best.is_empty():
 			print("    no winning build found; grinding the previous stage once")
 			progression.team = _random_team(progression, rng)

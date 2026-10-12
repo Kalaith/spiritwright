@@ -141,7 +141,10 @@ func _attack(unit: Dictionary, target: Dictionary) -> void:
 		"%s attacks %s." % [unit.label, target.label])
 	var magical: bool = unit.attack.kind == "magical"
 	var power: int = int(unit.attack.power) + int(unit.stats.mag if magical else unit.stats.str)
-	var amount: int = max(1, power - int(target.stats.res if magical else target.stats.def))
+	# Armour blunts a share of each blow, but a hit always keeps a floor of its power.
+	var armour: float = float(target.stats.res if magical else target.stats.def) * catalog.num("battle.armour_factor")
+	var floor_damage: float = power * catalog.num("battle.min_damage_fraction")
+	var amount: int = max(1, int(round(max(power - armour, floor_damage))))
 	amount += rng.randi_range(0, int(catalog.num("battle.damage_variance")))
 	var note: String = ""
 	if magical and target.soaked > 0:

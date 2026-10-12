@@ -287,7 +287,7 @@ func _validate_campaign() -> void:
 func _validate_balance() -> void:
 	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp.win", "xp.repeat_win", "xp.loss",
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
-			"battle.max_ticks", "battle.damage_variance", "status.burn_damage_per_stack",
+			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",
 			"status.regen_heal"]:
 		var node: Variant = balance

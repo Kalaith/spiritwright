@@ -51,14 +51,14 @@
 				{
 					"id": "ruins_stair",
 					"name": "Broken Stair",
-					"text": "Cinder motes in kindling bodies skitter over the steps. They hit hard and singe whoever strikes them, but the wood splinters fast. A trapped wind spirit cries out above them.",
+					"text": "Cinder motes skitter over the steps, the leader in a kindling body. It hits hard and singes whoever strikes it, but the wood splinters fast. A trapped wind spirit cries out above them.",
 					"map_pos": [440, 420],
 					"requires": ["ruins_court"],
 					"seed": 303,
 					"enemies": [
 						{ "spirit": "rubble_imp", "level": 2, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front" },
-						{ "spirit": "cinder_mote", "level": 3, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front" },
-						{ "spirit": "cinder_mote", "level": 2, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "back" }
+						{ "spirit": "cinder_mote", "level": 2, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front" },
+						{ "spirit": "cinder_mote", "level": 1, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "", "row": "back" }
 					],
 					"rewards": { "spirits": ["sefa"], "legs": ["spider"] }
 				},
@@ -85,7 +85,7 @@
 					"seed": 404,
 					"enemies": [
 						{ "spirit": "rubble_imp", "level": 3, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front" },
-						{ "spirit": "cinder_mote", "level": 3, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front" },
+						{ "spirit": "cinder_mote", "level": 2, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front" },
 						{ "spirit": "brine_sprite", "level": 3, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back" }
 					],
 					"rewards": { "sigils": ["surge_lens", "guard_bell"], "materials": ["crystal"] }
