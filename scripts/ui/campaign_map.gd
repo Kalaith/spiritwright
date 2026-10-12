@@ -1,7 +1,6 @@
 extends Control
-## The region map: an illustrated stretch of ruins with a landmark for every
-## stage, the trails between them and the golem laboratory where the journey
-## starts. Locked stages lie under fog and cannot be chosen; cleared stages
+## A region map: illustrated ground with a landmark for every stage, the trails
+## between them and the golem laboratory where the region's journey starts. Locked stages lie under fog and cannot be chosen; cleared stages
 ## stay repeatable. The player's golems walk to whichever place is selected.
 
 signal stage_selected(stage_id: String)
@@ -21,6 +20,8 @@ var states: Dictionary = {}
 var selected: String = ""
 ## {"name", "map_pos"} from the region data.
 var laboratory: Dictionary = {}
+## The region's "terrain" block from campaign.json.
+var terrain: Dictionary = {}
 ## One look per built golem, leader first.
 var party_looks: Array = []
 var golem_slots: int = 3
@@ -110,10 +111,11 @@ func _gui_input(event: InputEvent) -> void:
 
 
 func _draw_terrain(ci: Control) -> void:
-	MapTerrain.draw(ci, size, _offset())
+	MapTerrain.draw(ci, size, _offset(), terrain)
 	for stage in stages:
 		var requires: Array = stage.get("requires", [])
-		var froms: Array = requires.map(func(id): return _find(id).get("map_pos", stage.map_pos))
+		# A stage reached from another region (or from nowhere) starts at the laboratory.
+		var froms: Array = requires.map(func(id): return _find(id).get("map_pos", laboratory.map_pos))
 		if requires.is_empty():
 			froms = [laboratory.map_pos]
 		for from in froms:
@@ -123,12 +125,12 @@ func _draw_terrain(ci: Control) -> void:
 		MapLandmarks.draw(ci, stage.landmark, _at(stage.map_pos), 1.0 if states.get(stage.id) == "locked" else 0.0)
 	for stage in stages:
 		if states.get(stage.id) == "locked":
-			MapTerrain.fog(ci, _at(stage.map_pos))
+			MapTerrain.fog(ci, _at(stage.map_pos), terrain)
 	MapTerrain.vignette(ci, size)
 
 
 func _draw_live(ci: Control) -> void:
-	MapTerrain.draw_live(ci, _offset(), _time)
+	MapTerrain.draw_live(ci, _offset(), _time, terrain)
 	MapLandmarks.draw_live(ci, "laboratory", _at(laboratory.map_pos), _time, core_ready)
 	for stage in stages:
 		if states.get(stage.id) != "locked":

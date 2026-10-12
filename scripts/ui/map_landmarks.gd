@@ -1,9 +1,11 @@
 extends RefCounted
 ## The illustration behind each stage marker on the region map, and the golem
-## laboratory where the journey starts. `draw` paints the still parts once;
+## laboratory where the journey starts. Landmarks of later regions live in
+## map_landmarks_wild.gd. `draw` paints the still parts once;
 ## `draw_live` adds what moves (water, sparks, glow, smoke). `at` is the
 ## marker's centre; landmarks rise above it so the marker sits at their foot.
 
+const Wild = preload("res://scripts/ui/map_landmarks_wild.gd")
 const STONE := Color("50535b")
 const STONE_LIGHT := Color("70747d")
 const STONE_DARK := Color("2c2e34")
@@ -31,6 +33,7 @@ static func draw(ci: CanvasItem, kind: String, at: Vector2, dim: float = 0.0) ->
 		"vault": _vault(ci, at)
 		"heart": _heart(ci, at)
 		"laboratory": _laboratory(ci, at)
+		_: Wild.draw(ci, kind, at)
 	if dim > 0.0:
 		_shadow(ci, at + Vector2(0, -44), 70.0, 0.5 * dim)
 
@@ -63,6 +66,8 @@ static func draw_live(ci: CanvasItem, kind: String, at: Vector2, time: float, ac
 				ci.draw_circle(p, 4.0 + t * 7.0, Color(0.7, 0.7, 0.75, 0.22 * (1.0 - t)))
 			if active:
 				_glow(ci, at + Vector2(-20, -18), 12.0 + 3.0 * sin(time * 4.0), Color(CORE_GOLD, 0.5))
+		_:
+			Wild.draw_live(ci, kind, at, time)
 
 
 static func _gate(ci: CanvasItem, at: Vector2) -> void:

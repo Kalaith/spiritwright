@@ -10,7 +10,8 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 - **5 body materials**: Stone and Wood from the start, Ice (Sunken Court), Bronze (Thorn Cloister) and Crystal (Echo Vault). Each shifts stats and changes the golem's look. Some react with the spirit's element: Kindling (Fire in Wood: high STR/MAG, almost no DEF/RES, singes attackers), Steam (Fire in Ice), Glacier (Water in Ice), Heartwood (Nature in Wood), Living Rock (Earth in Stone), Live Wire (Lightning in Bronze) and Wind Chime (Wind in Crystal). Wild spirits use them too: the lead cinder motes are kindling, the brine sprite is ice and the Root Warden is heartwood.
 - **3v3 automated battles** with front and back rows, Burn, Soaked, Ward, Stun, Taunt and Regen, interceptions, chained damage and a readable combat log.
 - **One golem to start**: the campaign opens with a single golem (Pyra in a kindling body) while Neris and Odo rest. The Mossy Gate and the Sunken Court each yield a **golem core**; spend it in the **Golem Laboratory** to build another body for a resting spirit, up to a team of three.
-- **One region**, the Ancient Ruins, drawn as an illustrated map: a landmark for every stage (the broken gate, the flooded court, the crumbling stair, the bramble cloister, the belled vault and the Warden's tree), fog over places not yet reached, and your golems walking to whichever stage is selected. The laboratory stands at the start of the trail. Five stages (one an optional branch) and the Root Warden boss. First clears unlock parts, cores and a spirit; replays give XP.
+- **Five regions, 30 stages**, each drawn as an illustrated map with a landmark for every stage, fog over places not yet reached, and your golems walking to whichever stage is selected; `<` and `>` step between regions you have reached. The **Ancient Ruins** (Lv 1-8, the Root Warden) hold every part, core and spirit reward; the **Glimmer Fen** (Lv 8-11, the Fen Mother), **Ember Steppe** (Lv 11-15, the Kiln Tyrant), **Frostspine Pass** (Lv 14-17, the Crag Sovereign) and **Storm Crown** (Lv 16-20, the Storm Sovereign) bring 15 new wild spirits and are fought for XP. Each region has one optional branch stage.
+- **XP from the fight, not a flat amount**: every enemy level is worth `xp.per_enemy_level`, scaled by first clear / replay / loss, and by how far the spirit's level sits below or above the enemies' average (`xp.level_gap_step`, clamped to `xp.min_factor`-`xp.max_factor`). Each level costs `xp_per_level + xp_per_level_growth x (level - 1)` up to `level_cap` 20.
 - **Persistent saves** (IndexedDB in the browser, `user://` on desktop) with a backup.
 
 ## Prototype answers to the GDD's open questions
@@ -34,6 +35,16 @@ Targeting rules: melee hits the first front-row enemy (back row only when the fr
 
 Effect vocabulary (traits, awakenings and sigils, validated by `catalog.gd`): triggers `battle_start`, `turn_start`, `hit`, `hurt`, `low_hp`, `kill`; actions `status` (burn, soaked, taunt, regen, stun), `ward`, `heal`, `damage`, `haste` (action gauge) and `chain`; receivers `self`, `target` (on hit), `attacker` (on hurt), `team`, `allies`, `enemies`. Amounts are `flat` plus `stat` x `fraction` of the owner's stat.
 
+## Adding regions and stages
+
+The campaign is all data in `data/campaign.json`; `catalog.gd` validates it at startup and refuses to run with a readable error if anything is wrong.
+
+- **A region** is an entry in `regions` (shown in list order): `id`, `name`, `text`, a `laboratory` (`name`, `map_pos`: the start of its trails, and a button into the laboratory) and a `terrain` block: `seed`, hex colours `ground`, `dirt`, `rock`, `wall`, `water`, colour lists `patches` and `canopy`, and layout lists `stream` (points; `[]` for none), `walls` (`[start, end, height]`) and `woods` (`[centre, radius]`).
+- **A stage** goes in its region's `stages`: unique `id`, `name`, `text`, `map_pos`, `landmark`, `requires` (stage ids, from any region), `seed`, 1-3 `enemies` (loadouts with a `level`; any spirit from `spirits.json`), `rewards` (`{}` for XP only), optional `"boss": true` and optional `clear_text` shown on the first win.
+- Map positions are in an 860x560 space; landmarks rise about 110 px above the marker and the name sits below it. Landmarks: `gate`, `court`, `stair`, `cloister`, `vault`, `heart`, `bridge`, `hut`, `tower`, `kiln`, `spire`, `camp`, `monolith`, `peak`.
+- A region opens once any of its stages is reachable, so its first stage should require the previous region's boss. Trails from stages in other regions start at the laboratory.
+- New wild spirits go in `spirits.json` `wild` using the effect vocabulary below. Run the checks and `-- --report` after adding stages to see the level curve and win rates.
+
 ## Layout
 
 ```
@@ -41,7 +52,7 @@ data/                 catalogs: spirits, parts, campaign, balance
 scenes/main.tscn      single scene; scripts/main.gd swaps screens
 scripts/core/         catalog (load + validate), builds (stat resolution, growth), progression (save state)
 scripts/sim/          battle_sim.gd: deterministic simulation and event log
-scripts/ui/           title, campaign map (terrain, landmarks), golem laboratory, battle playback and backdrop, results, golem art and reaction fx
+scripts/ui/           title, campaign map (terrain, landmarks, wild landmarks), golem laboratory, battle playback and backdrop, results, golem art and reaction fx
 tools/                sim_checks.gd (headless checks + balance report), capture.gd (screenshots), publishing/
 ```
 

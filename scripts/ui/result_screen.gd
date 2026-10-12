@@ -56,8 +56,8 @@ func _ready() -> void:
 		var lines: Array = Style.reward_text(catalog, reward.kind, reward.id)
 		column.add_child(Style.label("Unlocked  " + lines[0], 17, Style.GOLD))
 		column.add_child(Style.wrapped(lines[1], 13))
-	if report.first_clear and stage.get("boss", false):
-		column.add_child(Style.wrapped("The Root Warden falls and the Ancient Ruins are free. More regions are not built yet: keep refining builds and replaying stages.", 15, Style.GOLD))
+	if report.first_clear and stage.has("clear_text"):
+		column.add_child(Style.wrapped(stage.clear_text, 15, Style.GOLD))
 	if not save_error.is_empty():
 		column.add_child(Style.wrapped(save_error, 14, Style.BAD))
 	var buttons := Style.hbox(10)

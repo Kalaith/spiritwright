@@ -132,7 +132,7 @@ func _roster_entry(id: String) -> Control:
 	var element_color: Color = catalog.element_color(spirit.element)
 	var temperament: Dictionary = catalog.temperaments[spirit.temperament]
 	box.add_child(Style.label("%s  -  %s  -  Lv %d  (%d/%d XP)" % [catalog.element_label(spirit.element),
-		temperament.label, entry.level, entry.xp, int(catalog.num("xp_per_level"))], 13, element_color))
+		temperament.label, entry.level, entry.xp, progression.xp_to_next(int(entry.level))], 13, element_color))
 	var growth: Array[String] = []
 	for stat in Catalog.STATS:
 		growth.append("%s %d%%" % [Style.STAT_LABELS[stat], int(spirit.growth[stat])])

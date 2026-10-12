@@ -82,6 +82,22 @@ func _check_progression(catalog: Catalog) -> void:
 	progression.cores = 2
 	_check("a save cannot hold more golems than team_size", not progression.valid(progression.to_dict()))
 	progression.cores = 0
+	var gate_xp: int = progression.stage_xp(catalog.stages["ruins_gate"], 1, catalog.num("xp.repeat_win"))
+	var court_xp: int = progression.stage_xp(catalog.stages["ruins_court"], 1, catalog.num("xp.repeat_win"))
+	_check("a stronger enemy team is worth more XP", court_xp > gate_xp, "%d vs %d" % [court_xp, gate_xp])
+	_check("an over-levelled spirit earns less XP",
+		progression.stage_xp(catalog.stages["ruins_gate"], 5, 1.0) < gate_xp)
+	_check("each level costs more XP than the last", progression.xp_to_next(10) > progression.xp_to_next(1))
+	var reachable: Array = []
+	var grew: bool = true
+	while grew:
+		grew = false
+		for stage in catalog.stages.values():
+			if not stage.id in reachable and stage.get("requires", []).all(func(id): return id in reachable):
+				reachable.append(stage.id)
+				grew = true
+	_check("every stage in every region can be reached", reachable.size() == catalog.stages.size(),
+		str(catalog.stages.keys().filter(func(id): return not id in reachable)))
 	progression.apply_battle(catalog.stages["ruins_gate"], "win")
 	_check("a replay grants no second core", progression.cores == 0)
 	_check("save writes", progression.save_game(), progression.last_error)
@@ -228,7 +244,7 @@ func _report(catalog: Catalog) -> void:
 	progression.new_game()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1
-	for stage in catalog.region().stages:
+	for stage in catalog.stages.values():
 		while progression.build_golem():
 			pass
 		var enemies: Array = progression.enemy_team(stage)

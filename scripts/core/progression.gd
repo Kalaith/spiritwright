@@ -268,20 +268,19 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 	var first_clear: bool = won and not stage.id in cleared
 	var xp_key: String = "xp.loss"
 	if won:
-		xp_key = "xp.win" if first_clear else "xp.repeat_win"
-	var gained: int = int(catalog.num(xp_key))
+		xp_key = "xp.first_clear" if first_clear else "xp.repeat_win"
 	var report: Dictionary = {"xp": [], "rewards": [], "first_clear": first_clear}
-	var per_level: int = int(catalog.num("xp_per_level"))
 	var cap: int = int(catalog.num("level_cap"))
 	for loadout in team:
 		var entry: Dictionary = spirits[loadout.spirit]
 		var spirit_def: Dictionary = catalog.spirit(loadout.spirit)
+		var gained: int = stage_xp(stage, int(entry.level), catalog.num(xp_key))
 		var line: Dictionary = {"spirit": loadout.spirit, "gained": gained, "from": entry.level, "rises": {}}
 		entry.last_frame = loadout.frame
 		entry.last_allies = _allies_of(loadout.spirit)
 		entry.xp += gained
-		while entry.xp >= per_level and entry.level < cap:
-			entry.xp -= per_level
+		while entry.xp >= xp_to_next(entry.level) and entry.level < cap:
+			entry.xp -= xp_to_next(entry.level)
 			var rises: Dictionary = Builds.level_up_gains(catalog, spirit_def, entry.level)
 			for stat in rises:
 				line.rises[stat] = int(line.rises.get(stat, 0)) + int(rises[stat])
@@ -315,6 +314,32 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 					ordered.append(id)
 			unlocks[kind] = ordered
 	return report
+
+
+## XP a spirit at `level` needs to reach the next level: each level costs more.
+func xp_to_next(level: int) -> int:
+	return int(catalog.num("xp_per_level") + catalog.num("xp_per_level_growth") * (level - 1))
+
+
+## XP one spirit earns from a stage: every enemy level is worth
+## xp.per_enemy_level, scaled by the outcome, and by how far the spirit's level
+## sits below (more) or above (less) the enemies' average level.
+func stage_xp(stage: Dictionary, spirit_level: int, outcome_factor: float) -> int:
+	var total_levels: int = 0
+	for enemy in stage.enemies:
+		total_levels += int(enemy.level)
+	var gap: float = float(total_levels) / max(1, stage.enemies.size()) - spirit_level
+	var level_factor: float = clampf(1.0 + gap * catalog.num("xp.level_gap_step"),
+		catalog.num("xp.min_factor"), catalog.num("xp.max_factor"))
+	return max(1, int(round(total_levels * catalog.num("xp.per_enemy_level") * outcome_factor * level_factor)))
+
+
+## Average enemy level of a stage, rounded, for the campaign screen.
+func stage_level(stage: Dictionary) -> int:
+	var total_levels: int = 0
+	for enemy in stage.enemies:
+		total_levels += int(enemy.level)
+	return int(round(float(total_levels) / max(1, stage.enemies.size())))
 
 
 func can_build() -> bool:

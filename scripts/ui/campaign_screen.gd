@@ -1,5 +1,6 @@
 extends Control
-## Region map plus the selected stage's scouting report: enemy builds, traits
+## Region map (one region at a time, stepped with < and >) plus the selected
+## stage's scouting report: enemy builds, traits
 ## and first-clear rewards, so the player can plan a counter in the laboratory.
 
 signal laboratory_requested
@@ -15,7 +16,14 @@ var catalog: RefCounted
 var progression: RefCounted
 var selected: String = ""
 var _map: Control
+var _map_holder: HBoxContainer
 var _details: VBoxContainer
+var _region_index: int = 0
+var _region_name: Label
+var _region_text: Label
+var _region_count: Label
+var _prev: Button
+var _next: Button
 
 
 func _ready() -> void:
@@ -28,33 +36,31 @@ func _ready() -> void:
 	add_child(margin)
 	var column := Style.vbox(10)
 	margin.add_child(column)
-	var region: Dictionary = catalog.region()
 	var bar := Style.hbox(12)
 	column.add_child(bar)
-	bar.add_child(Style.label(region.name, 26, Style.GOLD))
-	var blurb := Style.wrapped(region.text, 14)
-	blurb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	blurb.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	bar.add_child(blurb)
+	_prev = Style.button("<", func(): _step_region(-1))
+	bar.add_child(_prev)
+	var titles := Style.vbox(0)
+	bar.add_child(titles)
+	_region_name = Style.label("", 26, Style.GOLD)
+	titles.add_child(_region_name)
+	_region_count = Style.label("", 13, Style.MUTED)
+	titles.add_child(_region_count)
+	_next = Style.button(">", func(): _step_region(1))
+	bar.add_child(_next)
+	_region_text = Style.wrapped("", 14)
+	_region_text.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_region_text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(_region_text)
 	bar.add_child(_lab_button())
 	bar.add_child(Style.button("Title", func(): title_requested.emit()))
 	var body := Style.hbox(12)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	column.add_child(body)
-	_map = CampaignMap.new()
-	_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	_map.stages = region.stages
-	_map.laboratory = region.laboratory
-	_map.golem_slots = int(catalog.num("team_size"))
-	_map.core_ready = progression.can_build()
-	for slot in range(progression.team.size()):
-		_map.party_looks.append(GolemArt.look_for(catalog, progression.team[slot], Style.ALLY))
-	for stage in region.stages:
-		_map.states[stage.id] = progression.stage_state(stage.id)
-	_map.stage_selected.connect(_select)
-	_map.laboratory_selected.connect(func(): laboratory_requested.emit())
-	body.add_child(_map)
+	_map_holder = Style.hbox(0)
+	_map_holder.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_map_holder.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	body.add_child(_map_holder)
 	var side := Style.panel(14)
 	side.custom_minimum_size.x = 410
 	body.add_child(side)
@@ -65,15 +71,65 @@ func _ready() -> void:
 	_details.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	scroll.add_child(_details)
 	if selected.is_empty() or progression.stage_state(selected) == "locked":
-		selected = _first_open(region)
+		selected = _furthest_open(catalog.stages.keys())
+	_show_region(int(catalog.stage_region[selected]))
 	_select(selected)
 
 
-func _first_open(region: Dictionary) -> String:
+## The last open stage of `ids` in campaign order, else the last one not locked,
+## else the first: the place the player most likely wants to go next.
+func _furthest_open(ids: Array) -> String:
+	var open: String = ""
+	var reached: String = ""
+	for id in ids:
+		var state: String = progression.stage_state(id)
+		if state == "open":
+			open = id
+		elif state == "cleared":
+			reached = id
+	if not open.is_empty():
+		return open
+	return reached if not reached.is_empty() else ids[0]
+
+
+## A region can be visited once any of its stages is open or cleared.
+func _region_reached(index: int) -> bool:
+	return catalog.regions()[index].stages.any(func(stage): return progression.stage_state(stage.id) != "locked")
+
+
+func _step_region(step: int) -> void:
+	var index: int = _region_index + step
+	if index < 0 or index >= catalog.regions().size() or not _region_reached(index):
+		return
+	_show_region(index)
+	_select(_furthest_open(catalog.regions()[index].stages.map(func(stage): return stage.id)))
+
+
+func _show_region(index: int) -> void:
+	_region_index = index
+	var region: Dictionary = catalog.regions()[index]
+	_region_name.text = region.name
+	_region_text.text = region.text
+	_region_count.text = "Region %d of %d" % [index + 1, catalog.regions().size()]
+	_prev.disabled = index == 0
+	_next.disabled = index + 1 >= catalog.regions().size() or not _region_reached(index + 1)
+	if _map != null:
+		_map.queue_free()
+	_map = CampaignMap.new()
+	_map.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_map.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_map.stages = region.stages
+	_map.laboratory = region.laboratory
+	_map.terrain = region.terrain
+	_map.golem_slots = int(catalog.num("team_size"))
+	_map.core_ready = progression.can_build()
+	for slot in range(progression.team.size()):
+		_map.party_looks.append(GolemArt.look_for(catalog, progression.team[slot], Style.ALLY))
 	for stage in region.stages:
-		if progression.stage_state(stage.id) == "open":
-			return stage.id
-	return region.stages[-1].id
+		_map.states[stage.id] = progression.stage_state(stage.id)
+	_map.stage_selected.connect(_select)
+	_map.laboratory_selected.connect(func(): laboratory_requested.emit())
+	_map_holder.add_child(_map)
 
 
 func _select(stage_id: String) -> void:
@@ -94,11 +150,13 @@ func _select(stage_id: String) -> void:
 	_details.add_child(Style.label("Enemy team", 17, Style.MUTED))
 	for golem in progression.enemy_team(stage):
 		_details.add_child(_enemy_row(golem))
-	if state == "cleared":
-		_details.add_child(Style.wrapped("Replay for %d XP per spirit." % int(catalog.num("xp.repeat_win")), 14))
-	elif stage.get("rewards", {}).is_empty():
-		_details.add_child(Style.wrapped("Defeat the Warden to free the Ancient Ruins.", 14, Style.GOLD))
-	else:
+	var level: int = progression.stage_level(stage)
+	var xp_factor: float = catalog.num("xp.repeat_win" if state == "cleared" else "xp.first_clear")
+	_details.add_child(Style.wrapped("%s %d XP per Lv %d spirit; lower-level spirits earn more, higher-level less." % [
+		"Replay for" if state == "cleared" else "Win for", progression.stage_xp(stage, level, xp_factor), level], 14))
+	if state != "cleared" and stage.get("rewards", {}).is_empty():
+		_details.add_child(Style.wrapped("No parts or spirits wait here: this fight is for experience.", 14))
+	elif state != "cleared":
 		_details.add_child(Style.label("First-clear rewards", 17, Style.MUTED))
 		for kind in stage.rewards:
 			for id in ([str(stage.rewards[kind])] if kind == "cores" else stage.rewards[kind]):

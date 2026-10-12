@@ -85,6 +85,21 @@ func _run() -> void:
 	main.show_laboratory()
 	await _frames(10)
 	await _shot("12_laboratory_materials")
+	# Every later region, partway through: two stages cleared, the rest open or fogged.
+	var regions: Array = main.catalog.regions()
+	for index in range(1, regions.size()):
+		for stage in regions[index - 1].stages:
+			if not stage.id in main.progression.cleared:
+				main.progression.cleared.append(stage.id)
+		for stage in regions[index].stages.slice(0, 2):
+			main.progression.cleared.append(stage.id)
+		main.selected_stage = regions[index].stages[2].id
+		main.show_map()
+		await _seconds(2.0)
+		await _shot("14_region_%d_%s" % [index + 1, regions[index].id])
+	main.start_battle(regions[1].stages[2].id)
+	await _seconds(6.0)
+	await _shot("15_fen_battle")
 	await _gallery()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)

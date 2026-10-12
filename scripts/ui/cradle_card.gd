@@ -45,9 +45,9 @@ func _ready() -> void:
 
 func _where_cores_are() -> String:
 	var places: Array[String] = []
-	for stage in catalog.region().stages:
+	for stage in catalog.stages.values():
 		if int(stage.get("rewards", {}).get("cores", 0)) > 0 and not stage.id in progression.cleared:
 			places.append(stage.name)
 	if places.is_empty():
-		return "No more cores lie in this region."
+		return "No more golem cores lie anywhere on the map."
 	return "Cores lie in: " + ", ".join(places) + ". Clear it to bring one back."

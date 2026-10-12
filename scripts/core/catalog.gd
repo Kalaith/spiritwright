@@ -8,8 +8,13 @@ const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils", "material
 ## Catalog kind -> the key a loadout uses for it.
 const LOADOUT_KEYS: Dictionary = {"frames": "frame", "arms": "arms", "legs": "legs", "materials": "material"}
 const ROWS: Array[String] = ["front", "back"]
-## Map illustrations a stage can stand beside (drawn by map_landmarks.gd).
-const LANDMARKS: Array[String] = ["gate", "court", "stair", "cloister", "vault", "heart"]
+## Map illustrations a stage can stand beside (drawn by map_landmarks.gd and
+## map_landmarks_wild.gd).
+const LANDMARKS: Array[String] = ["gate", "court", "stair", "cloister", "vault", "heart", "bridge", "hut", "tower",
+	"kiln", "spire", "camp", "monolith", "peak"]
+## Colours a region's terrain block names (hex strings); lists hold one or more.
+const TERRAIN_COLORS: Array[String] = ["ground", "dirt", "rock", "wall", "water"]
+const TERRAIN_PALETTES: Array[String] = ["patches", "canopy"]
 const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp", "kill"]
 const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste"]
 const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen", "stun"]
@@ -30,7 +35,10 @@ var parts: Dictionary = {}
 ## Ordered id lists per kind, so menus keep catalog order.
 var part_order: Dictionary = {}
 var campaign: Dictionary = {}
+## Every stage of every region, by id, in campaign order.
 var stages: Dictionary = {}
+## stage id -> index into campaign.regions.
+var stage_region: Dictionary = {}
 var errors: Array[String] = []
 
 
@@ -85,8 +93,12 @@ func reaction(material_id: String, element: String) -> Dictionary:
 	return part("materials", material_id).get("reactions", {}).get(element, {})
 
 
-func region() -> Dictionary:
-	return campaign.regions[0]
+func regions() -> Array:
+	return campaign.regions
+
+
+func region_of(stage_id: String) -> Dictionary:
+	return campaign.regions[int(stage_region.get(stage_id, 0))]
 
 
 ## Dot-separated lookup into balance.json, e.g. "battle.gauge_threshold".
@@ -265,16 +277,40 @@ func _validate_campaign() -> void:
 		return
 	for loadout in team:
 		_validate_loadout("start team", loadout, false)
-	var lab: Variant = region().get("laboratory")
-	if not lab is Dictionary or not _is_point(lab.get("map_pos")) or not lab.get("name") is String:
-		errors.append("The region needs a laboratory with a name and map_pos")
 	var golems: int = team.size()
-	for stage in region().get("stages", []):
+	for index in range(campaign.regions.size()):
+		golems += _validate_region(index)
+	if golems > int(num("team_size")):
+		errors.append("The start team plus every golem core is %d golems, more than team_size" % golems)
+	for stage in stages.values():
+		for required in stage.get("requires", []):
+			if not stages.has(required):
+				errors.append("Stage %s requires unknown stage %s" % [stage.id, required])
+
+
+## Checks one region and its stages; returns the golem cores it awards.
+func _validate_region(index: int) -> int:
+	var region: Variant = campaign.regions[index]
+	if not region is Dictionary or not region.get("id") is String or not region.get("name") is String 			or not region.get("text") is String:
+		errors.append("Region %d needs an id, name and text" % (index + 1))
+		return 0
+	var lab: Variant = region.get("laboratory")
+	if not lab is Dictionary or not _is_point(lab.get("map_pos")) or not lab.get("name") is String:
+		errors.append("Region %s needs a laboratory with a name and map_pos" % region.id)
+	_validate_terrain(region.id, region.get("terrain"))
+	if not region.get("stages") is Array or region.stages.is_empty():
+		errors.append("Region %s needs at least one stage" % region.id)
+		return 0
+	var golems: int = 0
+	for stage in region.stages:
 		var id: String = String(stage.get("id", ""))
 		if id.is_empty() or stages.has(id):
 			errors.append("Stage ids must be unique and non-empty")
 			continue
 		stages[id] = stage
+		stage_region[id] = index
+		if stage.has("clear_text") and not stage.clear_text is String:
+			errors.append("Stage %s clear_text must be text" % id)
 		var enemies: Variant = stage.get("enemies")
 		if not enemies is Array or enemies.is_empty() or enemies.size() > 3:
 			errors.append("Stage %s needs 1-3 enemies" % id)
@@ -296,12 +332,31 @@ func _validate_campaign() -> void:
 				var known: bool = spirit(reward).get("playable", false) if kind == "spirits" else not part(kind, reward).is_empty()
 				if not known:
 					errors.append("Stage %s rewards unknown %s %s" % [id, kind, reward])
-	if golems > int(num("team_size")):
-		errors.append("The start team plus every golem core is %d golems, more than team_size" % golems)
-	for stage in stages.values():
-		for required in stage.get("requires", []):
-			if not stages.has(required):
-				errors.append("Stage %s requires unknown stage %s" % [stage.id, required])
+	return golems
+
+
+## A region's map ground: colours, a fixed seed, and optional stream, walls and woods.
+func _validate_terrain(region_id: String, terrain: Variant) -> void:
+	var owner: String = "Region %s terrain" % region_id
+	if not terrain is Dictionary or not (terrain.get("seed") is float or terrain.get("seed") is int):
+		errors.append(owner + " needs an object with a seed")
+		return
+	for key in TERRAIN_COLORS:
+		if not terrain.get(key) is String or not Color.html_is_valid(terrain[key]):
+			errors.append("%s needs a %s colour" % [owner, key])
+	for key in TERRAIN_PALETTES:
+		var palette: Variant = terrain.get(key)
+		if not palette is Array or palette.is_empty() or palette.any(func(c): return not c is String or not Color.html_is_valid(c)):
+			errors.append("%s needs a list of %s colours" % [owner, key])
+	var stream: Variant = terrain.get("stream")
+	if not stream is Array or stream.size() == 1 or not stream.all(_is_point):
+		errors.append(owner + " stream must be a list of points (empty for none)")
+	var walls: Variant = terrain.get("walls")
+	if not walls is Array or not walls.all(func(w): return w is Array and w.size() == 3 and _is_point(w[0]) 			and _is_point(w[1]) and (w[2] is float or w[2] is int)):
+		errors.append(owner + " walls must be [start, end, height] entries")
+	var woods: Variant = terrain.get("woods")
+	if not woods is Array or not woods.all(func(w): return w is Array and w.size() == 2 and _is_point(w[0]) 			and (w[1] is float or w[1] is int)):
+		errors.append(owner + " woods must be [centre, radius] entries")
 
 
 func _is_point(value: Variant) -> bool:
@@ -309,7 +364,8 @@ func _is_point(value: Variant) -> bool:
 
 
 func _validate_balance() -> void:
-	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp.win", "xp.repeat_win", "xp.loss",
+	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp_per_level_growth", "xp.per_enemy_level", "xp.first_clear", "xp.repeat_win", "xp.loss",
+			"xp.level_gap_step", "xp.min_factor", "xp.max_factor",
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
 			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",

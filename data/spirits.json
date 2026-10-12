@@ -261,6 +261,238 @@
 					{ "on": "turn_start", "do": "heal", "flat": 5, "to": "self" }
 				]
 			}
+		},
+		{
+			"id": "bog_lurker",
+			"name": "Bog Lurker",
+			"element": "water",
+			"base": { "hp": 32, "str": 4, "mag": 4, "spd": 3, "def": 3, "res": 4 },
+			"growth": { "hp": 60, "str": 35, "mag": 40, "spd": 25, "def": 40, "res": 40 },
+			"trait": {
+				"name": "Clinging Mud",
+				"text": "Whoever strikes it comes away Soaked for 2 turns.",
+				"effects": [
+					{ "on": "hurt", "do": "status", "status": "soaked", "amount": 2, "to": "attacker" }
+				]
+			}
+		},
+		{
+			"id": "spark_newt",
+			"name": "Spark Newt",
+			"element": "lightning",
+			"base": { "hp": 24, "str": 3, "mag": 6, "spd": 7, "def": 1, "res": 3 },
+			"growth": { "hp": 40, "str": 25, "mag": 55, "spd": 55, "def": 20, "res": 30 },
+			"trait": {
+				"name": "Arc",
+				"text": "Its attacks leap on to a second enemy for 40% damage.",
+				"effects": [
+					{ "on": "hit", "do": "chain", "fraction": 0.4 }
+				]
+			}
+		},
+		{
+			"id": "reed_sprite",
+			"name": "Reed Sprite",
+			"element": "nature",
+			"base": { "hp": 26, "str": 3, "mag": 5, "spd": 5, "def": 2, "res": 4 },
+			"growth": { "hp": 45, "str": 25, "mag": 45, "spd": 45, "def": 25, "res": 40 },
+			"trait": {
+				"name": "Reedbed",
+				"text": "Starts each battle with Regen (3 turns).",
+				"effects": [
+					{ "on": "battle_start", "do": "status", "status": "regen", "amount": 3, "to": "self" }
+				]
+			}
+		},
+		{
+			"id": "fen_mother",
+			"name": "Fen Mother",
+			"boss": true,
+			"element": "water",
+			"base": { "hp": 64, "str": 4, "mag": 7, "spd": 4, "def": 4, "res": 6 },
+			"growth": { "hp": 70, "str": 30, "mag": 55, "spd": 30, "def": 40, "res": 50 },
+			"trait": {
+				"name": "Tidecaller",
+				"text": "Soaks every enemy as battle begins and mends 4 HP at the start of each of its turns.",
+				"effects": [
+					{ "on": "battle_start", "do": "status", "status": "soaked", "amount": 1, "to": "enemies" },
+					{ "on": "turn_start", "do": "heal", "flat": 4, "to": "self" }
+				]
+			}
+		},
+		{
+			"id": "ash_hound",
+			"name": "Ash Hound",
+			"element": "fire",
+			"base": { "hp": 28, "str": 6, "mag": 2, "spd": 7, "def": 2, "res": 1 },
+			"growth": { "hp": 45, "str": 55, "mag": 15, "spd": 55, "def": 30, "res": 20 },
+			"trait": {
+				"name": "Pack Hunter",
+				"text": "Each time it is struck, its next turn comes sooner.",
+				"effects": [
+					{ "on": "hurt", "do": "haste", "flat": 20, "to": "self" }
+				]
+			}
+		},
+		{
+			"id": "dust_devil",
+			"name": "Dust Devil",
+			"element": "wind",
+			"base": { "hp": 24, "str": 4, "mag": 4, "spd": 8, "def": 1, "res": 2 },
+			"growth": { "hp": 40, "str": 40, "mag": 40, "spd": 60, "def": 20, "res": 25 },
+			"trait": {
+				"name": "Tailwind",
+				"text": "Its attacks hurry its allies along.",
+				"effects": [
+					{ "on": "hit", "do": "haste", "flat": 12, "to": "allies" }
+				]
+			}
+		},
+		{
+			"id": "slag_brute",
+			"name": "Slag Brute",
+			"element": "earth",
+			"base": { "hp": 36, "str": 6, "mag": 1, "spd": 2, "def": 5, "res": 1 },
+			"growth": { "hp": 65, "str": 50, "mag": 10, "spd": 20, "def": 50, "res": 20 },
+			"trait": {
+				"name": "Slag Hide",
+				"text": "Strikes back for 2 + half its DEF whenever it is hit.",
+				"effects": [
+					{ "on": "hurt", "do": "damage", "flat": 2, "stat": "def", "fraction": 0.5, "to": "attacker" }
+				]
+			}
+		},
+		{
+			"id": "kiln_tyrant",
+			"name": "Kiln Tyrant",
+			"boss": true,
+			"element": "fire",
+			"base": { "hp": 66, "str": 7, "mag": 4, "spd": 4, "def": 5, "res": 3 },
+			"growth": { "hp": 70, "str": 55, "mag": 30, "spd": 30, "def": 45, "res": 30 },
+			"trait": {
+				"name": "Forgeheart",
+				"text": "Its attacks set the target Burning, and anyone who strikes it catches Burn too.",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" },
+					{ "on": "hurt", "do": "status", "status": "burn", "amount": 1, "to": "attacker" }
+				]
+			}
+		},
+		{
+			"id": "frost_wisp",
+			"name": "Frost Wisp",
+			"element": "water",
+			"base": { "hp": 24, "str": 2, "mag": 6, "spd": 6, "def": 2, "res": 4 },
+			"growth": { "hp": 40, "str": 20, "mag": 55, "spd": 50, "def": 25, "res": 45 },
+			"trait": {
+				"name": "Deep Chill",
+				"text": "Its attacks freeze a Soaked target solid for a turn (every 3 turns).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "stun", "amount": 1, "if_target": ["soaked"], "to": "target", "cooldown": 3 }
+				]
+			}
+		},
+		{
+			"id": "gale_kite",
+			"name": "Gale Kite",
+			"element": "wind",
+			"base": { "hp": 24, "str": 5, "mag": 3, "spd": 8, "def": 1, "res": 2 },
+			"growth": { "hp": 40, "str": 50, "mag": 30, "spd": 60, "def": 20, "res": 25 },
+			"trait": {
+				"name": "Updraft",
+				"text": "Bursts ahead of everyone as battle begins.",
+				"effects": [
+					{ "on": "battle_start", "do": "haste", "flat": 40, "to": "self" }
+				]
+			}
+		},
+		{
+			"id": "rime_ogre",
+			"name": "Rime Ogre",
+			"element": "earth",
+			"base": { "hp": 38, "str": 6, "mag": 2, "spd": 2, "def": 4, "res": 3 },
+			"growth": { "hp": 65, "str": 50, "mag": 15, "spd": 20, "def": 45, "res": 35 },
+			"trait": {
+				"name": "Frost Ward",
+				"text": "When struck, wraps itself in a ward worth its RES.",
+				"effects": [
+					{ "on": "hurt", "do": "ward", "stat": "res", "to": "self", "cooldown": 1 }
+				]
+			}
+		},
+		{
+			"id": "crag_sovereign",
+			"name": "Crag Sovereign",
+			"boss": true,
+			"element": "earth",
+			"base": { "hp": 72, "str": 7, "mag": 3, "spd": 3, "def": 6, "res": 5 },
+			"growth": { "hp": 75, "str": 50, "mag": 25, "spd": 25, "def": 55, "res": 45 },
+			"trait": {
+				"name": "Avalanche Mantle",
+				"text": "Draws every blow as battle begins and, when worn down, wards its whole team.",
+				"effects": [
+					{ "on": "battle_start", "do": "status", "status": "taunt", "amount": 2, "to": "self" },
+					{ "on": "low_hp", "do": "ward", "stat": "res", "to": "team" }
+				]
+			}
+		},
+		{
+			"id": "storm_hawk",
+			"name": "Storm Hawk",
+			"element": "wind",
+			"base": { "hp": 26, "str": 6, "mag": 3, "spd": 8, "def": 2, "res": 2 },
+			"growth": { "hp": 40, "str": 55, "mag": 25, "spd": 60, "def": 25, "res": 25 },
+			"trait": {
+				"name": "Dive",
+				"text": "Each time it is struck, its next turn comes sooner.",
+				"effects": [
+					{ "on": "hurt", "do": "haste", "flat": 20, "to": "self" }
+				]
+			}
+		},
+		{
+			"id": "volt_shade",
+			"name": "Volt Shade",
+			"element": "lightning",
+			"base": { "hp": 24, "str": 2, "mag": 7, "spd": 6, "def": 1, "res": 4 },
+			"growth": { "hp": 40, "str": 20, "mag": 60, "spd": 50, "def": 20, "res": 40 },
+			"trait": {
+				"name": "Conduction",
+				"text": "Its attacks deal half its MAG again to a Soaked target.",
+				"effects": [
+					{ "on": "hit", "do": "damage", "stat": "mag", "fraction": 0.5, "if_target": ["soaked"], "to": "target" }
+				]
+			}
+		},
+		{
+			"id": "thunder_drake",
+			"name": "Thunder Drake",
+			"element": "lightning",
+			"base": { "hp": 30, "str": 6, "mag": 5, "spd": 5, "def": 3, "res": 3 },
+			"growth": { "hp": 55, "str": 50, "mag": 45, "spd": 45, "def": 35, "res": 35 },
+			"trait": {
+				"name": "Forked Strike",
+				"text": "Against a Burning or Soaked target, its attacks leap on to a second enemy for 50%.",
+				"effects": [
+					{ "on": "hit", "do": "chain", "fraction": 0.5, "if_target": ["burn", "soaked"] }
+				]
+			}
+		},
+		{
+			"id": "storm_sovereign",
+			"name": "Storm Sovereign",
+			"boss": true,
+			"element": "lightning",
+			"base": { "hp": 70, "str": 6, "mag": 8, "spd": 6, "def": 4, "res": 5 },
+			"growth": { "hp": 70, "str": 40, "mag": 60, "spd": 50, "def": 40, "res": 45 },
+			"trait": {
+				"name": "Eye of the Storm",
+				"text": "Hurries its whole team as battle begins, and its attacks leap on to a second enemy for 40%.",
+				"effects": [
+					{ "on": "battle_start", "do": "haste", "flat": 40, "to": "team" },
+					{ "on": "hit", "do": "chain", "fraction": 0.4 }
+				]
+			}
 		}
 	]
 }
