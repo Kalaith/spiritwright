@@ -1,0 +1,176 @@
+{
+	"schema_version": 1,
+	"elements": {
+		"fire": { "label": "Fire", "color": "ff7a3d", "glyph": "F" },
+		"water": { "label": "Water", "color": "4fb6ff", "glyph": "W" },
+		"earth": { "label": "Earth", "color": "c99a5b", "glyph": "E" },
+		"wind": { "label": "Wind", "color": "9fe8c8", "glyph": "A" },
+		"nature": { "label": "Nature", "color": "7fd35a", "glyph": "N" }
+	},
+	"temperaments": {
+		"brash": {
+			"label": "Brash",
+			"text": "Fights harder in a close-range body (melee frame or arms).",
+			"prefers_tags": ["melee"],
+			"bonus": { "str": 2, "spd": 1 }
+		},
+		"calm": {
+			"label": "Calm",
+			"text": "Steadier when built to guard others (guardian frame or arms).",
+			"prefers_tags": ["guardian"],
+			"bonus": { "res": 2, "def": 1 }
+		},
+		"stubborn": {
+			"label": "Stubborn",
+			"text": "Likes a heavy body that will not budge (heavy frame, arms or legs).",
+			"prefers_tags": ["heavy"],
+			"bonus": { "def": 2, "hp": 6 }
+		},
+		"curious": {
+			"label": "Curious",
+			"text": "Livelier in a frame it did not use in its last battle.",
+			"prefers_new_frame": true,
+			"bonus": { "spd": 2, "mag": 1 }
+		}
+	},
+	"spirits": [
+		{
+			"id": "pyra",
+			"name": "Pyra",
+			"title": "the Emberling",
+			"element": "fire",
+			"temperament": "brash",
+			"description": "A quick-tempered ember who wants to be where the sparks fly.",
+			"base": { "hp": 30, "str": 6, "mag": 2, "spd": 6, "def": 3, "res": 1 },
+			"growth": { "hp": 45, "str": 60, "mag": 20, "spd": 50, "def": 35, "res": 20 },
+			"trait": {
+				"name": "Kindle",
+				"text": "Her attacks set the target Burning (+1 stack).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }
+				]
+			}
+		},
+		{
+			"id": "neris",
+			"name": "Neris",
+			"title": "the Calm Tide",
+			"element": "water",
+			"temperament": "calm",
+			"description": "Patient and watchful. Pressure only makes her tide rise.",
+			"base": { "hp": 32, "str": 3, "mag": 5, "spd": 4, "def": 3, "res": 6 },
+			"growth": { "hp": 50, "str": 30, "mag": 45, "spd": 40, "def": 35, "res": 50 },
+			"trait": {
+				"name": "Tide Memory",
+				"text": "When struck, gains Ward equal to her RES (once between her turns).",
+				"effects": [
+					{ "on": "hurt", "do": "ward", "stat": "res", "to": "self", "cooldown": 1 }
+				]
+			}
+		},
+		{
+			"id": "odo",
+			"name": "Odo",
+			"title": "the Gravemind",
+			"element": "earth",
+			"temperament": "stubborn",
+			"description": "An old stone spirit. Slow to move, slower to fall.",
+			"base": { "hp": 36, "str": 5, "mag": 1, "spd": 2, "def": 5, "res": 2 },
+			"growth": { "hp": 60, "str": 50, "mag": 15, "spd": 20, "def": 55, "res": 25 },
+			"trait": {
+				"name": "Bedrock",
+				"text": "+3 DEF and +3 RES while standing in the front row.",
+				"front_row": { "def": 3, "res": 3 },
+				"effects": []
+			}
+		},
+		{
+			"id": "sefa",
+			"name": "Sefa",
+			"title": "the Zephra",
+			"element": "wind",
+			"temperament": "curious",
+			"description": "A restless squall that wants to try every body once.",
+			"base": { "hp": 28, "str": 4, "mag": 5, "spd": 8, "def": 2, "res": 4 },
+			"growth": { "hp": 35, "str": 35, "mag": 40, "spd": 60, "def": 20, "res": 45 },
+			"trait": {
+				"name": "Squall",
+				"text": "Her attacks leave the target Soaked for 2 turns.",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "soaked", "amount": 2, "to": "target" }
+				]
+			}
+		}
+	],
+	"wild": [
+		{
+			"id": "moss_wisp",
+			"name": "Moss Wisp",
+			"element": "nature",
+			"base": { "hp": 28, "str": 4, "mag": 3, "spd": 4, "def": 2, "res": 3 },
+			"growth": { "hp": 50, "str": 40, "mag": 35, "spd": 40, "def": 35, "res": 30 },
+			"trait": {
+				"name": "Mossback",
+				"text": "The first time its HP falls below half, it heals 6.",
+				"effects": [
+					{ "on": "low_hp", "do": "heal", "flat": 6, "to": "self" }
+				]
+			}
+		},
+		{
+			"id": "rubble_imp",
+			"name": "Rubble Imp",
+			"element": "earth",
+			"base": { "hp": 30, "str": 5, "mag": 1, "spd": 3, "def": 4, "res": 1 },
+			"growth": { "hp": 55, "str": 45, "mag": 10, "spd": 30, "def": 45, "res": 20 },
+			"trait": {
+				"name": "Grit",
+				"text": "+2 DEF while standing in the front row.",
+				"front_row": { "def": 2 },
+				"effects": []
+			}
+		},
+		{
+			"id": "brine_sprite",
+			"name": "Brine Sprite",
+			"element": "water",
+			"base": { "hp": 24, "str": 2, "mag": 5, "spd": 5, "def": 1, "res": 4 },
+			"growth": { "hp": 40, "str": 20, "mag": 50, "spd": 45, "def": 20, "res": 40 },
+			"trait": {
+				"name": "Spray",
+				"text": "Its attacks leave the target Soaked for 2 turns.",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "soaked", "amount": 2, "to": "target" }
+				]
+			}
+		},
+		{
+			"id": "cinder_mote",
+			"name": "Cinder Mote",
+			"element": "fire",
+			"base": { "hp": 24, "str": 5, "mag": 2, "spd": 6, "def": 2, "res": 1 },
+			"growth": { "hp": 40, "str": 55, "mag": 20, "spd": 50, "def": 25, "res": 15 },
+			"trait": {
+				"name": "Kindle",
+				"text": "Its attacks set the target Burning (+1 stack).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }
+				]
+			}
+		},
+		{
+			"id": "root_warden",
+			"name": "Root Warden",
+			"element": "nature",
+			"base": { "hp": 60, "str": 6, "mag": 3, "spd": 3, "def": 5, "res": 4 },
+			"growth": { "hp": 70, "str": 50, "mag": 30, "spd": 25, "def": 50, "res": 40 },
+			"trait": {
+				"name": "Overgrowth",
+				"text": "Heals 5 HP at the start of each of its turns.",
+				"effects": [
+					{ "on": "turn_start", "do": "heal", "flat": 5, "to": "self" }
+				]
+			}
+		}
+	]
+}

@@ -1,0 +1,9 @@
+{
+  "slug": "spiritwright",
+  "display_name": "Spiritwright",
+  "description": "A PvE auto-battler: collect spirits, build modular golem vessels for them and watch your team's synergies decide the fight.",
+  "godot_version": "4.2.2",
+  "executable": "Spiritwright.exe",
+  "itch_target": "kalaith/spiritwright",
+  "itch_channels": { "html5": "html5", "windows": "windows" }
+}

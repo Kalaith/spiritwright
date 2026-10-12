@@ -1,0 +1,105 @@
+{
+	"schema_version": 1,
+	"frames": [
+		{
+			"id": "bulwark",
+			"name": "Bulwark Frame",
+			"text": "A heavy front-line chassis. Tough but slow.",
+			"tags": ["guardian", "heavy"],
+			"stats": { "hp": 18, "def": 4, "res": 2, "spd": -2 }
+		},
+		{
+			"id": "strider",
+			"name": "Strider Frame",
+			"text": "A light, quick body for close fighting. Fragile.",
+			"tags": ["melee", "agile"],
+			"stats": { "hp": 6, "str": 2, "spd": 4, "def": -1 }
+		},
+		{
+			"id": "conduit",
+			"name": "Conduit Frame",
+			"text": "A channel for spirit power. Strong magic, thin plating.",
+			"tags": ["caster", "ranged"],
+			"stats": { "hp": 4, "mag": 4, "res": 2, "def": -1 }
+		}
+	],
+	"arms": [
+		{
+			"id": "hammer",
+			"name": "Hammer Arms",
+			"text": "Slow, heavy STR blows at the nearest front-row enemy. Every second hit Stuns.",
+			"tags": ["melee", "heavy"],
+			"stats": { "str": 2 },
+			"attack": { "kind": "physical", "power": 3, "range": "melee", "cost": 130, "stun_every": 2 }
+		},
+		{
+			"id": "shield",
+			"name": "Shield Arms",
+			"text": "Quick STR jabs. From the front row, takes a hit aimed at a back-row ally (once between turns).",
+			"tags": ["guardian", "melee"],
+			"stats": { "def": 3 },
+			"attack": { "kind": "physical", "power": 1, "range": "melee", "cost": 90, "intercept": true }
+		},
+		{
+			"id": "cannon",
+			"name": "Spirit Cannon",
+			"text": "Magical MAG shots from any row. Always aims at the weakest enemy.",
+			"tags": ["ranged", "caster"],
+			"stats": { "mag": 1 },
+			"attack": { "kind": "magical", "power": 3, "range": "ranged", "cost": 110 }
+		}
+	],
+	"legs": [
+		{
+			"id": "pillar",
+			"name": "Pillar Legs",
+			"text": "Planted and steady: cannot be Stunned.",
+			"tags": ["heavy"],
+			"stats": { "def": 1, "spd": -1 },
+			"stable": true
+		},
+		{
+			"id": "spider",
+			"name": "Spider Legs",
+			"text": "Skitters past the front line: melee attacks strike the weakest enemy.",
+			"tags": ["agile"],
+			"stats": { "spd": 3 },
+			"reach": true
+		}
+	],
+	"sigils": [
+		{
+			"id": "ember_sigil",
+			"name": "Ember Sigil",
+			"text": "Attacks set the target Burning (+1 stack).",
+			"effects": [
+				{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }
+			]
+		},
+		{
+			"id": "guard_bell",
+			"name": "Guard Bell",
+			"text": "At the start of battle: Taunts enemies for 2 turns and gains 6 Ward.",
+			"effects": [
+				{ "on": "battle_start", "do": "status", "status": "taunt", "amount": 2, "to": "self" },
+				{ "on": "battle_start", "do": "ward", "flat": 6, "to": "self" }
+			]
+		},
+		{
+			"id": "surge_lens",
+			"name": "Surge Lens",
+			"text": "Hits on a Burning or Soaked enemy arc half their damage to another enemy.",
+			"effects": [
+				{ "on": "hit", "do": "chain", "fraction": 0.5, "if_target": ["burn", "soaked"] }
+			]
+		},
+		{
+			"id": "moss_charm",
+			"name": "Moss Charm",
+			"text": "The first time HP falls below half, gain Regen: heal 3 at the start of each of the next 3 turns.",
+			"effects": [
+				{ "on": "low_hp", "do": "status", "status": "regen", "amount": 3, "to": "self" }
+			]
+		}
+	]
+}

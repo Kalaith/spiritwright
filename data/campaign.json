@@ -1,0 +1,96 @@
+{
+	"schema_version": 1,
+	"start": {
+		"spirits": ["pyra", "neris", "odo"],
+		"unlocks": {
+			"frames": ["bulwark", "strider"],
+			"arms": ["hammer", "shield"],
+			"legs": ["pillar"],
+			"sigils": ["ember_sigil"]
+		},
+		"team": [
+			{ "spirit": "odo", "frame": "bulwark", "arms": "shield", "legs": "pillar", "sigil": "", "row": "front" },
+			{ "spirit": "pyra", "frame": "strider", "arms": "hammer", "legs": "pillar", "sigil": "", "row": "front" },
+			{ "spirit": "neris", "frame": "strider", "arms": "hammer", "legs": "pillar", "sigil": "ember_sigil", "row": "back" }
+		]
+	},
+	"regions": [
+		{
+			"id": "ruins",
+			"name": "Ancient Ruins",
+			"text": "Moss-choked halls where old spirits sleep in broken stone. Wild spirits here guard, mend and endure.",
+			"stages": [
+				{
+					"id": "ruins_gate",
+					"name": "Mossy Gate",
+					"text": "Two wild spirits have wedged themselves into the gatehouse rubble.",
+					"map_pos": [120, 470],
+					"requires": [],
+					"seed": 101,
+					"enemies": [
+						{ "spirit": "rubble_imp", "level": 1, "frame": "bulwark", "arms": "shield", "legs": "pillar", "sigil": "", "row": "front" },
+						{ "spirit": "moss_wisp", "level": 1, "frame": "strider", "arms": "hammer", "legs": "pillar", "sigil": "", "row": "front" }
+					],
+					"rewards": { "arms": ["cannon"] }
+				},
+				{
+					"id": "ruins_court",
+					"name": "Sunken Court",
+					"text": "A flooded courtyard. The sprite in the back keeps everyone Soaked.",
+					"map_pos": [270, 330],
+					"requires": ["ruins_gate"],
+					"seed": 202,
+					"enemies": [
+						{ "spirit": "rubble_imp", "level": 2, "frame": "bulwark", "arms": "shield", "legs": "pillar", "sigil": "", "row": "front" },
+						{ "spirit": "moss_wisp", "level": 2, "frame": "strider", "arms": "hammer", "legs": "pillar", "sigil": "", "row": "front" },
+						{ "spirit": "brine_sprite", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "sigil": "", "row": "back" }
+					],
+					"rewards": { "frames": ["conduit"], "sigils": ["moss_charm"] }
+				},
+				{
+					"id": "ruins_stair",
+					"name": "Broken Stair",
+					"text": "Cinder motes skitter over the steps. A trapped wind spirit cries out above them.",
+					"map_pos": [440, 420],
+					"requires": ["ruins_court"],
+					"seed": 303,
+					"enemies": [
+						{ "spirit": "rubble_imp", "level": 2, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "sigil": "", "row": "front" },
+						{ "spirit": "cinder_mote", "level": 3, "frame": "strider", "arms": "hammer", "legs": "spider", "sigil": "", "row": "front" },
+						{ "spirit": "cinder_mote", "level": 2, "frame": "strider", "arms": "hammer", "legs": "spider", "sigil": "", "row": "back" }
+					],
+					"rewards": { "spirits": ["sefa"], "legs": ["spider"] }
+				},
+				{
+					"id": "ruins_vault",
+					"name": "Echo Vault",
+					"text": "A belled guardian draws every blow while its allies pick you apart.",
+					"map_pos": [600, 280],
+					"requires": ["ruins_stair"],
+					"seed": 404,
+					"enemies": [
+						{ "spirit": "rubble_imp", "level": 3, "frame": "bulwark", "arms": "shield", "legs": "pillar", "sigil": "guard_bell", "row": "front" },
+						{ "spirit": "cinder_mote", "level": 3, "frame": "strider", "arms": "hammer", "legs": "spider", "sigil": "", "row": "front" },
+						{ "spirit": "brine_sprite", "level": 3, "frame": "conduit", "arms": "cannon", "legs": "pillar", "sigil": "", "row": "back" }
+					],
+					"rewards": { "sigils": ["surge_lens", "guard_bell"] }
+				},
+				{
+					"id": "ruins_heart",
+					"name": "Heart of the Roots",
+					"text": "The Root Warden mends 5 HP every turn. Its bell drags every blow onto its healing bark: out-damage the mending or strike past it.",
+					"map_pos": [740, 140],
+					"requires": ["ruins_vault"],
+					"seed": 505,
+					"boss": true,
+					"enemies": [
+						{ "spirit": "root_warden", "level": 8, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "sigil": "guard_bell", "row": "front" },
+						{ "spirit": "moss_wisp", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "sigil": "moss_charm", "row": "back" },
+						{ "spirit": "brine_sprite", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "sigil": "", "row": "back" }
+					],
+					"rewards": {}
+				}
+			]
+		}
+	]
+}
