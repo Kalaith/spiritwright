@@ -8,9 +8,14 @@ const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils"]
 ## Catalog kind -> the key a loadout uses for it.
 const LOADOUT_KEYS: Dictionary = {"frames": "frame", "arms": "arms", "legs": "legs"}
 const ROWS: Array[String] = ["front", "back"]
-const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp"]
-const ACTIONS: Array[String] = ["status", "ward", "heal", "chain"]
-const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen"]
+const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp", "kill"]
+const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste"]
+const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen", "stun"]
+## Who an effect lands on. "team" includes the owner; "allies" does not.
+const RECEIVERS: Array[String] = ["self", "target", "attacker", "team", "allies", "enemies"]
+## Receivers that only exist for some triggers: the struck target on a hit,
+## the attacker when hurt.
+const RECEIVER_TRIGGERS: Dictionary = {"target": ["hit"], "attacker": ["hurt"]}
 
 var balance: Dictionary = {}
 var elements: Dictionary = {}
@@ -122,6 +127,13 @@ func _add_spirit(entry: Variant, playable: bool) -> void:
 	else:
 		_validate_effects("spirit " + id, entry["trait"].get("effects", []))
 		_validate_stat_block("spirit " + id + " front_row", entry["trait"].get("front_row", {}))
+	# Player spirits grow a second trait at balance.awaken_level.
+	if playable:
+		var awakening: Variant = entry.get("awakening")
+		if not awakening is Dictionary or not awakening.get("name") is String or not awakening.get("text") is String:
+			errors.append("Spirit %s needs a named awakening" % id)
+		else:
+			_validate_effects("spirit %s awakening" % id, awakening.get("effects"))
 	entry["playable"] = playable
 	spirits[id] = entry
 	if playable:
@@ -163,8 +175,29 @@ func _validate_effects(owner: String, effects: Variant) -> void:
 	for effect in effects:
 		if not effect is Dictionary or not effect.get("on") in TRIGGERS or not effect.get("do") in ACTIONS:
 			errors.append(owner + " has an unsupported effect")
-		elif effect.do == "status" and not effect.get("status") in STATUSES:
+			continue
+		if effect.do == "status" and not effect.get("status") in STATUSES:
 			errors.append(owner + " applies an unknown status")
+		if effect.has("if_target"):
+			var conditions: Variant = effect.if_target
+			if effect.on != "hit" or not conditions is Array or conditions.is_empty() \
+					or conditions.any(func(status): return not status in ["burn", "soaked", "taunt", "regen"]):
+				errors.append(owner + " if_target needs on hit and lasting statuses")
+		if effect.do == "chain":
+			if effect.on != "hit" or not (effect.get("fraction") is float or effect.get("fraction") is int):
+				errors.append(owner + " chain needs on hit and a fraction")
+			continue
+		var receiver: Variant = effect.get("to")
+		if not receiver in RECEIVERS:
+			errors.append(owner + " effect needs a known 'to'")
+		elif RECEIVER_TRIGGERS.has(receiver) and not effect.on in RECEIVER_TRIGGERS[receiver]:
+			errors.append("%s effect cannot reach '%s' on %s" % [owner, receiver, effect.on])
+		if effect.has("stat") and not effect.stat in STATS:
+			errors.append(owner + " effect scales with an unknown stat")
+		if effect.do in ["ward", "heal", "damage", "haste"] and not effect.has("flat") and not effect.has("stat"):
+			errors.append(owner + " effect needs a flat amount or a stat")
+		if effect.do == "status" and int(effect.get("amount", 0)) <= 0:
+			errors.append(owner + " status effect needs an amount")
 
 
 func _validate_loadout(owner: String, loadout: Variant, wild: bool) -> void:
@@ -227,7 +260,7 @@ func _validate_campaign() -> void:
 
 
 func _validate_balance() -> void:
-	for path in ["team_size", "level_cap", "xp_per_level", "xp.win", "xp.repeat_win", "xp.loss",
+	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp.win", "xp.repeat_win", "xp.loss",
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
 			"battle.max_ticks", "battle.damage_variance", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",

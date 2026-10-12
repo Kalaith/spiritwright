@@ -60,6 +60,8 @@ func _ready() -> void:
 		catalog.part("legs", loadout.legs).text,
 		"%s: %s" % [spirit["trait"].name, spirit["trait"].text],
 	]
+	if golem.awakened:
+		notes.append("%s (awakened): %s" % [spirit.awakening.name, spirit.awakening.text])
 	if not String(loadout.sigil).is_empty():
 		notes.append(catalog.part("sigils", loadout.sigil).text)
 	for note in notes:

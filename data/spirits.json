@@ -5,7 +5,8 @@
 		"water": { "label": "Water", "color": "4fb6ff", "glyph": "W" },
 		"earth": { "label": "Earth", "color": "c99a5b", "glyph": "E" },
 		"wind": { "label": "Wind", "color": "9fe8c8", "glyph": "A" },
-		"nature": { "label": "Nature", "color": "7fd35a", "glyph": "N" }
+		"nature": { "label": "Nature", "color": "7fd35a", "glyph": "N" },
+		"lightning": { "label": "Lightning", "color": "f2e15a", "glyph": "L" }
 	},
 	"temperaments": {
 		"brash": {
@@ -31,6 +32,18 @@
 			"text": "Livelier in a frame it did not use in its last battle.",
 			"prefers_new_frame": true,
 			"bonus": { "spd": 2, "mag": 1 }
+		},
+		"patient": {
+			"label": "Patient",
+			"text": "Gathers itself in the back row before it acts.",
+			"prefers_row": "back",
+			"bonus": { "mag": 2, "str": 1 }
+		},
+		"loyal": {
+			"label": "Loyal",
+			"text": "Steadier beside an ally it fought with in its last battle.",
+			"prefers_familiar": true,
+			"bonus": { "hp": 6, "res": 2 }
 		}
 	},
 	"spirits": [
@@ -49,6 +62,13 @@
 				"effects": [
 					{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }
 				]
+			},
+			"awakening": {
+				"name": "Wildfire",
+				"text": "When she defeats an enemy, every remaining enemy catches Burn (+1 stack).",
+				"effects": [
+					{ "on": "kill", "do": "status", "status": "burn", "amount": 1, "to": "enemies" }
+				]
 			}
 		},
 		{
@@ -66,6 +86,13 @@
 				"effects": [
 					{ "on": "hurt", "do": "ward", "stat": "res", "to": "self", "cooldown": 1 }
 				]
+			},
+			"awakening": {
+				"name": "Floodwall",
+				"text": "The first time her HP falls below half, she and every ally gain Ward equal to her RES.",
+				"effects": [
+					{ "on": "low_hp", "do": "ward", "stat": "res", "to": "team" }
+				]
 			}
 		},
 		{
@@ -82,6 +109,13 @@
 				"text": "+3 DEF and +3 RES while standing in the front row.",
 				"front_row": { "def": 3, "res": 3 },
 				"effects": []
+			},
+			"awakening": {
+				"name": "Rumble",
+				"text": "Every blow he takes fills his action gauge by 20: the harder he is pressed, the sooner he answers.",
+				"effects": [
+					{ "on": "hurt", "do": "haste", "flat": 20, "to": "self" }
+				]
 			}
 		},
 		{
@@ -98,6 +132,61 @@
 				"text": "Her attacks leave the target Soaked for 2 turns.",
 				"effects": [
 					{ "on": "hit", "do": "status", "status": "soaked", "amount": 2, "to": "target" }
+				]
+			},
+			"awakening": {
+				"name": "Tailwind",
+				"text": "After each of her attacks, every ally's action gauge fills by 12.",
+				"effects": [
+					{ "on": "hit", "do": "haste", "flat": 12, "to": "allies" }
+				]
+			}
+		},
+		{
+			"id": "volta",
+			"name": "Volta",
+			"title": "the Sparkwright",
+			"element": "lightning",
+			"temperament": "patient",
+			"description": "A crackling spark who waits for the perfect moment, then strikes twice.",
+			"base": { "hp": 26, "str": 3, "mag": 6, "spd": 5, "def": 2, "res": 3 },
+			"growth": { "hp": 35, "str": 25, "mag": 55, "spd": 45, "def": 20, "res": 35 },
+			"trait": {
+				"name": "Conduction",
+				"text": "Her hits on a Soaked enemy jolt it again for half her MAG.",
+				"effects": [
+					{ "on": "hit", "do": "damage", "stat": "mag", "fraction": 0.5, "if_target": ["soaked"], "to": "target" }
+				]
+			},
+			"awakening": {
+				"name": "Overcharge",
+				"text": "Her hits on a Soaked enemy also Stun it (once every 3 of her turns).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "stun", "amount": 1, "if_target": ["soaked"], "to": "target", "cooldown": 3 }
+				]
+			}
+		},
+		{
+			"id": "briar",
+			"name": "Briar",
+			"title": "the Thornheart",
+			"element": "nature",
+			"temperament": "loyal",
+			"description": "A bramble spirit that grew around a fallen friend's vessel. Slow to trust; never lets go.",
+			"base": { "hp": 34, "str": 4, "mag": 3, "spd": 3, "def": 5, "res": 3 },
+			"growth": { "hp": 55, "str": 35, "mag": 30, "spd": 25, "def": 50, "res": 35 },
+			"trait": {
+				"name": "Thorns",
+				"text": "When struck by an attack, lashes the attacker for 2 plus half her DEF.",
+				"effects": [
+					{ "on": "hurt", "do": "damage", "flat": 2, "stat": "def", "fraction": 0.5, "to": "attacker" }
+				]
+			},
+			"awakening": {
+				"name": "Bloom",
+				"text": "The first time her HP falls below half, she and every ally gain Regen for 3 turns.",
+				"effects": [
+					{ "on": "low_hp", "do": "status", "status": "regen", "amount": 3, "to": "team" }
 				]
 			}
 		}

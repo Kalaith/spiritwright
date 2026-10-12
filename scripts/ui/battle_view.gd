@@ -212,6 +212,8 @@ func _apply(event: Dictionary) -> void:
 			var color: Color = Style.STATUS_COLORS.burn if event.cause == "burn" else Color.WHITE
 			if event.cause == "chain":
 				color = Color("b9a6ff")
+			elif event.cause == "effect":
+				color = Style.GOLD
 			_float(unit, "-%d" % int(event.amount), color)
 			if int(event.absorbed) > 0:
 				_float(unit, "WARD -%d" % int(event.absorbed), Style.STATUS_COLORS.ward)
@@ -229,6 +231,8 @@ func _apply(event: Dictionary) -> void:
 		"stun_skip":
 			unit.stun = 0
 			_float(unit, "STUNNED", Style.STATUS_COLORS.stun)
+		"haste":
+			_float(unit, "HASTE", Style.STATUS_COLORS.haste)
 		"intercept":
 			_float(unit, "INTERCEPT", Style.GOLD)
 		"resist":

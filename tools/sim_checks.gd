@@ -20,6 +20,7 @@ func _init() -> void:
 		_check_determinism(catalog)
 		_check_progression(catalog)
 		_check_slice(catalog)
+		_check_spirits(catalog)
 		if "--report" in OS.get_cmdline_user_args():
 			_report(catalog)
 	print("%s (%d failure(s))" % ["ALL PASS" if failures == 0 else "FAILED", failures])
@@ -81,6 +82,76 @@ func _check_slice(catalog: Catalog) -> void:
 	var stage: Dictionary = catalog.stages["ruins_gate"]
 	var outcome: Dictionary = BattleSim.new().run(catalog, progression.resolved_team(), progression.enemy_team(stage), int(stage.seed))
 	_check("starting team wins the Mossy Gate", outcome.result == "win", outcome.result)
+
+
+## Awakenings, temperaments and the spirit-driven effects (receivers, damage,
+## haste, kill triggers and Stun as a status).
+func _check_spirits(catalog: Catalog) -> void:
+	var awaken: int = int(catalog.num("awaken_level"))
+	var pyra_loadout: Dictionary = _loadout("pyra", "strider", "hammer", "spider", "front")
+	var asleep: Dictionary = Builds.resolve(catalog, pyra_loadout, awaken - 1)
+	var awake: Dictionary = Builds.resolve(catalog, pyra_loadout, awaken)
+	_check("awakening waits for its level", not asleep.awakened
+		and not asleep.effects.any(func(e): return e.source == "Wildfire"))
+	_check("awakening adds its effects", awake.awakened and awake.effects.any(func(e): return e.source == "Wildfire"))
+
+	var briar: Dictionary = catalog.spirit("briar")
+	var history: Dictionary = {"last_frame": "", "last_allies": ["odo"], "allies": ["odo", "pyra"]}
+	var back: Dictionary = _loadout("briar", "bulwark", "shield", "pillar", "back")
+	_check("loyal prefers a familiar ally", Builds.preference(catalog, briar, back, history).active)
+	history.allies = ["neris", "pyra"]
+	_check("loyal is idle beside strangers", not Builds.preference(catalog, briar, back, history).active)
+	var volta: Dictionary = catalog.spirit("volta")
+	_check("patient prefers the back row", Builds.preference(catalog, volta, back, {}).active
+		and not Builds.preference(catalog, volta, _loadout("volta", "bulwark", "shield", "pillar", "front"), {}).active)
+
+	var thorns: Dictionary = _duel(catalog, [["briar", 3, _loadout("briar", "bulwark", "shield", "pillar", "front")]],
+		[["rubble_imp", 3, _loadout("rubble_imp", "strider", "hammer", "spider", "front")]])
+	_check("thorns lash the attacker", _has(thorns, {"type": "damage", "cause": "effect", "unit": "b0", "source": "a0"}))
+
+	var storm: Dictionary = _duel(catalog, [
+			["sefa", awaken, _loadout("sefa", "conduit", "cannon", "pillar", "back")],
+			["volta", awaken, _loadout("volta", "conduit", "cannon", "pillar", "back")],
+			["pyra", awaken, _loadout("pyra", "strider", "hammer", "pillar", "front")]],
+		[["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "spider", "front")],
+			["moss_wisp", 6, _loadout("moss_wisp", "bulwark", "shield", "spider", "front")],
+			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "spider", "front")]])
+	_check("tailwind hastens allies", _has(storm, {"type": "haste", "cause": "Tailwind"}))
+	_check("conduction jolts soaked enemies", _has(storm, {"type": "damage", "cause": "effect", "source": "a1"}))
+	_check("overcharge stuns soaked enemies", _has(storm, {"type": "status", "status": "stun", "cause": "Overcharge"}))
+	# Wildfire needs a kill that leaves someone standing: Pyra alone against a weak pair.
+	var wildfire: Dictionary = _duel(catalog, [["pyra", 10, _loadout("pyra", "strider", "hammer", "pillar", "front")]],
+		[["cinder_mote", 1, _loadout("cinder_mote", "strider", "shield", "pillar", "front")],
+			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "pillar", "front")]])
+	_check("wildfire spreads burn on a kill", _has(wildfire, {"type": "status", "status": "burn", "cause": "Wildfire"}))
+
+	var migrated: Variant = Progression.new(catalog).migrate({"schema": 1, "spirits": {"pyra": {"level": 1, "xp": 0, "last_frame": ""}}})
+	_check("schema 1 saves gain remembered allies", migrated.schema == 2 and migrated.spirits.pyra.last_allies == [])
+	var strict := Catalog.new()
+	strict._validate_effects("probe", [{"on": "hit", "do": "damage", "flat": 2, "to": "attacker"}])
+	_check("catalog rejects an unreachable receiver", not strict.errors.is_empty())
+
+
+func _loadout(spirit: String, frame: String, arms: String, legs: String, row: String) -> Dictionary:
+	return {"spirit": spirit, "frame": frame, "arms": arms, "legs": legs, "sigil": "", "row": row}
+
+
+func _has(outcome: Dictionary, fields: Dictionary) -> bool:
+	for event in outcome.events:
+		var matched: bool = true
+		for key in fields:
+			matched = matched and event.get(key) == fields[key]
+		if matched:
+			return true
+	return false
+
+
+## Each side is a list of [spirit id, level, loadout].
+func _duel(catalog: Catalog, side_a: Array, side_b: Array) -> Dictionary:
+	var teams: Array = []
+	for side in [side_a, side_b]:
+		teams.append(side.map(func(entry): return Builds.resolve(catalog, entry[2], entry[1])))
+	return BattleSim.new().run(catalog, teams[0], teams[1], 11)
 
 
 ## Plays the campaign in order. For each stage it samples random legal builds

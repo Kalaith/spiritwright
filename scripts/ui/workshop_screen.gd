@@ -116,6 +116,12 @@ func _roster_entry(id: String) -> Control:
 	growth_label.mouse_filter = Control.MOUSE_FILTER_PASS
 	box.add_child(growth_label)
 	box.add_child(Style.wrapped("%s: %s" % [spirit["trait"].name, spirit["trait"].text], 12, Style.TEXT))
+	var awakening: Dictionary = spirit.awakening
+	var awaken_level: int = int(catalog.num("awaken_level"))
+	if int(entry.level) >= awaken_level:
+		box.add_child(Style.wrapped("Awakened - %s: %s" % [awakening.name, awakening.text], 12, Style.GOLD))
+	else:
+		box.add_child(Style.wrapped("Awakens at Lv %d - %s: %s" % [awaken_level, awakening.name, awakening.text], 12))
 	box.add_child(Style.wrapped("Prefers: " + temperament.text, 12))
 	box.add_child(HSeparator.new())
 	return box

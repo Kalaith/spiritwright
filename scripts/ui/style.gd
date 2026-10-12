@@ -16,7 +16,7 @@ const ENEMY := Color("e0605a")
 const STAT_LABELS: Dictionary = {"hp": "HP", "str": "STR", "mag": "MAG", "spd": "SPD", "def": "DEF", "res": "RES"}
 const STATUS_COLORS: Dictionary = {
 	"burn": Color("ff7a3d"), "soaked": Color("4fb6ff"), "ward": Color("e8e2ff"),
-	"stun": Color("f2d34f"), "taunt": Color("e0605a"), "regen": Color("7fd35a"),
+	"stun": Color("f2d34f"), "taunt": Color("e0605a"), "regen": Color("7fd35a"), "haste": Color("9fe8c8"),
 }
 const STATUS_LABELS: Dictionary = {
 	"burn": "BURN", "soaked": "SOAK", "ward": "WARD", "stun": "STUN", "taunt": "TAUNT", "regen": "REGEN",

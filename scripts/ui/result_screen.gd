@@ -46,9 +46,12 @@ func _ready() -> void:
 		var text: String = "%s  +%d XP" % [spirit.name, int(line.gained)]
 		var color: Color = Style.TEXT
 		if int(line.to) > int(line.from):
-			text += "   Level up! Lv %d to %d:  %s" % [int(line.from), int(line.to), Style.stat_line(line.rises)]
+			var rises: String = Style.stat_line(line.rises)
+			text += "   Level up! Lv %d to %d:  %s" % [int(line.from), int(line.to), rises if not rises.is_empty() else "growth builds toward the next rise"]
 			color = Style.GOLD
 		column.add_child(Style.label(text, 15, color))
+		if line.awakened:
+			column.add_child(Style.wrapped("%s awakens! %s: %s" % [spirit.name, spirit.awakening.name, spirit.awakening.text], 15, Style.GOLD))
 	for reward in report.rewards:
 		var lines: Array = Style.reward_text(catalog, reward.kind, reward.id)
 		column.add_child(Style.label("Unlocked  " + lines[0], 17, Style.GOLD))

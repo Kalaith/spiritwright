@@ -4,10 +4,11 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 
 ## What is in this build (GDD section 10 vertical slice)
 
-- **4 spirits**: Pyra (Fire, Brash), Neris (Water, Calm), Odo (Earth, Stubborn) and Sefa (Wind, Curious, rescued in the campaign). Each has its own base stats, growth rates, a trait and a temperament preference.
+- **6 spirits**: Pyra (Fire, Brash), Neris (Water, Calm), Odo (Earth, Stubborn), plus three rescued in the campaign: Volta (Lightning, Patient) at the Sunken Court, Sefa (Wind, Curious) at the Broken Stair and Briar (Nature, Loyal) in the optional Thorn Cloister. Each has its own base stats, growth rates, a trait and a temperament preference.
+- **Awakenings**: at Lv 5 every spirit grows a second trait (Pyra's Wildfire, Neris's Floodwall, Odo's Rumble, Sefa's Tailwind, Volta's Overcharge, Briar's Bloom). The roster shows what each will become; the result screen announces it.
 - **3 frames** (Bulwark, Strider, Conduit), **3 arms** (Hammer, Shield, Spirit Cannon), **2 legs** (Pillar, Spider) and **4 sigils** (Ember Sigil, Guard Bell, Surge Lens, Moss Charm). Every part changes behaviour, not just stats.
 - **3v3 automated battles** with front and back rows, Burn, Soaked, Ward, Stun, Taunt and Regen, interceptions, chained damage and a readable combat log.
-- **One region**, the Ancient Ruins: four stages and the Root Warden boss. First clears unlock parts and a spirit; replays give XP.
+- **One region**, the Ancient Ruins: five stages (one an optional branch) and the Root Warden boss. First clears unlock parts and a spirit; replays give XP.
 - **Persistent saves** (IndexedDB in the browser, `user://` on desktop) with a backup.
 
 ## Prototype answers to the GDD's open questions
@@ -22,10 +23,13 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
 | Rebuild economy | Free. Unlocked parts are blueprints usable by any number of golems. |
 | Team size | 3. |
 | Affinity | Both: universal status rules (Soaked puts out Burn, blocks new Burn, slows and takes +30% magic damage) plus per-spirit traits. |
-| Compatibility | Simple temperament bonuses only (no Resonance yet). |
+| Compatibility | Simple temperament bonuses only (no Resonance yet). Tags (Brash, Calm, Stubborn), a new frame (Curious), the back row (Patient) or an ally from the last battle (Loyal). |
+| Unlocked traits | One Awakening per spirit at `balance.awaken_level` (5): a second data-driven trait, never a stat penalty. |
 | Visuals | Procedural 2D golems assembled from part silhouettes at runtime; the element shows as core colour plus a letter. |
 
 Targeting rules: melee hits the first front-row enemy (back row only when the front is empty); Spider Legs and cannons go for the enemy with the lowest HP; a Taunting enemy overrides both; front-row Shield Arms take one hit aimed at a back-row ally between their turns.
+
+Effect vocabulary (traits, awakenings and sigils, validated by `catalog.gd`): triggers `battle_start`, `turn_start`, `hit`, `hurt`, `low_hp`, `kill`; actions `status` (burn, soaked, taunt, regen, stun), `ward`, `heal`, `damage`, `haste` (action gauge) and `chain`; receivers `self`, `target` (on hit), `attacker` (on hurt), `team`, `allies`, `enemies`. Amounts are `flat` plus `stat` x `fraction` of the owner's stat.
 
 ## Layout
 

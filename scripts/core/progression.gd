@@ -5,10 +5,10 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
-const SAVE_SCHEMA: int = 1
+const SAVE_SCHEMA: int = 2
 
 var catalog: Catalog
-## spirit id -> {"level", "xp", "last_frame"}
+## spirit id -> {"level", "xp", "last_frame", "last_allies"}
 var spirits: Dictionary = {}
 ## catalog kind -> Array of unlocked ids, in catalog order.
 var unlocks: Dictionary = {}
@@ -28,7 +28,7 @@ func new_game() -> void:
 	var start: Dictionary = catalog.campaign.start
 	spirits.clear()
 	for id in start.spirits:
-		spirits[id] = {"level": 1, "xp": 0, "last_frame": ""}
+		spirits[id] = _fresh_spirit(1)
 	unlocks.clear()
 	for kind in Catalog.PART_KINDS:
 		unlocks[kind] = []
@@ -47,6 +47,7 @@ func has_save() -> bool:
 func load_game() -> bool:
 	for path in [save_path, save_path + ".bak"]:
 		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
+		parsed = migrate(parsed)
 		if valid(parsed):
 			_apply(parsed)
 			last_error = "" if path == save_path else "Recovered your workshop from the backup save."
@@ -86,6 +87,18 @@ func to_dict() -> Dictionary:
 		"cleared": cleared, "battles": battles}
 
 
+## Brings an older save up to SAVE_SCHEMA. Schema 1 predates Loyal spirits
+## remembering their allies: they start with no remembered allies.
+func migrate(data: Variant) -> Variant:
+	if not data is Dictionary or int(data.get("schema", 0)) != 1 or not data.get("spirits") is Dictionary:
+		return data
+	for id in data.spirits:
+		if data.spirits[id] is Dictionary:
+			data.spirits[id]["last_allies"] = []
+	data["schema"] = 2
+	return data
+
+
 func valid(data: Variant) -> bool:
 	if not data is Dictionary or int(data.get("schema", 0)) != SAVE_SCHEMA:
 		return false
@@ -98,8 +111,11 @@ func valid(data: Variant) -> bool:
 		var level: int = int(entry.get("level", 0))
 		if level < 1 or level > int(catalog.num("level_cap")) or int(entry.get("xp", -1)) < 0:
 			return false
-		if not entry.get("last_frame") is String:
+		if not entry.get("last_frame") is String or not entry.get("last_allies") is Array:
 			return false
+		for ally in entry.last_allies:
+			if not catalog.spirit(String(ally)).get("playable", false):
+				return false
 	if not data.get("unlocks") is Dictionary:
 		return false
 	for kind in Catalog.PART_KINDS:
@@ -135,7 +151,8 @@ func _apply(data: Dictionary) -> void:
 	spirits = {}
 	for id in data.spirits:
 		var entry: Dictionary = data.spirits[id]
-		spirits[id] = {"level": int(entry.level), "xp": int(entry.xp), "last_frame": String(entry.last_frame)}
+		spirits[id] = {"level": int(entry.level), "xp": int(entry.xp), "last_frame": String(entry.last_frame),
+			"last_allies": entry.last_allies.map(func(ally): return String(ally))}
 	unlocks = {}
 	for kind in Catalog.PART_KINDS:
 		unlocks[kind] = []
@@ -161,7 +178,17 @@ func stage_state(stage_id: String) -> String:
 func resolve_slot(slot: int) -> Dictionary:
 	var loadout: Dictionary = team[slot]
 	var entry: Dictionary = spirits[loadout.spirit]
-	return Builds.resolve(catalog, loadout, int(entry.level), String(entry.last_frame))
+	var history: Dictionary = {"last_frame": entry.last_frame, "last_allies": entry.last_allies,
+		"allies": _allies_of(loadout.spirit)}
+	return Builds.resolve(catalog, loadout, int(entry.level), history)
+
+
+func _allies_of(spirit_id: String) -> Array:
+	var allies: Array = []
+	for loadout in team:
+		if loadout.spirit != spirit_id:
+			allies.append(loadout.spirit)
+	return allies
 
 
 func resolved_team() -> Array:
@@ -224,6 +251,7 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 		var spirit_def: Dictionary = catalog.spirit(loadout.spirit)
 		var line: Dictionary = {"spirit": loadout.spirit, "gained": gained, "from": entry.level, "rises": {}}
 		entry.last_frame = loadout.frame
+		entry.last_allies = _allies_of(loadout.spirit)
 		entry.xp += gained
 		while entry.xp >= per_level and entry.level < cap:
 			entry.xp -= per_level
@@ -234,6 +262,7 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 		if entry.level >= cap:
 			entry.xp = 0
 		line["to"] = entry.level
+		line["awakened"] = Builds.awakened(catalog, spirit_def, entry.level) 			and not Builds.awakened(catalog, spirit_def, int(line.from))
 		report.xp.append(line)
 	if first_clear:
 		cleared.append(stage.id)
@@ -241,7 +270,7 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 			for id in stage.rewards[kind]:
 				if kind == "spirits":
 					if not spirits.has(id):
-						spirits[id] = {"level": _join_level(), "xp": 0, "last_frame": ""}
+						spirits[id] = _fresh_spirit(_join_level())
 						report.rewards.append({"kind": kind, "id": id})
 				elif not id in unlocks[kind]:
 					unlocks[kind].append(id)
@@ -253,6 +282,10 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 					ordered.append(id)
 			unlocks[kind] = ordered
 	return report
+
+
+func _fresh_spirit(level: int) -> Dictionary:
+	return {"level": level, "xp": 0, "last_frame": "", "last_allies": []}
 
 
 ## A rescued spirit joins at the team's average level so it can fight at once.

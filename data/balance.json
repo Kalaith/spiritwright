@@ -2,6 +2,7 @@
 	"schema_version": 1,
 	"team_size": 3,
 	"level_cap": 10,
+	"awaken_level": 5,
 	"xp_per_level": 100,
 	"xp": {
 		"win": 60,

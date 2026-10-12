@@ -151,12 +151,7 @@ func _attack(unit: Dictionary, target: Dictionary) -> void:
 	unit.hits += 1
 	var stun_every: int = int(unit.attack.get("stun_every", 0))
 	if target.alive and stun_every > 0 and unit.hits % stun_every == 0:
-		if target.stable:
-			_log({"type": "resist", "unit": target.id}, "%s's Pillar Legs hold firm: no Stun." % target.label)
-		else:
-			target.stunned = true
-			_log({"type": "status", "unit": target.id, "status": "stun", "value": 1, "cause": unit.arms},
-				"%s is Stunned by the hammer blow." % target.label)
+		_stun(target, "the hammer blow")
 	_fire(unit, "hit", {"target": target, "damage": dealt})
 
 
@@ -175,10 +170,11 @@ func _damage(target: Dictionary, amount: int, source: Variant, cause: String, te
 		"amount": dealt, "absorbed": absorbed, "hp": target.hp, "ward": target.ward, "cause": cause}, text)
 	if target.hp <= 0:
 		target.alive = false
-		if source != null:
-			source.kills += 1
 		_log({"type": "death", "unit": target.id}, "%s's vessel crumbles." % target.label)
 		_check_end()
+		if source != null:
+			source.kills += 1
+			_fire(source, "kill", {"target": target})
 		return dealt
 	if cause == "attack" and source != null:
 		_fire(target, "hurt", {"attacker": source, "damage": dealt})
@@ -214,39 +210,93 @@ func _fire(unit: Dictionary, trigger: String, context: Dictionary) -> void:
 				matched = matched or int(target[status]) > 0
 			if not matched:
 				continue
-		if effect.get("to", "") == "target" and (target == null or not target.alive):
+		var receivers: Array = [] if effect.do == "chain" else _receivers(unit, String(effect.to), context)
+		if effect.do != "chain" and receivers.is_empty():
 			continue
 		unit.triggers += 1
 		if effect.has("cooldown"):
 			unit.cooldowns[i] = int(effect.cooldown)
-		_apply(unit, effect, target if effect.get("to", "") == "target" else unit, context)
+		if effect.do == "chain":
+			_chain(unit, effect, context)
+		for receiver in receivers:
+			if not result.is_empty():
+				return
+			if receiver.alive:
+				_apply(unit, effect, receiver)
 
 
-func _apply(unit: Dictionary, effect: Dictionary, receiver: Dictionary, context: Dictionary) -> void:
+## Living golems an effect lands on, in board order.
+func _receivers(unit: Dictionary, to: String, context: Dictionary) -> Array:
+	match to:
+		"self":
+			return [unit]
+		"target", "attacker":
+			var other: Variant = context.get(to)
+			return [other] if other != null and other.alive else []
+		"team":
+			return units.filter(func(u): return u.alive and u.side == unit.side)
+		"allies":
+			return units.filter(func(u): return u.alive and u.side == unit.side and u != unit)
+		"enemies":
+			return units.filter(func(u): return u.alive and u.side != unit.side)
+	return []
+
+
+## Flat amount plus a share of one of the effect owner's stats.
+func _amount(unit: Dictionary, effect: Dictionary) -> int:
+	var scaled: float = 0.0
+	if effect.has("stat"):
+		scaled = float(unit.stats[effect.stat]) * float(effect.get("fraction", 1.0))
+	return int(effect.get("flat", 0)) + int(floor(scaled))
+
+
+func _apply(unit: Dictionary, effect: Dictionary, receiver: Dictionary) -> void:
 	var source: String = effect.source
 	match effect.do:
 		"status":
 			_apply_status(receiver, effect.status, int(effect.amount), source)
 		"ward":
-			var amount: int = int(effect.get("flat", 0)) + int(receiver.stats.get(effect.get("stat", ""), 0))
+			var amount: int = _amount(unit, effect)
 			receiver.ward += amount
 			unit.shielded += amount
 			_log({"type": "ward", "unit": receiver.id, "amount": amount, "ward": receiver.ward, "cause": source},
 				"%s gains %d Ward (%s)." % [receiver.label, amount, source])
 		"heal":
-			_heal(receiver, int(effect.flat), source)
-		"chain":
-			var primary: Dictionary = context.target
-			var others: Array = units.filter(func(u): return u.alive and u.side != unit.side and u != primary)
-			var amount: int = int(floor(int(context.get("damage", 0)) * float(effect.fraction)))
-			if others.is_empty() or amount <= 0:
-				return
-			var arc: Dictionary = _weakest(others)
-			_log({"type": "chain", "unit": unit.id, "from": primary.id, "target": arc.id}, "")
-			_damage(arc, amount, unit, "chain", "%s arcs %d to %s (%s)." % [unit.label, amount, arc.label, source])
+			_heal(receiver, _amount(unit, effect), source)
+		"damage":
+			var amount: int = max(1, _amount(unit, effect))
+			_damage(receiver, amount, unit, "effect", "%s strikes %s for %d (%s)." % [unit.label, receiver.label, amount, source])
+		"haste":
+			var amount: int = _amount(unit, effect)
+			receiver.gauge += float(amount)
+			_log({"type": "haste", "unit": receiver.id, "amount": amount, "cause": source},
+				"%s surges forward (+%d gauge, %s)." % [receiver.label, amount, source])
+
+
+func _chain(unit: Dictionary, effect: Dictionary, context: Dictionary) -> void:
+	var primary: Dictionary = context.target
+	var others: Array = units.filter(func(u): return u.alive and u.side != unit.side and u != primary)
+	var amount: int = int(floor(int(context.get("damage", 0)) * float(effect.fraction)))
+	if others.is_empty() or amount <= 0:
+		return
+	var arc: Dictionary = _weakest(others)
+	_log({"type": "chain", "unit": unit.id, "from": primary.id, "target": arc.id}, "")
+	_damage(arc, amount, unit, "chain", "%s arcs %d to %s (%s)." % [unit.label, amount, arc.label, effect.source])
+
+
+func _stun(receiver: Dictionary, cause: String) -> void:
+	if receiver.stable:
+		_log({"type": "resist", "unit": receiver.id}, "%s's Pillar Legs hold firm: no Stun." % receiver.label)
+		return
+	receiver.stunned = true
+	_log({"type": "status", "unit": receiver.id, "status": "stun", "value": 1, "cause": cause},
+		"%s is Stunned (%s)." % [receiver.label, cause])
 
 
 func _apply_status(receiver: Dictionary, status: String, amount: int, source: String) -> void:
+	if status == "stun":
+		_stun(receiver, source)
+		return
 	if status == "burn":
 		if receiver.soaked > 0:
 			_log({"type": "resist", "unit": receiver.id}, "%s is Soaked: the Burn fizzles." % receiver.label)

@@ -51,6 +51,23 @@ func _run() -> void:
 	main.start_battle("ruins_heart")
 	await _seconds(6.0)
 	await _shot("09_boss_battle")
+	# The newer spirits, one win away from awakening.
+	main.progression.apply_battle(main.catalog.stages["ruins_cloister"], "win")
+	var builds: Array = [["briar", "bulwark", "shield", "pillar", "front"],
+		["sefa", "conduit", "cannon", "pillar", "back"], ["volta", "conduit", "cannon", "spider", "back"]]
+	for slot in range(builds.size()):
+		var build: Array = builds[slot]
+		main.progression.team[slot] = {"spirit": build[0], "frame": build[1], "arms": build[2],
+			"legs": build[3], "sigil": "", "row": build[4]}
+		main.progression.spirits[build[0]].level = 4
+		main.progression.spirits[build[0]].xp = 90
+	main.start_battle("ruins_stair")
+	await _seconds(7.0)
+	await _shot("10_spirits_battle")
+	main.screen._skip()
+	main.screen.finished.emit()
+	await _frames(10)
+	await _shot("11_spirits_result")
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)
 	quit()
