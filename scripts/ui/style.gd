@@ -17,9 +17,11 @@ const STAT_LABELS: Dictionary = {"hp": "HP", "str": "STR", "mag": "MAG", "spd": 
 const STATUS_COLORS: Dictionary = {
 	"burn": Color("ff7a3d"), "soaked": Color("4fb6ff"), "ward": Color("e8e2ff"),
 	"stun": Color("f2d34f"), "taunt": Color("e0605a"), "regen": Color("7fd35a"), "haste": Color("9fe8c8"),
+	"weaken": Color("b68ad8"), "expose": Color("ff9fb0"), "slow": Color("8fc8ff"),
 }
 const STATUS_LABELS: Dictionary = {
 	"burn": "BURN", "soaked": "SOAK", "ward": "WARD", "stun": "STUN", "taunt": "TAUNT", "regen": "REGEN",
+	"weaken": "WEAK", "expose": "EXPOSED",
 }
 
 

@@ -45,7 +45,7 @@ func _ready() -> void:
 	for unit in outcome.units:
 		units[unit.id] = {
 			"id": unit.id, "label": unit.label, "level": unit.level, "side": unit.side, "lane": unit.lane,
-			"row": unit.row, "hp": unit.max_hp, "max_hp": unit.max_hp, "ward": 0, "burn": 0, "soaked": 0,
+			"row": unit.row, "hp": unit.max_hp, "max_hp": unit.max_hp, "ward": 0, "burn": 0, "soaked": 0, "weaken": 0, "expose": 0,
 			"taunt": 0, "regen": 0, "stun": 0, "alive": true, "flash": 0.0, "alpha": 1.0, "offset": Vector2.ZERO,
 			"look": GolemArt.look_for(catalog, unit, Style.ALLY if unit.side == 0 else Style.ENEMY),
 			"scale": ART_SCALE * (BOSS_SCALE if catalog.spirit(unit.spirit).get("boss", false) else 1.0),
@@ -237,6 +237,10 @@ func _apply(event: Dictionary) -> void:
 			_float(unit, "STUNNED", Style.STATUS_COLORS.stun)
 		"haste":
 			_float(unit, "HASTE", Style.STATUS_COLORS.haste)
+		"slow":
+			_float(unit, "SLOWED", Style.STATUS_COLORS.slow)
+		"cleanse":
+			_float(unit, "CLEANSED", Style.GOOD)
 		"intercept":
 			_float(unit, "INTERCEPT", Style.GOLD)
 		"resist":
@@ -244,7 +248,7 @@ func _apply(event: Dictionary) -> void:
 		"death":
 			unit.alive = false
 			unit.hp = 0
-			for status in ["ward", "burn", "soaked", "taunt", "regen", "stun"]:
+			for status in ["ward", "burn", "soaked", "taunt", "regen", "stun", "weaken", "expose"]:
 				unit[status] = 0
 	# Burn loses a stack each time it deals its turn-start damage, as in the simulation.
 	if event.type == "damage" and event.cause == "burn":
@@ -330,7 +334,7 @@ func _draw_hud(unit: Dictionary, feet: Vector2) -> void:
 		draw_rect(Rect2(bar.position + Vector2(0, -4), Vector2(bar.size.x * ward_ratio, 3)), Style.STATUS_COLORS.ward)
 	draw_string(font, Vector2(bar.end.x + 4, bar.end.y), str(unit.hp), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Style.TEXT)
 	var badges: Array = []
-	for status in ["ward", "burn", "soaked", "taunt", "regen", "stun"]:
+	for status in ["ward", "burn", "soaked", "taunt", "regen", "stun", "weaken", "expose"]:
 		if int(unit[status]) > 0:
 			badges.append([status, Style.STATUS_LABELS[status] + (" %d" % int(unit[status]) if status in ["ward", "burn"] else "")])
 	var x: float = bar.position.x

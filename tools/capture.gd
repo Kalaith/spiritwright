@@ -65,8 +65,9 @@ func _run() -> void:
 	await _seconds(6.0)
 	await _shot("09_boss_battle")
 	# The newer spirits, one win away from awakening.
-	main.progression.apply_battle(main.catalog.stages["ruins_cloister"], "win")
-	main.progression.apply_battle(main.catalog.stages["ruins_vault"], "win")
+	# Volta, Sefa, the aegis and the tower legs come from the region bosses.
+	for id in ["ruins_cloister", "ruins_vault", "fen_mother", "steppe_tyrant"]:
+		main.progression.apply_battle(main.catalog.stages[id], "win")
 	var builds: Array = [["briar", "bulwark", "aegis", "tower", "front", "wood", 1],
 		["sefa", "strider", "bow", "pillar", "back", "crystal", 1], ["volta", "conduit", "cannon", "spider", "back", "bronze", 2]]
 	for slot in range(builds.size()):
@@ -103,6 +104,31 @@ func _run() -> void:
 	main.start_battle(regions[1].stages[2].id)
 	await _seconds(6.0)
 	await _shot("15_fen_battle")
+	# The late arsenal: six golems in the newer parts, in the last region.
+	for kind in main.catalog.part_order:
+		main.progression.unlocks[kind] = main.catalog.part_order[kind].duplicate()
+	main.progression.cores = int(main.catalog.num("team_size")) - main.progression.team.size()
+	while main.progression.build_golem():
+		pass
+	var arsenal: Array = [["odo", "colossus", "flail", "treads", "front:1", "obsidian", "thorn_crest"],
+		["pyra", "strider", "scythe", "skates", "front:0", "obsidian", "phoenix_ember"],
+		["briar", "bulwark", "spear", "tower", "front:2", "bogwood", "hunters_brand"],
+		["neris", "conduit", "lantern", "stilts", "back:1", "bogwood", "cleansing_charm"],
+		["volta", "conduit", "storm_staff", "pillar", "back:0", "fulgurite", "storm_coil"],
+		["sefa", "strider", "twin_blades", "spider", "back:2", "fulgurite", "hex_eye"]]
+	for slot in range(arsenal.size()):
+		var build: Array = arsenal[slot]
+		var fields: Dictionary = {"spirit": build[0], "frame": build[1], "arms": build[2], "legs": build[3],
+			"material": build[5], "sigil": build[6], "cell": build[4]}
+		for key in fields:
+			main.progression.set_slot(slot, key, fields[key])
+	main.show_laboratory()
+	await _frames(10)
+	await _shot("16_laboratory_arsenal")
+	main.start_battle(regions[regions.size() - 1].stages[2].id)
+	for i in range(3):
+		await _seconds(3.0)
+		await _shot("17_arsenal_battle_%d" % i)
 	await _gallery()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)

@@ -23,6 +23,7 @@ func _init() -> void:
 		_check_spirits(catalog)
 		_check_materials(catalog)
 		_check_board(catalog)
+		_check_arsenal(catalog)
 		if "--report" in OS.get_cmdline_user_args():
 			_report(catalog)
 	print("%s (%d failure(s))" % ["ALL PASS" if failures == 0 else "FAILED", failures])
@@ -264,6 +265,67 @@ func _check_board(catalog: Catalog) -> void:
 	_check("six golems fill the six cells", Catalog.distinct_cells(six))
 	six[5].lane = 1
 	_check("two golems cannot share a cell", not Catalog.distinct_cells(six))
+
+
+## The later parts: each new mechanic shows up in the event log.
+func _check_arsenal(catalog: Catalog) -> void:
+	var brute: Callable = func(lane: int = 1, row: String = "front", arms: String = "hammer", sigil: String = "") -> Dictionary:
+		return _loadout("slag_brute", "bulwark", arms, "pillar", row, "stone", lane, sigil)
+	var line: Array = [["slag_brute", 8, brute.call(0)], ["slag_brute", 8, brute.call(1)], ["slag_brute", 8, brute.call(2)]]
+	var flail: Dictionary = _duel(catalog, [["odo", 8, _loadout("odo", "bulwark", "flail", "pillar", "front")]], line)
+	_check("a flail splashes the golems beside its target", _has(flail, {"type": "damage", "source": "a0", "cause": "splash"}))
+	var blades: Dictionary = _duel(catalog, [["pyra", 8, _loadout("pyra", "strider", "twin_blades", "pillar", "front")]], line)
+	var cuts: int = blades.events.filter(func(e): return e.type == "damage" and e.source == "a0" and e.cause == "attack").size()
+	_check("twin blades cut twice a turn", cuts > _attacks(blades, "a0").size(), "%d cuts" % cuts)
+	var spear_team: Array = [Builds.resolve(catalog, _loadout("odo", "strider", "spear", "pillar", "front"), 8)]
+	var blunt_team: Array = spear_team.duplicate(true)
+	blunt_team[0].attack.erase("pierce")
+	var foes: Array = [Builds.resolve(catalog, _loadout("slag_brute", "bulwark", "shield", "tower", "back", "bronze"), 8)]
+	var pierced: Array = BattleSim.new().run(catalog, spear_team, foes, 3).events.filter(func(e): return e.type == "damage" and e.cause == "attack" and e.source == "a0")
+	var blunted: Array = BattleSim.new().run(catalog, blunt_team, foes, 3).events.filter(func(e): return e.type == "damage" and e.cause == "attack" and e.source == "a0")
+	_check("a pike punches through armour", int(pierced[0].amount) + int(pierced[0].absorbed) > int(blunted[0].amount) + int(blunted[0].absorbed))
+	_check("a scythe executes the badly wounded", _said(_duel(catalog, [["odo", 10, _loadout("odo", "strider", "scythe", "pillar", "front")]],
+		[["slag_brute", 6, brute.call()]]), "damage", "Execute"))
+	var lantern: Dictionary = _duel(catalog, [["odo", 8, _loadout("odo", "bulwark", "shield", "pillar", "front")],
+		["neris", 8, _loadout("neris", "conduit", "lantern", "stilts", "back")]], [["slag_brute", 8, brute.call()]])
+	_check("a lantern mends the wounded as it hits", _has(lantern, {"type": "heal", "cause": "Lantern Arms"}))
+	_check("stilts strike harder from the back row", _said(lantern, "damage", "from the stilts"))
+	var staff: Dictionary = _duel(catalog, [["volta", 8, _loadout("volta", "conduit", "storm_staff", "pillar", "back")]],
+		[["slag_brute", 8, brute.call()], ["dust_devil", 8, brute.call(1, "back")]])
+	_check("a storm staff strikes the back row", _attacks(staff, "a0").front() == "b1")
+
+	var burner: Array = [["cinder_mote", 8, _loadout("cinder_mote", "strider", "hammer", "pillar", "front", "stone", 1, "ember_sigil")]]
+	var treads: Dictionary = _duel(catalog, [["odo", 8, _loadout("odo", "bulwark", "shield", "treads", "front")]], burner)
+	_check("treads cannot be set Burning", _said(treads, "resist", "shrugs off Burn") and not _has(treads, {"type": "status", "unit": "a0", "status": "burn"}))
+	var cleanse: Dictionary = _duel(catalog, [["odo", 8, _loadout("odo", "bulwark", "shield", "pillar", "front", "stone", 1, "cleansing_charm")]], burner)
+	_check("a cleansing charm washes off Burn", _has(cleanse, {"type": "cleanse", "unit": "a0"}))
+	var colossus: Dictionary = _duel(catalog, [["odo", 8, _loadout("odo", "colossus", "shield", "spider", "front")]],
+		[["slag_brute", 8, brute.call()]])
+	_check("a colossus starts warded and cannot be Stunned", _has(colossus, {"type": "ward", "unit": "a0", "cause": "Colossus Frame"})
+		and not _has(colossus, {"type": "status", "unit": "a0", "status": "stun"}))
+
+	var sigil_duel: Callable = func(sigil: String, legs: String = "pillar") -> Dictionary:
+		return _duel(catalog, [["pyra", 8, _loadout("pyra", "strider", "hammer", legs, "front", "stone", 1, sigil)]],
+			[["slag_brute", 8, brute.call()]])
+	_check("skates leap forward at the start", _has(sigil_duel.call("", "skates"), {"type": "haste", "cause": "Ice Skates"}))
+	_check("a leech fang drinks from its hits", _has(sigil_duel.call("leech_fang"), {"type": "heal", "unit": "a0", "cause": "Leech Fang"}))
+	_check("a war drum hurries the team", _has(sigil_duel.call("war_drum"), {"type": "haste", "cause": "War Drum"}))
+	_check("a hunter's brand exposes the target", _said(sigil_duel.call("hunters_brand"), "damage", "Exposed"))
+	_check("a frost sigil slows the target", _has(sigil_duel.call("frost_sigil"), {"type": "slow", "unit": "b0"}))
+	_check("a hex eye weakens the target", _said(sigil_duel.call("hex_eye"), "damage", "Weakened"))
+	_check("thorns lash the attacker", _has(_duel(catalog, [["odo", 8, _loadout("odo", "bulwark", "shield", "pillar", "front", "stone", 1, "thorn_crest")]],
+		[["slag_brute", 8, brute.call()]]), {"type": "damage", "source": "a0", "cause": "effect"}))
+	_check("a storm coil crackles over every enemy", _said(_duel(catalog, [["volta", 8, _loadout("volta", "conduit", "cannon", "pillar", "back", "stone", 1, "storm_coil")]],
+		line), "damage", "Storm Coil"))
+	var phoenix: Dictionary = _duel(catalog, [["pyra", 3, _loadout("pyra", "strider", "hammer", "pillar", "front", "stone", 1, "phoenix_ember")]],
+		[["slag_brute", 12, brute.call()]])
+	_check("a phoenix ember rises once from a killing blow", _has(phoenix, {"type": "heal", "unit": "a0", "cause": "Phoenix Ember"})
+		and phoenix.events.filter(func(e): return e.type == "heal" and e.cause == "Phoenix Ember").size() == 1)
+	var vengeance: Dictionary = _duel(catalog, [["pyra", 2, _loadout("pyra", "strider", "hammer", "pillar", "front")],
+		["odo", 12, _loadout("odo", "bulwark", "shield", "pillar", "back", "stone", 1, "vengeance_idol")]], [["slag_brute", 12, brute.call()]])
+	_check("a vengeance idol answers a fallen ally", _has(vengeance, {"type": "haste", "unit": "a1", "cause": "Vengeance Idol"}))
+	_check("magma heart sets its targets Burning", _has(_duel(catalog, [["pyra", 8, _loadout("pyra", "strider", "hammer", "pillar", "front", "obsidian")]],
+		[["slag_brute", 8, brute.call()]]), {"type": "status", "unit": "b0", "status": "burn", "cause": "Magma Heart"}))
 
 
 ## Whether any event of `type` reads with `fragment` in its text.

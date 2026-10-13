@@ -104,8 +104,9 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		effects.append(_tagged(effect, trait_def.name))
 	for effect in reaction.get("effects", []):
 		effects.append(_tagged(effect, reaction.name))
-	for effect in arms.get("effects", []):
-		effects.append(_tagged(effect, arms.name))
+	for part_def in [frame, arms, legs]:
+		for effect in part_def.get("effects", []):
+			effects.append(_tagged(effect, part_def.name))
 	var is_awake: bool = awakened(catalog, spirit_def, level)
 	if is_awake:
 		for effect in spirit_def.awakening.effects:
@@ -134,6 +135,8 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		"stable": legs.get("stable", false),
 		"reach": legs.get("reach", false),
 		"brace": float(legs.get("brace", 0.0)),
+		"perch": float(legs.get("perch", 0.0)),
+		"immune": legs.get("immune", []) + frame.get("immune", []),
 		"effects": effects,
 	}
 

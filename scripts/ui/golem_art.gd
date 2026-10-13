@@ -8,6 +8,7 @@ extends RefCounted
 ## animated aura drawn by golem_fx.gd.
 
 const GolemFx = preload("res://scripts/ui/golem_fx.gd")
+const GolemParts = preload("res://scripts/ui/golem_parts.gd")
 const OUTLINE := Color("17151e")
 ## base: main surface; trim: joints, bands and rims; fill_alpha: translucency.
 const MATERIALS: Dictionary = {
@@ -16,17 +17,22 @@ const MATERIALS: Dictionary = {
 	"ice": {"base": Color("a9dcf0"), "trim": Color("5f9fc4"), "fill_alpha": 0.84},
 	"bronze": {"base": Color("caa24a"), "trim": Color("7c5a22"), "fill_alpha": 1.0},
 	"crystal": {"base": Color("b996e8"), "trim": Color("6f52a8"), "fill_alpha": 0.86},
+	"bogwood": {"base": Color("5a5238"), "trim": Color("342f20"), "fill_alpha": 1.0},
+	"obsidian": {"base": Color("463c58"), "trim": Color("241e30"), "fill_alpha": 1.0},
+	"fulgurite": {"base": Color("d6c48e"), "trim": Color("8a7646"), "fill_alpha": 1.0},
 }
 const HIP_Y: float = -34.0
-const SHOULDER_Y: Dictionary = {"bulwark": -84.0, "strider": -86.0, "conduit": -80.0}
+const SHOULDER_Y: Dictionary = {"bulwark": -84.0, "strider": -86.0, "conduit": -80.0, "colossus": -96.0}
 ## Torso quads (bottom-left, bottom-right, top-right, top-left) that surface
 ## detail is laid out in, so grain and cracks always stay on the body.
 const TORSO: Dictionary = {
 	"bulwark": [Vector2(-28, -38), Vector2(28, -38), Vector2(33, -84), Vector2(-33, -84)],
 	"strider": [Vector2(-13, -38), Vector2(12, -38), Vector2(23, -82), Vector2(-6, -87)],
 	"conduit": [Vector2(-17, -45), Vector2(17, -45), Vector2(17, -79), Vector2(-17, -79)],
+	"colossus": [Vector2(-34, -38), Vector2(34, -38), Vector2(41, -96), Vector2(-41, -96)],
 }
-const HEAD: Dictionary = {"bulwark": Vector2(0, -102), "strider": Vector2(13, -102), "conduit": Vector2(0, -104)}
+const HEAD: Dictionary = {"bulwark": Vector2(0, -102), "strider": Vector2(13, -102), "conduit": Vector2(0, -104),
+	"colossus": Vector2(0, -116)}
 
 var ci: CanvasItem
 var origin: Vector2
@@ -168,6 +174,8 @@ func _paint(look: Dictionary, opts: Dictionary) -> void:
 
 
 func _legs(kind: String) -> void:
+	if GolemParts.legs(self, kind):
+		return
 	var dark: Color = base.darkened(0.2)
 	if kind == "spider":
 		for side in [-1.0, 1.0]:
@@ -190,6 +198,8 @@ func _legs(kind: String) -> void:
 
 func _body() -> void:
 	match frame:
+		"colossus":
+			GolemParts.colossus(self)
 		"strider":
 			_rect(-12, HIP_Y - 4, 24, 8, trim)
 			_poly(TORSO.strider, base)
@@ -232,7 +242,7 @@ func _texture(q: Array) -> void:
 	var dark: Color = Color(trim.darkened(0.2), 0.8)
 	var light: Color = Color(base.lightened(0.45), 0.75)
 	match material:
-		"wood":
+		"wood", "bogwood":
 			for v in [0.15, 0.36, 0.62, 0.84]:
 				var grain: Array = []
 				for i in range(9):
@@ -258,6 +268,16 @@ func _texture(q: Array) -> void:
 			for uv in [Vector2(0.2, 0.35), Vector2(0.78, 0.25)]:
 				var spot: Vector2 = quad(q, uv.x, uv.y)
 				ci.draw_circle(_p(spot.x, spot.y), 3.2 * s, _c(Color("5fae94", 0.55)))
+		"obsidian":
+			_mark([quad(q, 0.15, 0.1), quad(q, 0.3, 0.9)], Color(Color.WHITE, 0.35), 2.5)
+			_mark([quad(q, 0.62, 0.2), quad(q, 0.72, 0.55)], Color(Color.WHITE, 0.25), 1.5)
+			_mark([quad(q, 0.0, 0.4), quad(q, 0.5, 0.62), quad(q, 1.0, 0.45)], dark, 1.2)
+		"fulgurite":
+			var vein: Array = []
+			for i in range(7):
+				vein.append(quad(q, 0.2 + (0.25 if i % 2 == 0 else 0.0) + i * 0.06, 0.05 + i * 0.15))
+			_mark(vein, Color(Color("fff2a8"), 0.5 + 0.4 * sin(time * 6.0)), 1.8)
+			_mark([quad(q, 0.0, 0.7), quad(q, 1.0, 0.7)], dark, 1.5)
 		"crystal":
 			var tip: Vector2 = quad(q, 0.5, 1.15)
 			for u in [0.0, 0.3, 0.7, 1.0]:
@@ -303,6 +323,8 @@ func _back_arm(arms: String) -> void:
 
 func _front_arm(arms: String) -> void:
 	var sy: float = SHOULDER_Y[frame]
+	if GolemParts.front_arm(self, arms, sy):
+		return
 	match arms:
 		"shield":
 			_line(Vector2(18, sy + 4), Vector2(34, sy + 26), 7.0, base.darkened(0.1))

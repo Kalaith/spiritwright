@@ -19,9 +19,16 @@ const LANDMARKS: Array[String] = ["gate", "court", "stair", "cloister", "vault",
 ## Colours a region's terrain block names (hex strings); lists hold one or more.
 const TERRAIN_COLORS: Array[String] = ["ground", "dirt", "rock", "wall", "water"]
 const TERRAIN_PALETTES: Array[String] = ["patches", "canopy"]
-const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp", "kill"]
-const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste"]
-const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen", "stun"]
+## "fatal" fires once, when a blow would destroy the golem; "ally_death" when a teammate falls.
+const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "low_hp", "kill", "fatal", "ally_death"]
+## "drain" heals the owner a fraction of the hit's damage; "cleanse" clears Burn, Soaked,
+## Weaken, Expose and Stun; "revive" sets HP to a fraction of max (only on "fatal");
+## a negative "haste" slows the receiver.
+const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste", "drain", "cleanse", "revive"]
+const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen", "stun", "weaken", "expose"]
+## Optional attack modifiers: armour ignored, share dealt to row neighbours,
+## extra power against targets below half HP (fractions), and blows per action.
+const ATTACK_FRACTIONS: Array[String] = ["pierce", "splash", "execute"]
 ## Who an effect lands on. "team" includes the owner; "allies" does not.
 ## "lane" is the owner and whoever shares its lane; "wounded" is the living
 ## ally (or owner) with the lowest share of its HP, if anyone is hurt.
@@ -179,6 +186,20 @@ func _add_part(kind: String, entry: Variant) -> void:
 				or not attack.get("range") in ["melee", "ranged"] or not attack.get("aim") in AIMS 				or int(attack.get("cost", 0)) <= 0:
 			errors.append("Arms %s need a valid attack" % id)
 		_validate_effects("arms " + id, entry.get("effects", []))
+		if attack is Dictionary:
+			for key in ATTACK_FRACTIONS:
+				if attack.has(key) and (not (attack[key] is float or attack[key] is int) or float(attack[key]) <= 0.0):
+					errors.append("Arms %s %s must be a positive fraction" % [id, key])
+			if attack.has("strikes") and (not (attack.strikes is float or attack.strikes is int) or int(attack.strikes) < 1):
+				errors.append("Arms %s strikes must be at least 1" % id)
+	if kind in ["frames", "legs"]:
+		_validate_effects(kind + " " + id, entry.get("effects", []))
+	if kind == "legs" and entry.has("perch"):
+		if not (entry.perch is float or entry.perch is int) or float(entry.perch) <= 0.0:
+			errors.append("Legs %s perch must be a positive fraction" % id)
+	if kind in ["frames", "legs"] and entry.has("immune"):
+		if not entry.immune is Array or entry.immune.any(func(status): return not status in STATUSES):
+			errors.append("%s %s immune must list statuses" % [kind.capitalize(), id])
 	if kind == "legs" and entry.has("brace"):
 		if not (entry.brace is float or entry.brace is int) or float(entry.brace) <= 0.0 or float(entry.brace) >= 1.0:
 			errors.append("Legs %s brace must be a fraction between 0 and 1" % id)
@@ -230,12 +251,14 @@ func _validate_effects(owner: String, effects: Variant) -> void:
 		if effect.has("if_target"):
 			var conditions: Variant = effect.if_target
 			if effect.on != "hit" or not conditions is Array or conditions.is_empty() \
-					or conditions.any(func(status): return not status in ["burn", "soaked", "taunt", "regen"]):
+					or conditions.any(func(status): return not status in ["burn", "soaked", "taunt", "regen", "weaken", "expose"]):
 				errors.append(owner + " if_target needs on hit and lasting statuses")
-		if effect.do == "chain":
+		if effect.do in ["chain", "drain"]:
 			if effect.on != "hit" or not (effect.get("fraction") is float or effect.get("fraction") is int):
-				errors.append(owner + " chain needs on hit and a fraction")
+				errors.append("%s %s needs on hit and a fraction" % [owner, effect.do])
 			continue
+		if effect.do == "revive" and (effect.on != "fatal" or effect.get("to") != "self" 				or not (effect.get("fraction") is float or effect.get("fraction") is int)):
+			errors.append(owner + " revive needs on fatal, to self and a fraction")
 		var receiver: Variant = effect.get("to")
 		if not receiver in RECEIVERS:
 			errors.append(owner + " effect needs a known 'to'")
@@ -407,7 +430,7 @@ func _validate_balance() -> void:
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
 			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "battle.back_row_melee_factor", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",
-			"status.regen_heal"]:
+			"status.regen_heal", "status.weaken_fraction", "status.expose_fraction"]:
 		var node: Variant = balance
 		for key in path.split("."):
 			node = node.get(key) if node is Dictionary else null

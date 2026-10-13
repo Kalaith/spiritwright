@@ -184,7 +184,7 @@
 						{ "spirit": "spark_newt", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "spark_newt", "level": 5, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 }
 					],
-					"rewards": {}
+					"rewards": { "legs": ["stilts"] }
 				},
 				{
 					"id": "fen_pool",
@@ -196,11 +196,11 @@
 					"seed": 603,
 					"enemies": [
 						{ "spirit": "brine_sprite", "level": 7, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "", "row": "front", "lane": 1 },
-						{ "spirit": "spark_newt", "level": 7, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+						{ "spirit": "spark_newt", "level": 7, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "leech_fang", "row": "front", "lane": 0 },
 						{ "spirit": "brine_sprite", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "brine_sprite", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 }
 					],
-					"rewards": {}
+					"rewards": { "sigils": ["leech_fang"] }
 				},
 				{
 					"id": "fen_shards",
@@ -229,10 +229,10 @@
 					"enemies": [
 						{ "spirit": "bog_lurker", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
 						{ "spirit": "bog_lurker", "level": 7, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
-						{ "spirit": "moss_wisp", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "moss_charm", "row": "back", "lane": 1 },
+						{ "spirit": "moss_wisp", "level": 8, "frame": "conduit", "arms": "lantern", "legs": "stilts", "material": "wood", "sigil": "moss_charm", "row": "back", "lane": 1 },
 						{ "spirit": "bog_lurker", "level": 6, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": {}
+					"rewards": { "arms": ["lantern"], "sigils": ["thorn_crest"] }
 				},
 				{
 					"id": "fen_mother",
@@ -249,7 +249,7 @@
 						{ "spirit": "reed_sprite", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "reed_sprite", "level": 6, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0 }
 					],
-					"rewards": { "spirits": ["volta"], "arms": ["aegis"], "legs": ["tower"] },
+					"rewards": { "spirits": ["volta"], "arms": ["aegis"], "legs": ["tower"], "materials": ["bogwood"] },
 					"clear_text": "The Fen Mother sinks and the marsh falls quiet. To the east the reeds give way to the dry, burning grass of the Ember Steppe."
 				}
 			]
@@ -324,13 +324,13 @@
 					"requires": ["steppe_kiln"],
 					"seed": 703,
 					"enemies": [
-						{ "spirit": "ash_hound", "level": 9, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
+						{ "spirit": "ash_hound", "level": 9, "frame": "strider", "arms": "spear", "legs": "spider", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
 						{ "spirit": "dust_devil", "level": 9, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
 						{ "spirit": "dust_devil", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "dust_devil", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "ash_hound", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "arms": ["spear"] }
 				},
 				{
 					"id": "steppe_stones",
@@ -358,13 +358,13 @@
 					"requires": ["steppe_tower"],
 					"seed": 705,
 					"enemies": [
-						{ "spirit": "ash_hound", "level": 10, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 1 },
+						{ "spirit": "ash_hound", "level": 10, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "hunters_brand", "row": "front", "lane": 1 },
 						{ "spirit": "cinder_mote", "level": 10, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "ember_sigil", "row": "front", "lane": 0 },
 						{ "spirit": "dust_devil", "level": 10, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "ash_hound", "level": 10, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
 						{ "spirit": "cinder_mote", "level": 10, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": {}
+					"rewards": { "legs": ["treads"], "sigils": ["war_drum"] }
 				},
 				{
 					"id": "steppe_tyrant",
@@ -377,12 +377,12 @@
 					"boss": true,
 					"enemies": [
 						{ "spirit": "kiln_tyrant", "level": 13, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "bronze", "sigil": "guard_bell", "row": "front", "lane": 1 },
-						{ "spirit": "slag_brute", "level": 11, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+						{ "spirit": "slag_brute", "level": 11, "frame": "bulwark", "arms": "shield", "legs": "treads", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
 						{ "spirit": "dust_devil", "level": 11, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "slag_brute", "level": 11, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 },
 						{ "spirit": "slag_brute", "level": 11, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 2 }
 					],
-					"rewards": { "spirits": ["sefa"], "sigils": ["surge_lens"] },
+					"rewards": { "spirits": ["sefa"], "sigils": ["surge_lens", "hunters_brand"], "materials": ["obsidian"] },
 					"clear_text": "The Great Kiln goes cold. North of the steppe, a pass climbs into the snow of the Frostspine."
 				}
 			]
@@ -443,12 +443,12 @@
 					"enemies": [
 						{ "spirit": "rime_ogre", "level": 14, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "", "row": "front", "lane": 1 },
 						{ "spirit": "brine_sprite", "level": 15, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
-						{ "spirit": "frost_wisp", "level": 14, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 0 },
+						{ "spirit": "frost_wisp", "level": 14, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 0 },
 						{ "spirit": "frost_wisp", "level": 13, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2 },
 						{ "spirit": "rime_ogre", "level": 13, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0 },
 						{ "spirit": "rime_ogre", "level": 13, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "legs": ["skates"] }
 				},
 				{
 					"id": "frost_stair",
@@ -461,12 +461,12 @@
 					"enemies": [
 						{ "spirit": "rime_ogre", "level": 15, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
 						{ "spirit": "rime_ogre", "level": 15, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "guard_bell", "row": "front", "lane": 0 },
-						{ "spirit": "gale_kite", "level": 15, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+						{ "spirit": "gale_kite", "level": 15, "frame": "strider", "arms": "bow", "legs": "skates", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "rime_ogre", "level": 14, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "gale_kite", "level": 14, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "rime_ogre", "level": 14, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "sigils": ["frost_sigil"] }
 				},
 				{
 					"id": "frost_cairn",
@@ -484,7 +484,7 @@
 						{ "spirit": "frost_wisp", "level": 15, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
 						{ "spirit": "brine_sprite", "level": 15, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "sigils": ["vengeance_idol"] }
 				},
 				{
 					"id": "frost_spire",
@@ -496,13 +496,13 @@
 					"seed": 805,
 					"enemies": [
 						{ "spirit": "rime_ogre", "level": 16, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
-						{ "spirit": "gale_kite", "level": 16, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+						{ "spirit": "gale_kite", "level": 16, "frame": "strider", "arms": "twin_blades", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
 						{ "spirit": "frost_wisp", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "rime_ogre", "level": 15, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "gale_kite", "level": 15, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "frost_wisp", "level": 15, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "arms": ["twin_blades"] }
 				},
 				{
 					"id": "frost_crag",
@@ -521,7 +521,7 @@
 						{ "spirit": "brine_sprite", "level": 14, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
 						{ "spirit": "frost_wisp", "level": 14, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
-					"rewards": { "sigils": ["mending"] },
+					"rewards": { "arms": ["flail"], "sigils": ["mending", "cleansing_charm"] },
 					"clear_text": "The White Crag cracks and the pass lies open. Above it, thunderheads gather around the Storm Crown."
 				}
 			]
@@ -569,7 +569,7 @@
 						{ "spirit": "volt_shade", "level": 17, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "volt_shade", "level": 17, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "arms": ["storm_staff"] }
 				},
 				{
 					"id": "storm_vault",
@@ -582,12 +582,12 @@
 					"enemies": [
 						{ "spirit": "rime_ogre", "level": 17, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
 						{ "spirit": "brine_sprite", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
-						{ "spirit": "volt_shade", "level": 17, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 0 },
+						{ "spirit": "volt_shade", "level": 17, "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "fulgurite", "sigil": "surge_lens", "row": "back", "lane": 0 },
 						{ "spirit": "rime_ogre", "level": 16, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
 						{ "spirit": "brine_sprite", "level": 16, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
 						{ "spirit": "volt_shade", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "materials": ["fulgurite"] }
 				},
 				{
 					"id": "storm_tower",
@@ -598,14 +598,14 @@
 					"requires": ["storm_vault"],
 					"seed": 903,
 					"enemies": [
-						{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 1 },
+						{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "scythe", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 1 },
 						{ "spirit": "cinder_mote", "level": 18, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "ember_sigil", "row": "front", "lane": 0 },
 						{ "spirit": "thunder_drake", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "thunder_drake", "level": 18, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "cinder_mote", "level": 18, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "thunder_drake", "level": 18, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "arms": ["scythe"] }
 				},
 				{
 					"id": "storm_ridge",
@@ -616,14 +616,14 @@
 					"requires": ["storm_tower"],
 					"seed": 904,
 					"enemies": [
-						{ "spirit": "storm_hawk", "level": 18, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 1 },
-						{ "spirit": "gale_kite", "level": 18, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
-						{ "spirit": "dust_devil", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 1 },
+						{ "spirit": "storm_hawk", "level": 17, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "hex_eye", "row": "front", "lane": 1 },
+						{ "spirit": "gale_kite", "level": 17, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+						{ "spirit": "dust_devil", "level": 17, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 1 },
 						{ "spirit": "storm_hawk", "level": 16, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
 						{ "spirit": "gale_kite", "level": 16, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "dust_devil", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "sigils": ["hex_eye"] }
 				},
 				{
 					"id": "storm_spire",
@@ -635,13 +635,13 @@
 					"seed": 905,
 					"enemies": [
 						{ "spirit": "rime_ogre", "level": 18, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
-						{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 0 },
+						{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "flail", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 0 },
 						{ "spirit": "volt_shade", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "rime_ogre", "level": 18, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "volt_shade", "level": 18, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
 					],
-					"rewards": {}
+					"rewards": { "sigils": ["storm_coil"] }
 				},
 				{
 					"id": "storm_crown",
@@ -653,14 +653,14 @@
 					"seed": 906,
 					"boss": true,
 					"enemies": [
-						{ "spirit": "storm_sovereign", "level": 20, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "crystal", "sigil": "guard_bell", "row": "front", "lane": 1 },
+						{ "spirit": "storm_sovereign", "level": 21, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "crystal", "sigil": "guard_bell", "row": "front", "lane": 1 },
 						{ "spirit": "thunder_drake", "level": 19, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "bronze", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "brine_sprite", "level": 19, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 0 },
-						{ "spirit": "thunder_drake", "level": 18, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
-						{ "spirit": "brine_sprite", "level": 18, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
+						{ "spirit": "thunder_drake", "level": 19, "frame": "colossus", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+						{ "spirit": "brine_sprite", "level": 19, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
 						{ "spirit": "thunder_drake", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
-					"rewards": {},
+					"rewards": { "frames": ["colossus"], "sigils": ["phoenix_ember"] },
 					"clear_text": "The Storm Sovereign is stilled and the sky clears over every region. More regions are not built yet: keep refining builds and replaying stages."
 				}
 			]

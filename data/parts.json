@@ -21,6 +21,15 @@
 			"text": "A channel for spirit power. Strong magic, thin plating.",
 			"tags": ["caster", "ranged"],
 			"stats": { "hp": 4, "mag": 4, "res": 2, "def": -1 }
+		},
+		{
+			"id": "colossus",
+			"name": "Colossus Frame",
+			"text": "A towering hull of stacked plates. Huge and nearly unbreakable, but it lumbers. Cannot be Stunned.",
+			"tags": ["guardian", "heavy"],
+			"stats": { "hp": 30, "str": 2, "def": 4, "res": 3, "spd": -5 },
+			"immune": ["stun"],
+			"effects": [{ "on": "battle_start", "do": "ward", "flat": 8, "to": "self" }]
 		}
 	],
 	"arms": [
@@ -71,6 +80,55 @@
 			"stats": { "def": 2, "res": 1 },
 			"attack": { "kind": "physical", "power": 1, "range": "melee", "aim": "front", "cost": 100 },
 			"effects": [{ "on": "turn_start", "do": "ward", "flat": 2, "stat": "def", "fraction": 0.5, "to": "lane" }]
+		},
+		{
+			"id": "spear",
+			"name": "Pike Arms",
+			"text": "A long STR thrust at the nearest front-row enemy that punches through half its armour.",
+			"tags": ["melee", "agile"],
+			"stats": { "str": 1 },
+			"attack": { "kind": "physical", "power": 3, "range": "melee", "aim": "front", "cost": 110, "pierce": 0.5 }
+		},
+		{
+			"id": "lantern",
+			"name": "Lantern Arms",
+			"text": "A spirit lamp. Weak MAG flashes at the nearest front-row enemy from either row; every hit mends the most wounded ally for 2 + a third of MAG.",
+			"tags": ["caster", "ranged"],
+			"stats": { "mag": 1, "res": 1 },
+			"attack": { "kind": "magical", "power": 1, "range": "ranged", "aim": "front", "cost": 100 },
+			"effects": [{ "on": "hit", "do": "heal", "flat": 2, "stat": "mag", "fraction": 0.34, "to": "wounded" }]
+		},
+		{
+			"id": "flail",
+			"name": "Chain Flail",
+			"text": "A heavy STR swing at the nearest front-row enemy; half the blow carries on to the golems beside it in that row.",
+			"tags": ["melee", "heavy"],
+			"stats": { "str": 1 },
+			"attack": { "kind": "physical", "power": 3, "range": "melee", "aim": "front", "cost": 125, "splash": 0.5 }
+		},
+		{
+			"id": "twin_blades",
+			"name": "Twin Blades",
+			"text": "Two quick STR cuts every turn at the nearest front-row enemy. Each cut is a separate hit, so sigils fire twice.",
+			"tags": ["melee", "agile"],
+			"stats": { "spd": 1 },
+			"attack": { "kind": "physical", "power": 0, "range": "melee", "aim": "front", "cost": 110, "strikes": 2 }
+		},
+		{
+			"id": "storm_staff",
+			"name": "Storm Staff",
+			"text": "Magical MAG bolts called down on the back-row enemy nearest its lane. Fires just as well from the back row.",
+			"tags": ["caster", "ranged"],
+			"stats": { "mag": 1 },
+			"attack": { "kind": "magical", "power": 3, "range": "ranged", "aim": "back", "cost": 115 }
+		},
+		{
+			"id": "scythe",
+			"name": "Reaper Scythe",
+			"text": "A sweeping STR cut at the nearest front-row enemy. Against an enemy below half HP it strikes 60% harder.",
+			"tags": ["melee", "heavy"],
+			"stats": { "str": 2 },
+			"attack": { "kind": "physical", "power": 3, "range": "melee", "aim": "front", "cost": 120, "execute": 0.6 }
 		}
 	],
 	"legs": [
@@ -97,6 +155,30 @@
 			"tags": ["heavy", "guardian"],
 			"stats": { "hp": 6, "spd": -2 },
 			"brace": 0.25
+		},
+		{
+			"id": "stilts",
+			"name": "Stilt Legs",
+			"text": "Tall, thin fen stilts. From the back row its attacks strike 25% harder.",
+			"tags": ["agile"],
+			"stats": { "spd": 1, "def": -1 },
+			"perch": 0.25
+		},
+		{
+			"id": "treads",
+			"name": "Crawler Treads",
+			"text": "Grinding iron treads. Cannot be Stunned or set Burning.",
+			"tags": ["heavy", "guardian"],
+			"stats": { "hp": 4, "def": 2, "spd": -2 },
+			"immune": ["stun", "burn"]
+		},
+		{
+			"id": "skates",
+			"name": "Ice Skates",
+			"text": "Bladed feet that glide over anything. Quick, and it leaps forward at the start of battle (+50 gauge).",
+			"tags": ["agile"],
+			"stats": { "spd": 2 },
+			"effects": [{ "on": "battle_start", "do": "haste", "flat": 50, "to": "self" }]
 		}
 	],
 	"sigils": [
@@ -148,6 +230,66 @@
 			"name": "Mending Rune",
 			"text": "At the start of each turn, heals the most wounded ally (or itself) for 2 + half MAG.",
 			"effects": [{ "on": "turn_start", "do": "heal", "flat": 2, "stat": "mag", "fraction": 0.5, "to": "wounded" }]
+		},
+		{
+			"id": "leech_fang",
+			"name": "Leech Fang",
+			"text": "Every hit drinks: heals itself for 35% of the damage dealt.",
+			"effects": [{ "on": "hit", "do": "drain", "fraction": 0.35 }]
+		},
+		{
+			"id": "thorn_crest",
+			"name": "Thorn Crest",
+			"text": "When struck, thorns lash the attacker for 2 + a quarter of DEF.",
+			"effects": [{ "on": "hurt", "do": "damage", "flat": 2, "stat": "def", "fraction": 0.25, "to": "attacker" }]
+		},
+		{
+			"id": "war_drum",
+			"name": "War Drum",
+			"text": "At the start of battle the whole team surges forward (+30 gauge).",
+			"effects": [{ "on": "battle_start", "do": "haste", "flat": 30, "to": "team" }]
+		},
+		{
+			"id": "hunters_brand",
+			"name": "Hunter's Brand",
+			"text": "Attacks mark the target Exposed for 2 turns: it takes 30% more damage from attacks.",
+			"effects": [{ "on": "hit", "do": "status", "status": "expose", "amount": 2, "to": "target" }]
+		},
+		{
+			"id": "frost_sigil",
+			"name": "Frost Sigil",
+			"text": "Attacks chill the target, slowing it (-25 gauge).",
+			"effects": [{ "on": "hit", "do": "haste", "flat": -25, "to": "target" }]
+		},
+		{
+			"id": "vengeance_idol",
+			"name": "Vengeance Idol",
+			"text": "Whenever an ally falls, it surges forward (+60 gauge) and gains 6 Ward.",
+			"effects": [{ "on": "ally_death", "do": "haste", "flat": 60, "to": "self" }, { "on": "ally_death", "do": "ward", "flat": 6, "to": "self" }]
+		},
+		{
+			"id": "cleansing_charm",
+			"name": "Cleansing Charm",
+			"text": "At the start of each turn, washes Burn, Soaked, Weaken, Expose and Stun off itself and the ally sharing its lane.",
+			"effects": [{ "on": "turn_start", "do": "cleanse", "to": "lane" }]
+		},
+		{
+			"id": "hex_eye",
+			"name": "Hex Eye",
+			"text": "Attacks Weaken the target for 2 turns: its attacks deal 30% less damage.",
+			"effects": [{ "on": "hit", "do": "status", "status": "weaken", "amount": 2, "to": "target" }]
+		},
+		{
+			"id": "storm_coil",
+			"name": "Storm Coil",
+			"text": "At the start of each turn, a crackle strikes every enemy for 1 + a fifth of MAG.",
+			"effects": [{ "on": "turn_start", "do": "damage", "flat": 1, "stat": "mag", "fraction": 0.2, "to": "enemies" }]
+		},
+		{
+			"id": "phoenix_ember",
+			"name": "Phoenix Ember",
+			"text": "Once per battle, a blow that would destroy it instead leaves it standing at 40% HP.",
+			"effects": [{ "on": "fatal", "do": "revive", "fraction": 0.4, "to": "self" }]
 		}
 	],
 	"materials": [
@@ -245,6 +387,72 @@
 					"text": "The wind sings through the facets: SPD +2, and the whole team surges forward at the start of battle (+40 gauge).",
 					"stats": { "spd": 2 },
 					"effects": [{ "on": "battle_start", "do": "haste", "flat": 40, "to": "team" }]
+				}
+			}
+		},
+		{
+			"id": "bogwood",
+			"name": "Bogwood",
+			"text": "Black, waterlogged fen timber. Heavy and roomy, it soaks up spells but moves slowly.",
+			"stats": { "hp": 8, "res": 2, "def": -1, "spd": -1 },
+			"reactions": {
+				"nature": {
+					"id": "mangrove",
+					"name": "Mangrove",
+					"text": "Roots knot through the wet wood: HP +4, and when struck it gains 3 Ward (then rests a turn).",
+					"stats": { "hp": 4 },
+					"effects": [{ "on": "hurt", "do": "ward", "flat": 3, "to": "self", "cooldown": 1 }]
+				},
+				"water": {
+					"id": "bog_spring",
+					"name": "Bog Spring",
+					"text": "The spirit wells up through the timber: RES +1, and it heals 2 at the start of every turn.",
+					"stats": { "res": 1 },
+					"effects": [{ "on": "turn_start", "do": "heal", "flat": 2, "to": "self" }]
+				}
+			}
+		},
+		{
+			"id": "obsidian",
+			"name": "Obsidian",
+			"text": "Glassy volcanic rock from the kilns. Razor edges hit hard, but it chips.",
+			"stats": { "str": 2, "mag": 1, "def": 1, "hp": -4 },
+			"reactions": {
+				"fire": {
+					"id": "magma_heart",
+					"name": "Magma Heart",
+					"text": "The glass runs molten: STR +2, MAG +2, and every hit sets the target Burning.",
+					"stats": { "str": 2, "mag": 2 },
+					"effects": [{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }]
+				},
+				"earth": {
+					"id": "basalt",
+					"name": "Basalt",
+					"text": "The earth spirit cools the glass into columns: HP +10, DEF +2.",
+					"stats": { "hp": 10, "def": 2 },
+					"effects": []
+				}
+			}
+		},
+		{
+			"id": "fulgurite",
+			"name": "Fulgurite",
+			"text": "Sand fused by lightning on the Storm Crown. Crackles with power, but holds little back.",
+			"stats": { "mag": 3, "spd": 1, "res": -1, "hp": -2 },
+			"reactions": {
+				"lightning": {
+					"id": "thunderglass",
+					"name": "Thunderglass",
+					"text": "The bolt that made it answers: MAG +2, and hits on a Soaked enemy arc their full damage to another enemy.",
+					"stats": { "mag": 2 },
+					"effects": [{ "on": "hit", "do": "chain", "fraction": 1.0, "if_target": ["soaked"] }]
+				},
+				"wind": {
+					"id": "singing_glass",
+					"name": "Singing Glass",
+					"text": "Wind howls through the fused tubes: SPD +2, and every hit slows the target (-20 gauge).",
+					"stats": { "spd": 2 },
+					"effects": [{ "on": "hit", "do": "haste", "flat": -20, "to": "target" }]
 				}
 			}
 		}

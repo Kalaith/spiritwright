@@ -32,6 +32,8 @@
 		"burn_max_stacks": 3,
 		"soaked_magic_bonus": 0.3,
 		"soaked_speed_multiplier": 0.75,
-		"regen_heal": 3
+		"regen_heal": 3,
+		"weaken_fraction": 0.3,
+		"expose_fraction": 0.3
 	}
 }

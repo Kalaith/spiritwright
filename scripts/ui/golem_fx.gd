@@ -9,8 +9,10 @@ const SHOULDERS: Dictionary = {
 	"bulwark": [Vector2(-31, -98), Vector2(31, -98)],
 	"strider": [Vector2(-6, -90), Vector2(22, -86)],
 	"conduit": [Vector2(-20, -84), Vector2(20, -84)],
+	"colossus": [Vector2(-38, -112), Vector2(38, -112)],
 }
-const CROWN: Dictionary = {"bulwark": Vector2(0, -114), "strider": Vector2(13, -113), "conduit": Vector2(0, -115)}
+const CROWN: Dictionary = {"bulwark": Vector2(0, -114), "strider": Vector2(13, -113), "conduit": Vector2(0, -115),
+	"colossus": Vector2(0, -128)}
 const FIRE := Color("ff7a3d")
 const FLAME_CORE := Color("ffd36b")
 const LEAF := Color("7fd35a")
@@ -23,19 +25,19 @@ const MOSS := Color("6f9a46")
 
 static func draw(art: RefCounted, reaction: String, front: bool) -> void:
 	match reaction:
-		"kindling":
+		"kindling", "magma_heart":
 			_kindling(art, front)
-		"heartwood":
+		"heartwood", "mangrove":
 			_heartwood(art, front)
-		"glacier":
+		"glacier", "bog_spring":
 			_glacier(art, front)
 		"steam":
 			_steam(art, front)
-		"live_wire":
+		"live_wire", "thunderglass":
 			_live_wire(art, front)
-		"wind_chime":
+		"wind_chime", "singing_glass":
 			_wind_chime(art, front)
-		"living_rock":
+		"living_rock", "basalt":
 			_living_rock(art, front)
 
 
