@@ -258,11 +258,11 @@ func apply_battle(stage: Dictionary, outcome: String, units: Array = []) -> Dict
 		var entry: Dictionary = spirits[loadout.spirit]
 		entry.last_frame = loadout.frame
 		entry.last_allies = _allies_of(loadout.spirit)
-		report.xp.append(_give_xp(loadout.spirit, stage_xp(stage, int(entry.level), catalog.num(xp_key))))
+		report.xp.append(_give_xp(loadout.spirit, stage_xp(stage, int(entry.level), catalog.num(xp_key), loadout.spirit)))
 	# Resting spirits watch from the laboratory and learn a share of it, so a
 	# spirit left on the bench can still be fielded later without grinding.
 	for id in resting_spirits():
-		var line: Dictionary = _give_xp(id, stage_xp(stage, int(spirits[id].level), catalog.num(xp_key) * catalog.num("xp.resting")))
+		var line: Dictionary = _give_xp(id, stage_xp(stage, int(spirits[id].level), catalog.num(xp_key) * catalog.num("xp.resting"), id))
 		line["resting"] = true
 		report.xp.append(line)
 	if first_clear:
@@ -356,9 +356,10 @@ func xp_to_next(level: int) -> int:
 	return Experience.xp_to_next(catalog, level)
 
 
-## XP one spirit at `spirit_level` earns from this stage (see Experience.stage_xp).
-func stage_xp(stage: Dictionary, spirit_level: int, outcome_factor: float) -> int:
-	return Experience.stage_xp(catalog, _average_level(stage), spirit_level, outcome_factor)
+## XP one spirit at `spirit_level` earns from this stage (see Experience.stage_xp);
+## without a `spirit_id` only the global xp.gain_percent applies.
+func stage_xp(stage: Dictionary, spirit_level: int, outcome_factor: float, spirit_id: String = "") -> int:
+	return Experience.stage_xp(catalog, _average_level(stage), spirit_level, outcome_factor, spirit_id)
 
 
 func _average_level(stage: Dictionary) -> float:

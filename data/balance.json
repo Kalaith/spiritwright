@@ -6,6 +6,7 @@
 	"xp_per_level": 100,
 	"xp_per_level_growth": 100,
 	"xp": {
+		"gain_percent": 80,
 		"per_stage_level": 40,
 		"first_clear": 1.5,
 		"repeat_win": 1.0,

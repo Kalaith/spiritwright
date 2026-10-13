@@ -177,6 +177,10 @@ func _add_spirit(entry: Variant, playable: bool) -> void:
 			errors.append("Spirit %s needs a named awakening" % id)
 		else:
 			_validate_effects("spirit %s awakening" % id, awakening.get("effects"))
+	# Optional whole-number percentage on top of balance.xp.gain_percent.
+	if entry.has("xp_percent") and (not (entry.xp_percent is float or entry.xp_percent is int)
+			or int(entry.xp_percent) != entry.xp_percent or int(entry.xp_percent) < 0):
+		errors.append("Spirit %s xp_percent must be a whole number of at least 0" % id)
 	entry["playable"] = playable
 	spirits[id] = entry
 	if playable:
@@ -306,7 +310,7 @@ static func distinct_cells(team: Array) -> bool:
 func _validate_balance() -> void:
 	if int(balance.get("team_size", 0)) > LANES * ROWS.size():
 		errors.append("team_size cannot exceed the %d cells of the board" % (LANES * ROWS.size()))
-	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp_per_level_growth", "xp.per_stage_level", "xp.first_clear", "xp.repeat_win", "xp.loss", "xp.resting",
+	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp_per_level_growth", "xp.gain_percent", "xp.per_stage_level", "xp.first_clear", "xp.repeat_win", "xp.loss", "xp.resting",
 			"xp.level_gap_step", "xp.min_factor", "xp.max_factor",
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
 			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "battle.back_row_melee_factor", "status.burn_damage_per_stack",
@@ -317,3 +321,6 @@ func _validate_balance() -> void:
 			node = node.get(key) if node is Dictionary else null
 		if not (node is float or node is int):
 			errors.append("Balance is missing " + path)
+	var gain: Variant = balance.get("xp", {}).get("gain_percent")
+	if (gain is float or gain is int) and (int(gain) != gain or int(gain) < 0):
+		errors.append("Balance xp.gain_percent must be a whole number of at least 0")

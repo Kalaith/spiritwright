@@ -54,6 +54,7 @@ The campaign is all data in `data/campaign.json`; `catalog.gd` validates it at s
 - A region opens once any of its stages is reachable, so its first stage should require the previous region's boss. Trails from stages in other regions start at the laboratory.
 - A stage may list `challenges` (see Codex challenges above); `"finale": true` marks the one stage whose fall completes a playthrough. `sim_checks.gd` checks that every playable spirit joins exactly one way and that the collection stays near 60/30/10.
 - New wild spirits go in `spirits.json` `wild` using the effect vocabulary below; give one a `title`, `temperament`, `description` and `awakening` to make it recruitable, and a source (a stage, challenge or feat reward). Run the checks and `-- --report` after adding stages to see the level curve and win rates; the report also lists how often random builds that keep each challenge's composition rules meet it, now and ten levels on (25 for an extreme one).
+- **XP rates** are whole-number percentages: `balance.json` `xp.gain_percent` scales every spirit's XP (80 = 20% less), and an optional `xp_percent` on a spirit in `spirits.json` scales that spirit on top of it (100 when absent).
 
 ## Layout
 

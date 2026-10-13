@@ -16,10 +16,13 @@ static func xp_to_next(catalog: Catalog, level: int) -> int:
 ## xp.per_stage_level, scaled by the outcome, and by how far the spirit's level
 ## sits below (more) or above (less) that average. Levels cost a steady amount
 ## more each time, so a spirit keeps pace with the stages without grinding.
-static func stage_xp(catalog: Catalog, average: float, spirit_level: int, outcome_factor: float) -> int:
+## The total is then scaled by the whole-number percentages xp.gain_percent
+## (every spirit) and the spirit's own xp_percent (100 when absent).
+static func stage_xp(catalog: Catalog, average: float, spirit_level: int, outcome_factor: float, spirit_id: String = "") -> int:
 	var level_factor: float = clampf(1.0 + (average - spirit_level) * catalog.num("xp.level_gap_step"),
 		catalog.num("xp.min_factor"), catalog.num("xp.max_factor"))
-	return max(1, int(round(average * catalog.num("xp.per_stage_level") * outcome_factor * level_factor)))
+	var percent: float = catalog.num("xp.gain_percent") * int(catalog.spirit(spirit_id).get("xp_percent", 100)) / 10000.0
+	return max(1, int(round(average * catalog.num("xp.per_stage_level") * outcome_factor * level_factor * percent)))
 
 
 ## Adds XP to one spirit's `entry` ({level, xp, ...}) and levels it up to the

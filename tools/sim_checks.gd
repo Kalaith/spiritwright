@@ -96,6 +96,14 @@ func _check_progression(catalog: Catalog) -> void:
 	_check("an over-levelled spirit earns less XP",
 		progression.stage_xp(catalog.stages["ruins_gate"], 5, 1.0) < gate_xp)
 	_check("each level costs more XP than the last", progression.xp_to_next(10) > progression.xp_to_next(1))
+	var court: Dictionary = catalog.stages["ruins_court"]
+	var full_xp: int = progression.stage_xp(court, 1, 1.0)
+	catalog.spirit("pyra")["xp_percent"] = 50
+	var halved_xp: int = progression.stage_xp(court, 1, 1.0, "pyra")
+	catalog.spirit("pyra").erase("xp_percent")
+	_check("a spirit's xp_percent scales its XP on top of the global rate",
+		halved_xp == int(round(full_xp / 2.0)) and progression.stage_xp(court, 1, 1.0, "pyra") == full_xp,
+		"%d vs %d" % [halved_xp, full_xp])
 	var reachable: Array = []
 	var grew: bool = true
 	while grew:
