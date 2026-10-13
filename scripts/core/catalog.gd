@@ -52,6 +52,8 @@ var campaign: Dictionary = {}
 var stages: Dictionary = {}
 ## stage id -> index into campaign.regions.
 var stage_region: Dictionary = {}
+## The one stage marked "finale": winning it completes a playthrough and opens New Game+.
+var finale_id: String = ""
 var errors: Array[String] = []
 
 
@@ -339,6 +341,8 @@ func _validate_campaign() -> void:
 		golems += _validate_region(index)
 	if golems > int(num("team_size")):
 		errors.append("The start team plus every golem core is %d golems, more than team_size" % golems)
+	if finale_id.is_empty():
+		errors.append("One stage must be marked \"finale\": true")
 	for stage in stages.values():
 		for required in stage.get("requires", []):
 			if not stages.has(required):
@@ -368,6 +372,10 @@ func _validate_region(index: int) -> int:
 		stage_region[id] = index
 		if stage.has("clear_text") and not stage.clear_text is String:
 			errors.append("Stage %s clear_text must be text" % id)
+		if stage.get("finale", false):
+			if not finale_id.is_empty():
+				errors.append("Only one stage can be the finale, not %s and %s" % [finale_id, id])
+			finale_id = id
 		var enemies: Variant = stage.get("enemies")
 		if not enemies is Array or enemies.is_empty() or enemies.size() > LANES * ROWS.size():
 			errors.append("Stage %s needs 1-%d enemies" % [id, LANES * ROWS.size()])
@@ -430,7 +438,7 @@ func _validate_balance() -> void:
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
 			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "battle.back_row_melee_factor", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",
-			"status.regen_heal", "status.weaken_fraction", "status.expose_fraction"]:
+			"status.regen_heal", "status.weaken_fraction", "status.expose_fraction", "new_game_plus.level_step"]:
 		var node: Variant = balance
 		for key in path.split("."):
 			node = node.get(key) if node is Dictionary else null

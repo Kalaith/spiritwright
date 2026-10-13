@@ -8,6 +8,7 @@ const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
 const Progression = preload("res://scripts/core/progression.gd")
 const BattleSim = preload("res://scripts/sim/battle_sim.gd")
+const CollectionChecks = preload("res://tools/checks_collection.gd")
 
 var failures: int = 0
 
@@ -24,6 +25,7 @@ func _init() -> void:
 		_check_materials(catalog)
 		_check_board(catalog)
 		_check_arsenal(catalog)
+		CollectionChecks.new(self, catalog).run()
 		if "--report" in OS.get_cmdline_user_args():
 			_report(catalog)
 	print("%s (%d failure(s))" % ["ALL PASS" if failures == 0 else "FAILED", failures])
@@ -213,7 +215,7 @@ func _check_materials(catalog: Catalog) -> void:
 		and migrated.team.size() == 3 and migrated.cores == 0
 		and migrated.unlocks.materials == ["stone", "wood", "ice"] and migrated.team[0].material == "stone",
 		JSON.stringify(migrated.get("unlocks", {})))
-	_check("schema 4 saves spread each row across its lanes, centre first", migrated.schema == 5
+	_check("schema 4 saves spread each row across its lanes, centre first", migrated.schema == Progression.SAVE_SCHEMA
 		and migrated.team.map(func(l): return Catalog.cell_of(l)) == ["front:1", "front:0", "back:1"],
 		JSON.stringify(migrated.team))
 

@@ -6,6 +6,7 @@ extends Control
 signal laboratory_requested
 signal fight_requested(stage_id: String)
 signal title_requested
+signal new_game_plus_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
@@ -111,6 +112,8 @@ func _show_region(index: int) -> void:
 	_region_name.text = region.name
 	_region_text.text = region.text
 	_region_count.text = "Region %d of %d" % [index + 1, catalog.regions().size()]
+	if progression.cycle > 0:
+		_region_count.text += "  -  New Game+ %d" % progression.cycle
 	_prev.disabled = index == 0
 	_next.disabled = index + 1 >= catalog.regions().size() or not _region_reached(index + 1)
 	if _map != null:
@@ -154,15 +157,15 @@ func _select(stage_id: String) -> void:
 	var xp_factor: float = catalog.num("xp.repeat_win" if state == "cleared" else "xp.first_clear")
 	_details.add_child(Style.wrapped("%s %d XP per Lv %d spirit; lower-level spirits earn more, higher-level less." % [
 		"Replay for" if state == "cleared" else "Win for", progression.stage_xp(stage, level, xp_factor), level], 14))
-	if state != "cleared" and stage.get("rewards", {}).is_empty():
-		_details.add_child(Style.wrapped("No parts or spirits wait here: this fight is for experience.", 14))
+	var rewards: Array = _new_rewards(stage)
+	if state != "cleared" and rewards.is_empty():
+		_details.add_child(Style.wrapped("No new parts or spirits wait here: this fight is for experience.", 14))
 	elif state != "cleared":
 		_details.add_child(Style.label("First-clear rewards", 17, Style.MUTED))
-		for kind in stage.rewards:
-			for id in ([str(stage.rewards[kind])] if kind == "cores" else stage.rewards[kind]):
-				var lines: Array = Style.reward_text(catalog, kind, id)
-				_details.add_child(Style.wrapped(lines[0], 15, Style.GOLD))
-				_details.add_child(Style.wrapped(lines[1], 13))
+		for reward in rewards:
+			var lines: Array = Style.reward_text(catalog, reward[0], reward[1])
+			_details.add_child(Style.wrapped(lines[0], 15, Style.GOLD))
+			_details.add_child(Style.wrapped(lines[1], 13))
 	var buttons := Style.hbox(10)
 	buttons.add_child(_lab_button())
 	var fight := Style.button("Fight!", func(): fight_requested.emit(selected), 20)
@@ -172,6 +175,42 @@ func _select(stage_id: String) -> void:
 	_details.add_child(Style.wrapped(_team_line(), 13))
 	if progression.can_build():
 		_details.add_child(Style.wrapped("A golem core waits in the laboratory: build another golem before you set out.", 13, Style.GOLD))
+	if progression.campaign_complete():
+		_details.add_child(_new_game_plus_offer())
+
+
+## [kind, id] pairs a first clear would still give: in New Game+ most parts and
+## spirits are already owned, and cores only fill empty cradles.
+func _new_rewards(stage: Dictionary) -> Array:
+	var rewards: Array = []
+	for kind in stage.get("rewards", {}):
+		if kind == "cores":
+			var room: int = int(catalog.num("team_size")) - progression.team.size() - progression.cores
+			if room > 0:
+				rewards.append([kind, str(min(room, int(stage.rewards.cores)))])
+			continue
+		for id in stage.rewards[kind]:
+			var owned: bool = progression.spirits.has(id) if kind == "spirits" else id in progression.unlocks[kind]
+			if not owned:
+				rewards.append([kind, id])
+	return rewards
+
+
+func _new_game_plus_offer() -> Control:
+	var box := Style.vbox(6)
+	box.add_child(HSeparator.new())
+	var step: int = int(catalog.num("new_game_plus.level_step"))
+	box.add_child(Style.label("New Game+ %d" % (progression.cycle + 1), 17, Style.GOLD))
+	box.add_child(Style.wrapped("%s has fallen. Walk the road again from the Mossy Gate: your spirits, their levels, your parts and golems come with you, and every wild spirit stands %d levels stronger (up to Lv %d)." % [
+		catalog.stages[catalog.finale_id].name, step, int(catalog.num("level_cap"))], 13))
+	var confirm := Style.hbox(8)
+	confirm.add_child(Style.label("Start over the map?", 14, Style.BAD))
+	confirm.add_child(Style.button("Begin", func(): new_game_plus_requested.emit(), 15))
+	confirm.add_child(Style.button("Not yet", func(): confirm.hide(), 15))
+	confirm.hide()
+	box.add_child(Style.button("Begin New Game+", func(): confirm.show(), 16))
+	box.add_child(confirm)
+	return box
 
 
 func _enemy_row(golem: Dictionary) -> Control:

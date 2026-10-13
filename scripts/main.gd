@@ -76,7 +76,17 @@ func show_map(_notice: String = "") -> void:
 	map.laboratory_requested.connect(func(): _laboratory_from(map))
 	map.fight_requested.connect(start_battle)
 	map.title_requested.connect(show_title)
+	map.new_game_plus_requested.connect(_new_game_plus)
 	_swap(map, show_title)
+
+
+func _new_game_plus() -> void:
+	if not progression.start_new_game_plus():
+		return
+	selected_stage = ""
+	if not progression.save_game():
+		push_warning(progression.last_error)
+	show_map()
 
 
 func _laboratory_from(map: Control) -> void:
@@ -109,7 +119,7 @@ func start_battle(stage_id: String) -> void:
 
 
 func _show_result(stage: Dictionary, outcome: Dictionary) -> void:
-	var report: Dictionary = progression.apply_battle(stage, outcome.result)
+	var report: Dictionary = progression.apply_battle(stage, outcome.result, outcome.units)
 	var result := ResultScreen.new()
 	result.catalog = catalog
 	result.stage = stage

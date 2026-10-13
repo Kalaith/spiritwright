@@ -652,6 +652,7 @@
 					"requires": ["storm_spire"],
 					"seed": 906,
 					"boss": true,
+					"finale": true,
 					"enemies": [
 						{ "spirit": "storm_sovereign", "level": 21, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "crystal", "sigil": "guard_bell", "row": "front", "lane": 1 },
 						{ "spirit": "thunder_drake", "level": 19, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "bronze", "sigil": "", "row": "back", "lane": 1 },

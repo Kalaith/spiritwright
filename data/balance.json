@@ -1,7 +1,7 @@
 {
 	"schema_version": 1,
 	"team_size": 6,
-	"level_cap": 20,
+	"level_cap": 50,
 	"awaken_level": 5,
 	"xp_per_level": 100,
 	"xp_per_level_growth": 100,
@@ -26,6 +26,9 @@
 		"armour_factor": 0.5,
 		"min_damage_fraction": 0.35,
 		"back_row_melee_factor": 0.5
+	},
+	"new_game_plus": {
+		"level_step": 15
 	},
 	"status": {
 		"burn_damage_per_stack": 2,

@@ -5,9 +5,10 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
-const SAVE_SCHEMA: int = 5
-## Where newly built golems stand, in order of preference: centre lanes first.
-const BUILD_CELLS: Array[String] = ["front:1", "back:1", "front:0", "front:2", "back:0", "back:2"]
+const SaveMigrations = preload("res://scripts/core/save_migrations.gd")
+const SAVE_SCHEMA: int = 6
+const BUILD_CELLS: Array[String] = SaveMigrations.BUILD_CELLS
+const RUN_KEYS: Array[String] = ["falls", "losses", "most_golems"]
 
 var catalog: Catalog
 ## spirit id -> {"level", "xp", "last_frame", "last_allies"}
@@ -20,6 +21,12 @@ var team: Array = []
 var cores: int = 0
 var cleared: Array = []
 var battles: int = 0
+## Which playthrough this is: 0 for the first, 1 for the first New Game+, and so
+## on. Each cycle fights every stage again with stronger wild spirits.
+var cycle: int = 0
+## This playthrough's record, for the feats: golems of yours that fell, battles
+## not won, and the most golems fielded in one battle.
+var run: Dictionary = {}
 var save_path: String = "user://spiritwright_save.json"
 var save_enabled: bool = true
 var last_error: String = ""
@@ -44,6 +51,14 @@ func new_game() -> void:
 	cores = 0
 	cleared = []
 	battles = 0
+	cycle = 0
+	_reset_run()
+
+
+func _reset_run() -> void:
+	run = {}
+	for key in RUN_KEYS:
+		run[key] = 0
 
 
 func has_save() -> bool:
@@ -90,49 +105,11 @@ func save_game() -> bool:
 
 func to_dict() -> Dictionary:
 	return {"schema": SAVE_SCHEMA, "spirits": spirits, "unlocks": unlocks, "team": team,
-		"cores": cores, "cleared": cleared, "battles": battles}
+		"cores": cores, "cleared": cleared, "battles": battles, "cycle": cycle, "run": run}
 
 
-## Brings an older save up to SAVE_SCHEMA one step at a time. Schema 1
-## predates Loyal spirits remembering their allies: they start with none.
-## Schema 2 predates materials: every golem is rebuilt in the first starting
-## material, and the materials the start and cleared stages grant unlock.
-## Schema 3 predates golem cores: those saves already field a full team.
-## Schema 4 predates lanes: each row's golems take its centre lane first.
 func migrate(data: Variant) -> Variant:
-	if not data is Dictionary or not data.get("spirits") is Dictionary:
-		return data
-	if int(data.get("schema", 0)) == 1:
-		for id in data.spirits:
-			if data.spirits[id] is Dictionary:
-				data.spirits[id]["last_allies"] = []
-		data["schema"] = 2
-	if int(data.get("schema", 0)) == 2 and data.get("unlocks") is Dictionary and data.get("team") is Array 			and data.get("cleared") is Array:
-		var start: Array = catalog.campaign.start.unlocks.get("materials", [])
-		var granted: Array = start.duplicate()
-		for id in data.cleared:
-			for material in catalog.stages.get(String(id), {}).get("rewards", {}).get("materials", []):
-				granted.append(material)
-		data.unlocks["materials"] = catalog.part_order.materials.filter(func(id): return id in granted)
-		for loadout in data.team:
-			if loadout is Dictionary and not start.is_empty():
-				loadout["material"] = start[0]
-		data["schema"] = 3
-	if int(data.get("schema", 0)) == 3:
-		data["cores"] = 0
-		data["schema"] = 4
-	if int(data.get("schema", 0)) == 4 and data.get("team") is Array:
-		var taken: Array = []
-		for loadout in data.team:
-			if not loadout is Dictionary:
-				continue
-			for cell in BUILD_CELLS:
-				if cell.begins_with(String(loadout.get("row", "")) + ":") and not cell in taken:
-					taken.append(cell)
-					loadout["lane"] = int(cell.get_slice(":", 1))
-					break
-		data["schema"] = 5
-	return data
+	return SaveMigrations.migrate(catalog, data)
 
 
 func valid(data: Variant) -> bool:
@@ -167,6 +144,14 @@ func valid(data: Variant) -> bool:
 			return false
 	if not (data.get("cores") is int or data.get("cores") is float) or int(data.cores) < 0:
 		return false
+	if not (data.get("cycle") is int or data.get("cycle") is float) or int(data.cycle) < 0:
+		return false
+	if not data.get("run") is Dictionary:
+		return false
+	for key in RUN_KEYS:
+		var count: Variant = data.run.get(key)
+		if not (count is int or count is float) or int(count) < 0:
+			return false
 	if not data.get("team") is Array or data.team.is_empty():
 		return false
 	if data.team.size() + int(data.cores) > int(catalog.num("team_size")):
@@ -206,6 +191,10 @@ func _apply(data: Dictionary) -> void:
 	cores = int(data.cores)
 	cleared = data.cleared.duplicate()
 	battles = int(data.battles)
+	cycle = int(data.cycle)
+	run = {}
+	for key in RUN_KEYS:
+		run[key] = int(data.run[key])
 
 
 func stage_state(stage_id: String) -> String:
@@ -243,8 +232,14 @@ func resolved_team() -> Array:
 func enemy_team(stage: Dictionary) -> Array:
 	var resolved: Array = []
 	for enemy in stage.enemies:
-		resolved.append(Builds.resolve(catalog, enemy, int(enemy.level)))
+		resolved.append(Builds.resolve(catalog, enemy, enemy_level(int(enemy.level))))
 	return resolved
+
+
+## A wild spirit's level in this playthrough: each New Game+ cycle adds
+## new_game_plus.level_step to the level the stage lists, up to level_cap.
+func enemy_level(listed: int) -> int:
+	return min(int(catalog.num("level_cap")), listed + cycle * int(catalog.num("new_game_plus.level_step")))
 
 
 ## Changes one loadout field. Choosing a spirit already in another slot swaps
@@ -286,9 +281,12 @@ func set_slot(slot: int, key: String, value: String) -> bool:
 
 ## Applies XP, last-used frames and first-clear rewards. Returns a report the
 ## result screen shows: {"xp": [{spirit, gained, from, to, rises}], "rewards": [...], "first_clear"}.
-func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
+## `units` is the finished battle's golems (BattleSim's `units`); without them
+## a win counts as nobody falling and a defeat as the whole team falling.
+func apply_battle(stage: Dictionary, outcome: String, units: Array = []) -> Dictionary:
 	battles += 1
 	var won: bool = outcome == "win"
+	_record_run(won, units)
 	var first_clear: bool = won and not stage.id in cleared
 	var xp_key: String = "xp.loss"
 	if won:
@@ -317,9 +315,11 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 	if first_clear:
 		cleared.append(stage.id)
 		var rewards: Dictionary = stage.get("rewards", {})
-		if int(rewards.get("cores", 0)) > 0:
-			cores += int(rewards.cores)
-			report.rewards.append({"kind": "cores", "id": str(int(rewards.cores))})
+		# A New Game+ team is usually already whole: cores only fill empty cradles.
+		var gained_cores: int = min(int(rewards.get("cores", 0)), int(catalog.num("team_size")) - team.size() - cores)
+		if gained_cores > 0:
+			cores += gained_cores
+			report.rewards.append({"kind": "cores", "id": str(gained_cores)})
 		for kind in rewards:
 			if kind == "cores":
 				continue
@@ -338,6 +338,32 @@ func apply_battle(stage: Dictionary, outcome: String) -> Dictionary:
 					ordered.append(id)
 			unlocks[kind] = ordered
 	return report
+
+
+func _record_run(won: bool, units: Array) -> void:
+	var fell: int = units.filter(func(unit): return unit.side == 0 and not unit.alive).size()
+	if units.is_empty() and not won:
+		fell = team.size()
+	run.falls += fell
+	run.losses += 0 if won else 1
+	run.most_golems = max(int(run.most_golems), team.size())
+
+
+## Whether the final stage has fallen in this playthrough.
+func campaign_complete() -> bool:
+	return catalog.finale_id in cleared
+
+
+## Starts the next playthrough once the finale is won: every stage is fought
+## again with stronger wild spirits, and the spirits, their levels, the parts
+## and the golems all carry over.
+func start_new_game_plus() -> bool:
+	if not campaign_complete():
+		return false
+	cycle += 1
+	cleared = []
+	_reset_run()
+	return true
 
 
 ## XP a spirit at `level` needs to reach the next level: each level costs more.
@@ -359,7 +385,7 @@ func stage_xp(stage: Dictionary, spirit_level: int, outcome_factor: float) -> in
 func _average_level(stage: Dictionary) -> float:
 	var total_levels: int = 0
 	for enemy in stage.enemies:
-		total_levels += int(enemy.level)
+		total_levels += enemy_level(int(enemy.level))
 	return float(total_levels) / max(1, stage.enemies.size())
 
 
