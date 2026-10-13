@@ -6,7 +6,8 @@
 		"earth": { "label": "Earth", "color": "c99a5b", "glyph": "E" },
 		"wind": { "label": "Wind", "color": "9fe8c8", "glyph": "A" },
 		"nature": { "label": "Nature", "color": "7fd35a", "glyph": "N" },
-		"lightning": { "label": "Lightning", "color": "f2e15a", "glyph": "L" }
+		"lightning": { "label": "Lightning", "color": "f2e15a", "glyph": "L" },
+		"echo": { "label": "Echo", "color": "d8c8ff", "glyph": "O" }
 	},
 	"temperaments": {
 		"brash": {
@@ -44,6 +45,12 @@
 			"text": "Steadier beside an ally it fought with in its last battle.",
 			"prefers_familiar": true,
 			"bonus": { "hp": 6, "res": 2 }
+		},
+		"restless": {
+			"label": "Restless",
+			"text": "Livelier in a golem built differently from its last battle (any part changed).",
+			"prefers_new_build": true,
+			"bonus": { "str": 1, "mag": 1, "spd": 1 }
 		}
 	},
 	"spirits": [
@@ -187,6 +194,35 @@
 				"text": "The first time her HP falls below half, she and every ally gain Regen for 3 turns.",
 				"effects": [
 					{ "on": "low_hp", "do": "status", "status": "regen", "amount": 3, "to": "team" }
+				]
+			}
+		},
+		{
+			"id": "vesper",
+			"name": "Vesper",
+			"title": "the Crucible Spirit",
+			"element": "echo",
+			"temperament": "restless",
+			"description": "Forged from the echoes of defeated champions. It has no home material and takes a little of whatever body it wears.",
+			"base": { "hp": 30, "str": 5, "mag": 5, "spd": 6, "def": 3, "res": 3 },
+			"growth": { "hp": 40, "str": 40, "mag": 40, "spd": 40, "def": 35, "res": 35 },
+			"trait": {
+				"name": "Adaptation",
+				"text": "Takes a modest bonus from its frame: Bulwark DEF +2 RES +1, Strider STR +2 SPD +1, Conduit MAG +2 SPD +1, Colossus HP +9 STR +1.",
+				"by_frame": {
+					"bulwark": { "def": 2, "res": 1 },
+					"strider": { "str": 2, "spd": 1 },
+					"conduit": { "mag": 2, "spd": 1 },
+					"colossus": { "hp": 9, "str": 1 }
+				},
+				"effects": []
+			},
+			"awakening": {
+				"name": "Champions' Echo",
+				"text": "When an ally falls, Vesper takes up its echo: it surges forward (+40 gauge) and gains Ward of 4 plus half its RES.",
+				"effects": [
+					{ "on": "ally_death", "do": "haste", "flat": 40, "to": "self" },
+					{ "on": "ally_death", "do": "ward", "flat": 4, "stat": "res", "fraction": 0.5, "to": "self" }
 				]
 			}
 		}

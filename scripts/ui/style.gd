@@ -144,6 +144,11 @@ static func reward_text(catalog: RefCounted, kind: String, id: String) -> Array:
 	if kind == "spirits":
 		var spirit: Dictionary = catalog.spirit(id)
 		return ["New spirit: %s %s" % [spirit.name, spirit.get("title", "")], String(spirit.get("description", ""))]
+	if kind == "titles":
+		return ["Title: %s" % catalog.crucible_index.titles[id].name, "Choose it in the Crucible's milestones to wear it on the map."]
+	if kind == "finishes":
+		var finish: Dictionary = catalog.crucible_index.finishes[id]
+		return ["Vessel finish: %s" % finish.name, "%s Any golem can wear it: pick it on the golem's card in the laboratory." % finish.text]
 	var part: Dictionary = catalog.part(kind, id)
 	var kinds: Dictionary = {"frames": "Frame", "arms": "Arms", "legs": "Legs", "sigils": "Sigil", "materials": "Material"}
 	var text: String = material_text(catalog, part) if kind == "materials" else String(part.get("text", ""))

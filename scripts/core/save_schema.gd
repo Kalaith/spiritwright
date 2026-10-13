@@ -4,7 +4,9 @@ extends RefCounted
 ## what the older schema lacked; `valid` then checks the result.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
-const VERSION: int = 7
+const Crucible = preload("res://scripts/core/crucible.gd")
+const CrucibleRecord = preload("res://scripts/core/crucible_record.gd")
+const VERSION: int = 8
 ## The playthrough record's counters (see Progression.run).
 const RUN_KEYS: Array[String] = ["falls", "losses", "most_golems"]
 ## Where newly built golems stand, in order of preference: centre lanes first.
@@ -20,6 +22,8 @@ const BUILD_CELLS: Array[String] = ["front:1", "back:1", "front:0", "front:2", "
 ## playthrough, and one already under way cannot prove it never lost a golem,
 ## so its record starts spoiled (the next playthrough starts clean).
 ## Schema 6 predates the Codex: no challenge or feat has been met yet.
+## Schema 7 predates the Crucible and Restless spirits: no run, no records, and
+## no spirit remembers its last build.
 static func migrate(catalog: Catalog, data: Variant) -> Variant:
 	if not data is Dictionary or not data.get("spirits") is Dictionary:
 		return data
@@ -64,6 +68,12 @@ static func migrate(catalog: Catalog, data: Variant) -> Variant:
 		data["challenges"] = []
 		data["feats"] = []
 		data["schema"] = 7
+	if int(data.get("schema", 0)) == 7:
+		for id in data.spirits:
+			if data.spirits[id] is Dictionary:
+				data.spirits[id]["last_build"] = ""
+		data["crucible"] = CrucibleRecord.empty()
+		data["schema"] = 8
 	return data
 
 
@@ -80,7 +90,7 @@ static func valid(catalog: Catalog, data: Variant) -> bool:
 		var level: int = int(entry.get("level", 0))
 		if level < 1 or level > int(catalog.num("level_cap")) or int(entry.get("xp", -1)) < 0:
 			return false
-		if not entry.get("last_frame") is String or not entry.get("last_allies") is Array:
+		if not entry.get("last_frame") is String or not entry.get("last_build") is String or not entry.get("last_allies") is Array:
 			return false
 		for ally in entry.last_allies:
 			if not catalog.spirit(String(ally)).get("playable", false):
@@ -116,8 +126,20 @@ static func valid(catalog: Catalog, data: Variant) -> bool:
 		return false
 	if data.team.size() + int(data.cores) > int(catalog.num("team_size")):
 		return false
+	if not data.get("crucible") is Dictionary or not _valid_crucible(catalog, data, data.crucible):
+		return false
+	return valid_team(catalog, data, data.team)
+
+
+## Whether `team` is a list of loadouts the save `data` can field: owned
+## spirits, each once, unlocked parts, finishes its Crucible milestones earned,
+## and one golem per cell.
+static func valid_team(catalog: Catalog, data: Dictionary, team: Variant) -> bool:
+	if not team is Array or team.is_empty() or team.size() > int(catalog.num("team_size")):
+		return false
+	var finishes: Array = Crucible.unlocked(catalog, data.crucible.milestones, "finishes")
 	var used: Dictionary = {}
-	for loadout in data.team:
+	for loadout in team:
 		if not loadout is Dictionary or not data.spirits.has(loadout.get("spirit", "")) or used.has(loadout.spirit):
 			return false
 		used[loadout.spirit] = true
@@ -127,6 +149,62 @@ static func valid(catalog: Catalog, data: Variant) -> bool:
 		var sigil: Variant = loadout.get("sigil", "")
 		if not sigil is String or (sigil != "" and not sigil in data.unlocks.sigils):
 			return false
+		var finish: Variant = loadout.get("finish", "")
+		if not finish is String or (finish != "" and not finish in finishes):
+			return false
 		if not loadout.get("row") in Catalog.ROWS or not Catalog.valid_lane(loadout.get("lane")):
 			return false
-	return Catalog.distinct_cells(data.team)
+	return Catalog.distinct_cells(team)
+
+
+## The Crucible block (see CrucibleRecord): known milestones, encounters and
+## titles, whole-number records, and a run in progress whose sequence is the
+## one its mode and seed name and whose locked team the save could field.
+static func _valid_crucible(catalog: Catalog, data: Dictionary, block: Dictionary) -> bool:
+	var index: Dictionary = catalog.crucible_index
+	for key in ["milestones", "seen"]:
+		var known: Dictionary = index.milestones if key == "milestones" else catalog.crucible_encounters
+		if not block.get(key) is Array or block[key].any(func(id): return not known.has(String(id))):
+			return false
+	var title: Variant = block.get("title")
+	if not title is String or (title != "" and not title in Crucible.unlocked(catalog, block.milestones, "titles")):
+		return false
+	if not block.get("records") is Dictionary or not block.get("last") is Dictionary:
+		return false
+	for key in block.records:
+		var entry: Variant = block.records[key]
+		if not entry is Dictionary or not ["best", "runs", "completions"].all(func(k): return _count(entry.get(k))):
+			return false
+		if not entry.get("teams") is Array or entry.teams.any(func(t): return not t is Dictionary or not _count(t.get("seed")) \
+				or not t.get("golems") is Array or t.golems.is_empty()):
+			return false
+	var run: Variant = block.get("run")
+	if not run is Dictionary:
+		return false
+	if run.is_empty():
+		return true
+	if not run.get("mode") in Crucible.MODES or not index.tiers.has(String(run.get("tier", ""))) or not _count(run.get("seed")) \
+			or not _count(run.get("next")) or not run.get("history") is Dictionary:
+		return false
+	if not Crucible.tier_open(catalog, run.tier, block.milestones):
+		return false
+	var expected: Array = Crucible.sequence(catalog, run.mode, int(run.seed))
+	var steps: Variant = run.get("sequence")
+	if not steps is Array or steps.size() != expected.size() or int(run.next) >= expected.size():
+		return false
+	for i in range(expected.size()):
+		if not steps[i] is Dictionary or String(steps[i].get("encounter", "")) != expected[i].encounter \
+				or not _count(steps[i].get("variant")) or int(steps[i].variant) != expected[i].variant:
+			return false
+	if not valid_team(catalog, data, run.get("team")):
+		return false
+	for loadout in run.team:
+		var history: Variant = run.history.get(loadout.spirit)
+		if not history is Dictionary or not history.get("last_frame") is String or not history.get("last_build") is String \
+				or not history.get("last_allies") is Array or not history.get("allies") is Array:
+			return false
+	return true
+
+
+static func _count(value: Variant) -> bool:
+	return (value is int or value is float) and int(value) == value and int(value) >= 0

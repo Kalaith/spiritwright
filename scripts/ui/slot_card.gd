@@ -9,6 +9,7 @@ const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
 const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
 const Catalog = preload("res://scripts/core/catalog.gd")
+const Crucible = preload("res://scripts/core/crucible.gd")
 
 var catalog: RefCounted
 var progression: RefCounted
@@ -46,6 +47,13 @@ func _ready() -> void:
 	var sigils: Array = [["", "None", "No sigil."]]
 	sigils.append_array(_part_options("sigils"))
 	_selector(grid, "Sigil", "sigil", sigils, loadout.sigil)
+	var finishes: Array = Crucible.unlocked(catalog, progression.crucible.milestones, "finishes")
+	if not finishes.is_empty():
+		var options: Array = [["", "Plain", "No finish: the body shows its own material."]]
+		for id in finishes:
+			var finish: Dictionary = catalog.crucible_index.finishes[id]
+			options.append([id, finish.name, finish.text + " Only for looks."])
+		_selector(grid, "Finish", "finish", options, String(loadout.get("finish", "")))
 	column.add_child(_stats(golem))
 	var pref: Dictionary = golem.preference
 	if not pref.label.is_empty():

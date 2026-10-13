@@ -6,8 +6,11 @@ extends RefCounted
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
 const SaveSchema = preload("res://scripts/core/save_schema.gd")
+const SaveFile = preload("res://scripts/core/save_file.gd")
 const Challenges = preload("res://scripts/core/challenges.gd")
 const Experience = preload("res://scripts/core/experience.gd")
+const Crucible = preload("res://scripts/core/crucible.gd")
+const CrucibleRecord = preload("res://scripts/core/crucible_record.gd")
 const SAVE_SCHEMA: int = SaveSchema.VERSION
 const BUILD_CELLS: Array[String] = SaveSchema.BUILD_CELLS
 const RUN_KEYS: Array[String] = SaveSchema.RUN_KEYS
@@ -32,6 +35,8 @@ var run: Dictionary = {}
 ## Ids of every Codex challenge and feat ever met, across all playthroughs.
 var challenges: Array = []
 var feats: Array = []
+## The Shifting Crucible: the run in progress, records and milestones.
+var crucible := CrucibleRecord.new()
 var save_path: String = "user://spiritwright_save.json"
 var save_enabled: bool = true
 var last_error: String = ""
@@ -60,6 +65,7 @@ func new_game() -> void:
 	_reset_run()
 	challenges = []
 	feats = []
+	crucible = CrucibleRecord.new()
 
 
 func _reset_run() -> void:
@@ -73,47 +79,26 @@ func has_save() -> bool:
 
 
 func load_game() -> bool:
-	for path in [save_path, save_path + ".bak"]:
-		var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path)) if FileAccess.file_exists(path) else null
-		parsed = migrate(parsed)
-		if valid(parsed):
-			_apply(parsed)
-			last_error = "" if path == save_path else "Recovered your laboratory from the backup save."
-			return true
-	last_error = "The save could not be read."
-	return false
+	var found: Dictionary = SaveFile.read(save_path, migrate, valid)
+	if found.is_empty():
+		last_error = "The save could not be read."
+		return false
+	_apply(found.data)
+	last_error = "Recovered your laboratory from the backup save." if found.backup else ""
+	return true
 
 
 func save_game() -> bool:
 	if not save_enabled:
 		return true
-	var snapshot: Dictionary = to_dict()
-	if not valid(snapshot):
-		last_error = "Refused to write an invalid save."
-		return false
-	var temporary: String = save_path + ".tmp"
-	var file := FileAccess.open(temporary, FileAccess.WRITE)
-	if file == null:
-		last_error = "Could not write the save."
-		return false
-	file.store_string(JSON.stringify(snapshot, "\t"))
-	file.close()
-	if not valid(JSON.parse_string(FileAccess.get_file_as_string(temporary))):
-		last_error = "The written save did not read back."
-		return false
-	if FileAccess.file_exists(save_path):
-		DirAccess.copy_absolute(save_path, save_path + ".bak")
-	if DirAccess.rename_absolute(temporary, save_path) != OK:
-		last_error = "Could not replace the save."
-		return false
-	last_error = ""
-	return true
+	last_error = SaveFile.write(save_path, to_dict(), valid)
+	return last_error.is_empty()
 
 
 func to_dict() -> Dictionary:
 	return {"schema": SAVE_SCHEMA, "spirits": spirits, "unlocks": unlocks, "team": team,
 		"cores": cores, "cleared": cleared, "battles": battles, "cycle": cycle, "run": run,
-		"challenges": challenges, "feats": feats}
+		"challenges": challenges, "feats": feats, "crucible": crucible.to_dict()}
 
 
 func migrate(data: Variant) -> Variant:
@@ -129,7 +114,7 @@ func _apply(data: Dictionary) -> void:
 	for id in data.spirits:
 		var entry: Dictionary = data.spirits[id]
 		spirits[id] = {"level": int(entry.level), "xp": int(entry.xp), "last_frame": String(entry.last_frame),
-			"last_allies": entry.last_allies.map(func(ally): return String(ally))}
+			"last_build": String(entry.last_build), "last_allies": entry.last_allies.map(func(ally): return String(ally))}
 	unlocks = {}
 	for kind in Catalog.PART_KINDS:
 		unlocks[kind] = []
@@ -149,6 +134,8 @@ func _apply(data: Dictionary) -> void:
 		run[key] = int(data.run[key])
 	challenges = data.challenges.map(func(id): return String(id))
 	feats = data.feats.map(func(id): return String(id))
+	crucible = CrucibleRecord.new()
+	crucible.apply(data.crucible)
 	# A save may have met a region's challenges before its mastery existed.
 	for region in catalog.regions().filter(func(r): return Challenges.mastered(r, challenges)):
 		_grant(region.mastery.rewards, [])
@@ -166,9 +153,15 @@ func stage_state(stage_id: String) -> String:
 func resolve_slot(slot: int) -> Dictionary:
 	var loadout: Dictionary = team[slot]
 	var entry: Dictionary = spirits[loadout.spirit]
-	var history: Dictionary = {"last_frame": entry.last_frame, "last_allies": entry.last_allies,
-		"allies": _allies_of(loadout.spirit)}
-	return Builds.resolve(catalog, loadout, int(entry.level), history)
+	return Builds.resolve(catalog, loadout, int(entry.level), history_of(loadout.spirit))
+
+
+## What a spirit remembers of its last battle and who stands beside it now
+## (see Builds.preference).
+func history_of(spirit_id: String) -> Dictionary:
+	var entry: Dictionary = spirits[spirit_id]
+	return {"last_frame": entry.last_frame, "last_build": entry.last_build, "last_allies": entry.last_allies.duplicate(),
+		"allies": _allies_of(spirit_id)}
 
 
 func _allies_of(spirit_id: String) -> Array:
@@ -219,6 +212,9 @@ func set_slot(slot: int, key: String, value: String) -> bool:
 		"sigil":
 			if value != "" and not value in unlocks.sigils:
 				return false
+		"finish":
+			if value != "" and not value in Crucible.unlocked(catalog, crucible.milestones, "finishes"):
+				return false
 		"cell":
 			var row: String = value.get_slice(":", 0)
 			if value.get_slice_count(":") != 2 or not row in Catalog.ROWS or not value.get_slice(":", 1).is_valid_int() 					or not Catalog.valid_lane(value.get_slice(":", 1).to_int()):
@@ -257,6 +253,7 @@ func apply_battle(stage: Dictionary, outcome: String, units: Array = []) -> Dict
 	for loadout in team:
 		var entry: Dictionary = spirits[loadout.spirit]
 		entry.last_frame = loadout.frame
+		entry.last_build = Builds.build_key(loadout)
 		entry.last_allies = _allies_of(loadout.spirit)
 		report.xp.append(_give_xp(loadout.spirit, stage_xp(stage, int(entry.level), catalog.num(xp_key), loadout.spirit)))
 	# Resting spirits watch from the laboratory and learn a share of it, so a
@@ -403,7 +400,7 @@ func build_golem() -> bool:
 
 
 func _fresh_spirit(level: int) -> Dictionary:
-	return {"level": level, "xp": 0, "last_frame": "", "last_allies": []}
+	return {"level": level, "xp": 0, "last_frame": "", "last_build": "", "last_allies": []}
 
 
 ## A rescued spirit joins at the team's average level so it can fight at once.
@@ -414,8 +411,32 @@ func _join_level() -> int:
 	return max(1, int(floor(float(total) / max(1, team.size()))))
 
 
-func region_cleared() -> bool:
-	for id in catalog.stages:
-		if not id in cleared:
-			return false
+## The Crucible opens once its unlock stage has fallen in any playthrough.
+func crucible_open() -> bool:
+	return cycle > 0 or String(catalog.crucible.unlock.stage) in cleared
+
+
+## Locks the laboratory team as it stands into a new Crucible run. Refused
+## while a run is under way, before the Crucible opens, or at a closed tier.
+func start_crucible(mode: String, tier_id: String, seed: int) -> bool:
+	if not crucible.run.is_empty() or not crucible_open() or not mode in Crucible.MODES \
+			or not catalog.crucible_index.tiers.has(tier_id) or not Crucible.tier_open(catalog, tier_id, crucible.milestones):
+		return false
+	var history: Dictionary = {}
+	for loadout in team:
+		history[loadout.spirit] = history_of(loadout.spirit)
+	crucible.start(catalog, mode, tier_id, seed, team, history)
+	return true
+
+
+## Applies a Crucible battle's result (no XP: both sides fought at the tier's
+## level) and grants any spirit a milestone brings. See CrucibleRecord.apply_result.
+func apply_crucible(outcome: String) -> Dictionary:
+	return crucible.apply_result(catalog, outcome, _grant)
+
+
+func set_crucible_title(id: String) -> bool:
+	if id != "" and not id in Crucible.unlocked(catalog, crucible.milestones, "titles"):
+		return false
+	crucible.title = id
 	return true

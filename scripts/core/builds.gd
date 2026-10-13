@@ -40,13 +40,15 @@ static func level_up_gains(catalog: Catalog, spirit_def: Dictionary, level: int)
 
 
 ## `history` is what the spirit remembers and who stands beside it now:
-## {"last_frame": String, "last_allies": Array, "allies": Array} (spirit ids).
+## {"last_frame": String, "last_build": String, "last_allies": Array, "allies": Array} (spirit ids).
 static func preference(catalog: Catalog, spirit_def: Dictionary, loadout: Dictionary, history: Dictionary) -> Dictionary:
 	var temperament: Dictionary = catalog.temperaments.get(String(spirit_def.get("temperament", "")), {})
 	if temperament.is_empty():
 		return {"active": false, "label": "", "text": "", "bonus": {}}
 	var active: bool = false
-	if temperament.get("prefers_new_frame", false):
+	if temperament.get("prefers_new_build", false):
+		active = build_key(loadout) != String(history.get("last_build", ""))
+	elif temperament.get("prefers_new_frame", false):
 		active = String(loadout.frame) != String(history.get("last_frame", ""))
 	elif temperament.has("prefers_row"):
 		active = String(loadout.row) == String(temperament.prefers_row)
@@ -61,6 +63,12 @@ static func preference(catalog: Catalog, spirit_def: Dictionary, loadout: Dictio
 			if tag in tags:
 				active = true
 	return {"active": active, "label": temperament.label, "text": temperament.text, "bonus": temperament.bonus}
+
+
+## The parts a golem is built from, as one string a spirit remembers between
+## battles (Restless spirits prefer a change): "frame/arms/legs/material/sigil".
+static func build_key(loadout: Dictionary) -> String:
+	return "/".join([loadout.frame, loadout.arms, loadout.legs, loadout.material, String(loadout.get("sigil", ""))])
 
 
 ## Whether a spirit at `level` has grown its second trait.
@@ -93,6 +101,9 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 	var pref: Dictionary = {"active": false, "label": "", "text": "", "bonus": {}} if wild 		else preference(catalog, spirit_def, loadout, history)
 	if pref.active:
 		breakdown.append({"label": pref.label + " preference", "stats": pref.bonus})
+	var by_frame: Dictionary = trait_def.get("by_frame", {}).get(frame.id, {})
+	if not by_frame.is_empty():
+		breakdown.append({"label": "%s (%s)" % [trait_def.name, frame.name], "stats": by_frame})
 	if row == "front" and not trait_def.get("front_row", {}).is_empty():
 		breakdown.append({"label": trait_def.name + " (front row)", "stats": trait_def.front_row})
 	var stats: Dictionary = {}
@@ -129,6 +140,7 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		"material": material.id,
 		"reaction": reaction,
 		"sigil": sigil.get("id", ""),
+		"finish": String(loadout.get("finish", "")),
 		"stats": stats,
 		"breakdown": breakdown,
 		"preference": pref,

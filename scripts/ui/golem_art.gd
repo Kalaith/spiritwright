@@ -44,6 +44,8 @@ var base: Color
 var trim: Color
 var fill_alpha: float
 var element: Color
+## A Crucible vessel finish: trim recoloured and a halo round the core (alpha 0 for none).
+var finish: Color = Color(0, 0, 0, 0)
 var time: float
 var frame: String
 var torso: Array
@@ -51,7 +53,7 @@ var torso: Array
 var lift: float = 0.0
 
 
-## look: {frame, arms, legs, material, reaction, element_color, team_color, glyph}
+## look: {frame, arms, legs, material, reaction, element_color, team_color, glyph, finish_color (optional)}
 ## opts: {flash, alpha, shadow, time}
 static func draw(canvas: CanvasItem, at: Vector2, scale: float, facing: float, look: Dictionary, opts: Dictionary = {}) -> void:
 	var art: RefCounted = load("res://scripts/ui/golem_art.gd").new()
@@ -68,6 +70,9 @@ static func draw(canvas: CanvasItem, at: Vector2, scale: float, facing: float, l
 	art.trim = palette.trim.lerp(Color.WHITE, flash)
 	art.fill_alpha = lerpf(palette.fill_alpha, 1.0, flash)
 	art.element = look.get("element_color", Color.WHITE)
+	art.finish = look.get("finish_color", Color(0, 0, 0, 0))
+	if art.finish.a > 0.0:
+		art.trim = art.trim.lerp(art.finish, 0.7)
 	art._paint(look, opts)
 
 
@@ -298,6 +303,8 @@ func _texture(q: Array) -> void:
 func _core(glyph: String) -> void:
 	var y: float = -62.0 if frame == "conduit" else -60.0
 	var pulse: float = 0.5 + 0.5 * sin(time * 2.6)
+	if finish.a > 0.0:
+		glow(Vector2(0, y), 30.0 + pulse * 6.0, Color(finish, 0.4))
 	glow(Vector2(0, y), 15.0 + pulse * 4.0, Color(element, 0.45 + pulse * 0.15))
 	_circle(0, y, 10, trim)
 	ci.draw_circle(_p(0, y), 8.0 * s, _c(element))
@@ -356,8 +363,12 @@ func _front_arm(arms: String) -> void:
 static func look_for(catalog: RefCounted, golem: Dictionary, team: Color) -> Dictionary:
 	var element: String = String(catalog.spirit(String(golem.spirit)).element)
 	var reaction: Dictionary = catalog.reaction(String(golem.material), element)
-	return {
+	var look: Dictionary = {
 		"frame": golem.frame, "arms": golem.arms, "legs": golem.legs, "material": golem.material,
 		"reaction": String(reaction.get("id", "")), "team_color": team,
 		"element_color": catalog.element_color(element), "glyph": catalog.element_glyph(element),
 	}
+	var finish: Dictionary = catalog.crucible_index.finishes.get(String(golem.get("finish", "")), {})
+	if not finish.is_empty():
+		look["finish_color"] = Color(String(finish.color))
+	return look

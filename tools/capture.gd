@@ -158,10 +158,56 @@ func _run() -> void:
 	main.screen._details.get_parent().scroll_vertical = 100000
 	await _seconds(1.0)
 	await _shot("22_map_new_game_plus")
+	await _crucible()
 	await _gallery()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)
 	quit()
+
+
+## The Crucible, open now the finale has fallen: scouting both Royales, a run
+## under way, a battle and its result, the records and the finishes they bring.
+func _crucible() -> void:
+	main.show_crucible()
+	await _seconds(1.0)
+	await _shot("23_crucible_classic")
+	main.screen._select(4)
+	await _seconds(0.5)
+	await _shot("24_crucible_scout")
+	main.screen._set_mode("shifting")
+	await _seconds(0.5)
+	await _shot("25_crucible_shifting")
+	main.screen._set_mode("classic")
+	main.screen._begin()
+	main.start_crucible_battle()
+	await _seconds(5.0)
+	await _shot("26_crucible_battle")
+	main.screen._skip()
+	main.screen.finished.emit()
+	await _frames(10)
+	await _shot("27_crucible_result")
+	main.show_crucible()
+	await _seconds(0.5)
+	await _shot("28_crucible_run")
+	main.progression.crucible.abandon()
+	main.progression.crucible.milestones = main.catalog.crucible_index.milestones.keys()
+	main.progression.spirits["vesper"] = main.progression._fresh_spirit(20)
+	main.progression.set_crucible_title("champion")
+	var finishes: Array = main.catalog.crucible_index.finishes.keys()
+	for slot in range(main.progression.team.size()):
+		main.progression.set_slot(slot, "finish", finishes[slot % finishes.size()])
+	main.progression.set_slot(0, "spirit", "vesper")
+	main.show_crucible()
+	main.screen._select(-1)
+	await _seconds(0.5)
+	await _shot("29_crucible_records")
+	main.show_laboratory(true)
+	await _frames(10)
+	await _shot("30_laboratory_finishes")
+	main.show_codex()
+	main.screen._show("Crucible")
+	await _frames(10)
+	await _shot("31_codex_crucible")
 
 
 ## Every material in every frame, then every element reaction, side by side.

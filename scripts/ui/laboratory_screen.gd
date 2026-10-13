@@ -15,6 +15,8 @@ const Catalog = preload("res://scripts/core/catalog.gd")
 var catalog: RefCounted
 var progression: RefCounted
 var stage_id: String = ""
+## The button back to where the laboratory was opened from ("Map" or "Crucible").
+var back_text: String = "Map"
 var _cards: GridContainer
 var _roster: VBoxContainer
 var _status: Label
@@ -34,10 +36,12 @@ func _ready() -> void:
 	column.add_child(bar)
 	bar.add_child(Style.label("Golem Laboratory", 26, Style.GOLD))
 	_status = Style.wrapped("Hover a stat to see where it comes from. Changes save automatically.", 14)
+	if not progression.crucible.run.is_empty():
+		_status.text += " A Crucible run is under way with its team locked: changes here wait for the next run."
 	_status.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_status.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_status)
-	bar.add_child(Style.button("Map", func(): map_requested.emit()))
+	bar.add_child(Style.button(back_text, func(): map_requested.emit()))
 	if not stage_id.is_empty():
 		bar.add_child(Style.button("Fight: " + catalog.stages[stage_id].name, func(): fight_requested.emit(stage_id), 18))
 	var body := Style.hbox(12)

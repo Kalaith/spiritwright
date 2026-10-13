@@ -32,7 +32,7 @@ Read before working:
 - Base resolution 1280x720 with `canvas_items` stretch and `expand` aspect. Layouts must work with mouse and touch; do not rely on hover alone for anything essential.
 - UI text is ASCII only: the web build's default font lacks arrows, bullets and similar glyphs.
 - Static typing where practical; load dependencies with `const X = preload("res://...")`. Tabs, LF, UTF-8 (`.editorconfig`). Keep scripts under ~400 lines; split by responsibility before they grow past that.
-- Data lives in `data/` (`spirits.json`, `parts.json`, `campaign.json`, `balance.json`) with stable ids and `schema_version`, validated at startup by `scripts/core/catalog.gd`. Missing or mistyped data fails fast; no silent defaults in code.
+- Data lives in `data/` (`spirits.json`, `parts.json`, `campaign.json`, `balance.json`, `crucible.json`) with stable ids and `schema_version`, validated at startup by `scripts/core/catalog.gd`. Missing or mistyped data fails fast; no silent defaults in code.
 - Combat effects are data-driven (`{"on": "hit", "do": "status", ...}`) rather than bespoke code per spirit.
 - `scripts/core/progression.gd` is the single owner of persistent state and validates every change. Saves go to `user://spiritwright_save.json` with schema validation, staged writes and a backup.
 - Do not overwrite original art.

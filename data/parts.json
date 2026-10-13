@@ -329,6 +329,13 @@
 			"text": "Old ruin stone. Sturdy and plain.",
 			"stats": { "def": 1 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_stone",
+					"name": "Echoing Stone",
+					"text": "The stone remembers old walls: HP +4, DEF +1.",
+					"stats": { "hp": 4, "def": 1 },
+					"effects": []
+				},
 				"earth": {
 					"id": "living_rock",
 					"name": "Living Rock",
@@ -344,6 +351,13 @@
 			"text": "Light, springy timber. Quicker and roomier than stone, but it splinters.",
 			"stats": { "hp": 4, "spd": 1, "def": -1 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_grove",
+					"name": "Echoing Grove",
+					"text": "The timber shelters the echo: Regen for its first 2 turns.",
+					"stats": {},
+					"effects": [{ "on": "battle_start", "do": "status", "status": "regen", "amount": 2, "to": "self" }]
+				},
 				"fire": {
 					"id": "kindling",
 					"name": "Kindling",
@@ -366,6 +380,13 @@
 			"text": "Hard, cold and slow to move. Shrugs off blows and spells alike.",
 			"stats": { "def": 2, "res": 1, "spd": -2 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_frost",
+					"name": "Echoing Frost",
+					"text": "Its attacks chill the target a little (-10 gauge).",
+					"stats": {},
+					"effects": [{ "on": "hit", "do": "haste", "flat": -10, "to": "target" }]
+				},
 				"water": {
 					"id": "glacier",
 					"name": "Glacier",
@@ -396,6 +417,13 @@
 			"text": "Heavy cast metal from the old bells. Hits hard and holds, but conducts spells.",
 			"stats": { "def": 2, "str": 1, "spd": -1, "res": -1 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_bell",
+					"name": "Echoing Bell",
+					"text": "Rings when struck: Ward of 2 (then rests for 2 turns).",
+					"stats": {},
+					"effects": [{ "on": "hurt", "do": "ward", "flat": 2, "to": "self", "cooldown": 2 }]
+				},
 				"lightning": {
 					"id": "live_wire",
 					"name": "Live Wire",
@@ -411,6 +439,13 @@
 			"text": "Strange humming crystal grown in the vault. Focuses spirit power, but it is brittle.",
 			"stats": { "mag": 2, "res": 2, "hp": -6 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_prism",
+					"name": "Echoing Prism",
+					"text": "The crystal hums with borrowed power and loses its brittleness: MAG +2, HP +4.",
+					"stats": { "mag": 2, "hp": 4 },
+					"effects": []
+				},
 				"wind": {
 					"id": "wind_chime",
 					"name": "Wind Chime",
@@ -426,6 +461,13 @@
 			"text": "Black, waterlogged fen timber. Heavy and roomy, it soaks up spells but moves slowly.",
 			"stats": { "hp": 8, "res": 2, "def": -1, "spd": -1 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_mire",
+					"name": "Echoing Mire",
+					"text": "Its attacks leave the target Soaked for 1 turn.",
+					"stats": {},
+					"effects": [{ "on": "hit", "do": "status", "status": "soaked", "amount": 1, "to": "target" }]
+				},
 				"nature": {
 					"id": "mangrove",
 					"name": "Mangrove",
@@ -448,6 +490,13 @@
 			"text": "Glassy volcanic rock from the kilns. Razor edges hit hard, but it chips.",
 			"stats": { "str": 2, "mag": 1, "def": 1, "hp": -4 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_shard",
+					"name": "Echoing Shard",
+					"text": "Its attacks set the target Burning (+1 stack).",
+					"stats": {},
+					"effects": [{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }]
+				},
 				"fire": {
 					"id": "magma_heart",
 					"name": "Magma Heart",
@@ -470,6 +519,13 @@
 			"text": "Sand fused by lightning on the Storm Crown. Crackles with power, but holds little back.",
 			"stats": { "mag": 3, "spd": 1, "res": -1, "hp": -2 },
 			"reactions": {
+				"echo": {
+					"id": "echoing_spark",
+					"name": "Echoing Spark",
+					"text": "Leaps forward as battle begins (+25 gauge).",
+					"stats": {},
+					"effects": [{ "on": "battle_start", "do": "haste", "flat": 25, "to": "self" }]
+				},
 				"lightning": {
 					"id": "thunderglass",
 					"name": "Thunderglass",

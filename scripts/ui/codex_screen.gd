@@ -1,7 +1,8 @@
 extends Control
 ## The Codex: the whole collection at a glance. Spirits (found and still to
-## find, and exactly how), every stage's challenges, and the feats with this
-## playthrough's record, so the player always has several goals in view.
+## find, and exactly how), every stage's challenges, the feats with this
+## playthrough's record, and the Crucible's encounters and milestones, so the
+## player always has several goals in view.
 
 signal map_requested
 signal stage_requested(stage_id: String)
@@ -10,7 +11,7 @@ const Style = preload("res://scripts/ui/style.gd")
 const CodexText = preload("res://scripts/ui/codex_text.gd")
 const SpiritCard = preload("res://scripts/ui/codex_spirit_card.gd")
 const Challenges = preload("res://scripts/core/challenges.gd")
-const TABS: Array[String] = ["Spirits", "Challenges", "Feats"]
+const TABS: Array[String] = ["Spirits", "Challenges", "Feats", "Crucible"]
 
 var catalog: RefCounted
 var progression: RefCounted
@@ -80,6 +81,8 @@ func _show(tab_name: String) -> void:
 			_challenges()
 		"Feats":
 			_feats()
+		"Crucible":
+			_crucible()
 
 
 func _spirits() -> void:
@@ -176,3 +179,35 @@ func _feats() -> void:
 		var reward: String = CodexText.reward_line(catalog, feat)
 		if not reward.is_empty():
 			box.add_child(Style.wrapped(reward, 13, Style.GOLD))
+
+
+## Every Crucible encounter as a Codex entry (its test and story once beaten,
+## only its name before), and the milestones.
+func _crucible() -> void:
+	var record: RefCounted = progression.crucible
+	if not progression.crucible_open():
+		_content.add_child(Style.wrapped(catalog.crucible.unlock.text + " It pits one locked team against every boss in turn.", 15))
+	var all: Array = catalog.crucible.encounters + catalog.crucible.finals
+	_content.add_child(Style.label("Encounters beaten  %d of %d" % [record.seen.size(), all.size()], 20, Style.GOLD))
+	var grid := GridContainer.new()
+	grid.columns = 2
+	grid.add_theme_constant_override("h_separation", 16)
+	grid.add_theme_constant_override("v_separation", 8)
+	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.add_child(grid)
+	for entry in all:
+		var box := Style.vbox(2)
+		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		box.custom_minimum_size.x = 560
+		var beaten: bool = entry.id in record.seen
+		var kind: String = "Final" if entry.final else "Encounter"
+		box.add_child(Style.label("%s %s  (%s, tests %s)" % ["[x]" if beaten else "[ ]", entry.name, kind, entry.test], 16,
+			Style.GOOD if beaten else Style.TEXT))
+		box.add_child(Style.wrapped(entry.text if beaten else "Beat it in the Crucible to record it here.", 13))
+		grid.add_child(box)
+	_content.add_child(Style.label("Milestones  %d of %d" % [record.milestones.size(), catalog.crucible_index.milestones.size()], 20, Style.GOLD))
+	for id in catalog.crucible_index.milestones:
+		var milestone: Dictionary = catalog.crucible_index.milestones[id]
+		var done: bool = id in record.milestones
+		_content.add_child(Style.wrapped("%s %s: %s %s" % ["[x]" if done else "[ ]", milestone.name, milestone.text,
+			CodexText.reward_line(catalog, milestone)], 14, Style.GOOD if done else Style.TEXT))

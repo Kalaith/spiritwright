@@ -59,6 +59,11 @@ var challenges: Dictionary = {}
 var challenge_stage: Dictionary = {}
 ## Feat id -> entry: rules on a whole playthrough (see challenges.gd).
 var feats: Dictionary = {}
+## crucible.json as loaded, every encounter and final by id, and the tiers,
+## milestones, finishes and titles by id (see crucible_rules.gd).
+var crucible: Dictionary = {}
+var crucible_encounters: Dictionary = {}
+var crucible_index: Dictionary = {"tiers": {}, "milestones": {}, "finishes": {}, "titles": {}}
 var errors: Array[String] = []
 
 
@@ -68,6 +73,7 @@ func load_all() -> bool:
 	var spirit_data: Dictionary = _read("res://data/spirits.json")
 	var part_data: Dictionary = _read("res://data/parts.json")
 	campaign = _read("res://data/campaign.json")
+	crucible = _read("res://data/crucible.json")
 	if not errors.is_empty():
 		return false
 	elements = spirit_data.get("elements", {})
@@ -83,7 +89,10 @@ func load_all() -> bool:
 		part_order[kind] = []
 		for entry in part_data.get(kind, []):
 			_add_part(kind, entry)
+	for id in player_spirit_ids:
+		_validate_by_frame(spirits[id])
 	load("res://scripts/core/campaign_rules.gd").validate(self)
+	load("res://scripts/core/crucible_rules.gd").validate(self)
 	_validate_balance()
 	for message in errors:
 		push_error("Spiritwright data: " + message)
@@ -185,6 +194,20 @@ func _add_spirit(entry: Variant, playable: bool) -> void:
 	spirits[id] = entry
 	if playable:
 		player_spirit_ids.append(id)
+
+
+## A trait's optional by_frame: frame id -> stats the spirit gains in that frame.
+func _validate_by_frame(spirit_def: Dictionary) -> void:
+	if not spirit_def.get("trait") is Dictionary:
+		return
+	var by_frame: Variant = spirit_def["trait"].get("by_frame", {})
+	if not by_frame is Dictionary:
+		errors.append("Spirit %s by_frame must be an object" % spirit_def.id)
+		return
+	for frame_id in by_frame:
+		if part("frames", frame_id).is_empty():
+			errors.append("Spirit %s by_frame names an unknown frame %s" % [spirit_def.id, frame_id])
+		_validate_stat_block("spirit %s by_frame %s" % [spirit_def.id, frame_id], by_frame[frame_id])
 
 
 func _add_part(kind: String, entry: Variant) -> void:

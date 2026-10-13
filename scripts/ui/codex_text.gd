@@ -22,6 +22,9 @@ static func source_text(catalog: RefCounted, source: Dictionary) -> String:
 		"feat":
 			var feat: Dictionary = catalog.feats[source.id]
 			return "Feat - %s: %s" % [feat.name, feat.text]
+		"crucible":
+			var milestone: Dictionary = catalog.crucible_index.milestones[source.id]
+			return "Crucible - %s: %s" % [milestone.name, milestone.text]
 	return ""
 
 

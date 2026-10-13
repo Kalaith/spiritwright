@@ -1,6 +1,7 @@
 extends Control
 ## Owns the catalog and the persistent progression and swaps between screens:
-## title, region map, golem laboratory, battle playback and results.
+## title, region map, golem laboratory, battle playback and results, the
+## Codex and the Shifting Crucible.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Progression = preload("res://scripts/core/progression.gd")
@@ -12,6 +13,8 @@ const LaboratoryScreen = preload("res://scripts/ui/laboratory_screen.gd")
 const BattleView = preload("res://scripts/ui/battle_view.gd")
 const ResultScreen = preload("res://scripts/ui/result_screen.gd")
 const CodexScreen = preload("res://scripts/ui/codex_screen.gd")
+const CrucibleScreen = preload("res://scripts/ui/crucible_screen.gd")
+const Crucible = preload("res://scripts/core/crucible.gd")
 
 var catalog := Catalog.new()
 var progression: Progression
@@ -79,6 +82,9 @@ func show_map(_notice: String = "") -> void:
 	map.title_requested.connect(show_title)
 	map.new_game_plus_requested.connect(_new_game_plus)
 	map.codex_requested.connect(func(): _codex_from(map))
+	map.crucible_requested.connect(func():
+		selected_stage = map.selected
+		show_crucible())
 	_swap(map, show_title)
 
 
@@ -112,14 +118,68 @@ func _laboratory_from(map: Control) -> void:
 	show_laboratory()
 
 
-func show_laboratory() -> void:
+func show_laboratory(from_crucible: bool = false) -> void:
 	var laboratory := LaboratoryScreen.new()
 	laboratory.catalog = catalog
 	laboratory.progression = progression
-	laboratory.stage_id = selected_stage
-	laboratory.map_requested.connect(show_map)
+	var back: Callable = show_crucible if from_crucible else show_map
+	if from_crucible:
+		laboratory.back_text = "Crucible"
+	else:
+		laboratory.stage_id = selected_stage
+	laboratory.map_requested.connect(back)
 	laboratory.fight_requested.connect(start_battle)
-	_swap(laboratory, show_map)
+	_swap(laboratory, back)
+
+
+func show_crucible() -> void:
+	if not progression.crucible_open():
+		show_map()
+		return
+	var crucible := CrucibleScreen.new()
+	crucible.catalog = catalog
+	crucible.progression = progression
+	crucible.fight_requested.connect(start_crucible_battle)
+	crucible.laboratory_requested.connect(func(): show_laboratory(true))
+	crucible.map_requested.connect(show_map)
+	_swap(crucible, show_map)
+
+
+## Fights the Crucible run's next encounter: the locked team and every enemy
+## at the tier's level, with the step's own seed.
+func start_crucible_battle() -> void:
+	var run: Dictionary = progression.crucible.run
+	if run.is_empty():
+		return
+	var index: int = int(run.next)
+	var entry: Dictionary = catalog.crucible_encounters[run.sequence[index].encounter]
+	var outcome: Dictionary = BattleSim.new().run(catalog, Crucible.player_team(catalog, run),
+		Crucible.enemy_team(catalog, run.sequence[index], run.tier), Crucible.battle_seed(catalog, run, index))
+	var view := BattleView.new()
+	view.catalog = catalog
+	view.stage = {"id": entry.id, "name": "%s (%d of %d)" % [entry.name, index + 1, run.sequence.size()]}
+	view.outcome = outcome
+	view.finished.connect(func(): _show_crucible_result(view.stage, outcome))
+	_swap(view, func(): _show_crucible_result(view.stage, outcome))
+
+
+func _show_crucible_result(stage: Dictionary, outcome: Dictionary) -> void:
+	var result := ResultScreen.new()
+	result.catalog = catalog
+	result.stage = stage
+	result.outcome = outcome
+	result.report = progression.apply_crucible(outcome.result)
+	result.crucible = true
+	result.back_text = "Crucible"
+	var run: Dictionary = progression.crucible.run
+	if not run.is_empty():
+		result.next_name = catalog.crucible_encounters[run.sequence[int(run.next)].encounter].name
+	if not progression.save_game():
+		result.save_error = progression.last_error
+	result.map_requested.connect(show_crucible)
+	result.laboratory_requested.connect(func(): show_laboratory(true))
+	result.next_requested.connect(start_crucible_battle)
+	_swap(result, show_crucible)
 
 
 func start_battle(stage_id: String) -> void:

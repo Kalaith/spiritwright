@@ -8,12 +8,13 @@ signal fight_requested(stage_id: String)
 signal title_requested
 signal new_game_plus_requested
 signal codex_requested
+signal crucible_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
-const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
 const CampaignMap = preload("res://scripts/ui/campaign_map.gd")
 const CodexText = preload("res://scripts/ui/codex_text.gd")
+const EnemyCard = preload("res://scripts/ui/enemy_card.gd")
 
 var catalog: RefCounted
 var progression: RefCounted
@@ -56,6 +57,8 @@ func _ready() -> void:
 	_region_text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_region_text)
 	bar.add_child(_lab_button())
+	if progression.crucible_open():
+		bar.add_child(Style.button("Crucible", func(): crucible_requested.emit()))
 	bar.add_child(Style.button("Codex", func(): codex_requested.emit()))
 	bar.add_child(Style.button("Title", func(): title_requested.emit()))
 	var body := Style.hbox(12)
@@ -118,6 +121,8 @@ func _show_region(index: int) -> void:
 	_region_count.text += "  -  Spirits %d of %d" % [progression.spirits.size(), catalog.player_spirit_ids.size()]
 	if progression.cycle > 0:
 		_region_count.text += "  -  New Game+ %d" % progression.cycle
+	if not progression.crucible.title.is_empty():
+		_region_count.text += "  -  " + catalog.crucible_index.titles[progression.crucible.title].name
 	_prev.disabled = index == 0
 	_next.disabled = index + 1 >= catalog.regions().size() or not _region_reached(index + 1)
 	if _map != null:
@@ -162,7 +167,7 @@ func _select(stage_id: String) -> void:
 	_details.add_child(Style.wrapped(stage.text, 15, Style.TEXT))
 	_details.add_child(Style.label("Enemy team", 17, Style.MUTED))
 	for golem in progression.enemy_team(stage):
-		_details.add_child(_enemy_row(golem))
+		_details.add_child(EnemyCard.make(catalog, golem))
 	var level: int = progression.stage_level(stage)
 	var xp_factor: float = catalog.num("xp.repeat_win" if state == "cleared" else "xp.first_clear")
 	_details.add_child(Style.wrapped("%s %d XP per Lv %d spirit; lower-level spirits earn more, higher-level less." % [
@@ -237,31 +242,6 @@ func _new_game_plus_offer() -> Control:
 	box.add_child(Style.button("Begin New Game+", func(): confirm.show(), 16))
 	box.add_child(confirm)
 	return box
-
-
-func _enemy_row(golem: Dictionary) -> Control:
-	var row := Style.hbox(8)
-	var preview := GolemPreview.new()
-	preview.custom_minimum_size = Vector2(84, 92)
-	preview.animated = true
-	preview.setup(GolemArt.look_for(catalog, golem, Style.ENEMY), 0.62, -1.0)
-	row.add_child(preview)
-	var info := Style.vbox(1)
-	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(info)
-	info.add_child(Style.label("%s  Lv %d  %s" % [golem.name, golem.level, catalog.element_label(golem.element)], 15, Style.TEXT))
-	var build: String = "%s %s / %s / %s. %s" % [catalog.part("materials", golem.material).name,
-		catalog.part("frames", golem.frame).name.trim_suffix(" Frame"),
-		catalog.part("arms", golem.arms).name, catalog.part("legs", golem.legs).name, Style.cell_name(golem.row, golem.lane)]
-	info.add_child(Style.wrapped(build, 13))
-	if not golem.reaction.is_empty():
-		info.add_child(Style.wrapped("%s: %s" % [golem.reaction.name, golem.reaction.text], 12, catalog.element_color(golem.element)))
-	var trait_def: Dictionary = catalog.spirit(golem.spirit)["trait"]
-	info.add_child(Style.wrapped("%s: %s" % [trait_def.name, trait_def.text], 12))
-	if not String(golem.sigil).is_empty():
-		var sigil: Dictionary = catalog.part("sigils", golem.sigil)
-		info.add_child(Style.wrapped("%s: %s" % [sigil.name, sigil.text], 12, Style.GOLD.darkened(0.15)))
-	return row
 
 
 func _team_line() -> String:

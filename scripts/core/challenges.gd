@@ -118,9 +118,9 @@ static func newly_mastered(catalog: Catalog, newly: Array, met: Array) -> Array:
 
 
 ## Every way each playable spirit can join, by spirit id: a list of
-## {"tier", "kind", "id"} where kind is "start", "stage", "challenge" or "feat"
-## (id names it) and tier is "play" (start or a stage's first clear),
-## "challenge" or "extreme" (an extreme challenge or a feat).
+## {"tier", "kind", "id"} where kind is "start", "stage", "challenge", "feat" or "crucible"
+## (id names it; a Crucible milestone for "crucible") and tier is "play" (start or a stage's first clear),
+## "challenge" or "extreme" (an extreme challenge, a feat or a Crucible milestone).
 static func spirit_sources(catalog: Catalog) -> Dictionary:
 	var found: Dictionary = {}
 	var add := func(spirit_id: String, tier: String, kind: String, id: String) -> void:
@@ -136,6 +136,9 @@ static func spirit_sources(catalog: Catalog) -> Dictionary:
 	for entry in catalog.feats.values():
 		for spirit_id in entry.get("rewards", {}).get("spirits", []):
 			add.call(spirit_id, "extreme", "feat", entry.id)
+	for entry in catalog.crucible_index.milestones.values():
+		for spirit_id in entry.rewards.get("spirits", []):
+			add.call(spirit_id, "extreme", "crucible", entry.id)
 	return found
 
 

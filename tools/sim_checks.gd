@@ -2,13 +2,15 @@ extends SceneTree
 ## Headless checks for the data and the simulation. Prints PASS/FAIL lines and
 ## exits non-zero on failure. Run:
 ##   godot --headless --path . --script res://tools/sim_checks.gd
-## Pass `-- --report` to also print every stage's outcome for balance work.
+## Pass `-- --report` to also print every stage's outcome and the Crucible's for balance
+## work, or `-- --crucible` for the Crucible alone.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
 const Progression = preload("res://scripts/core/progression.gd")
 const BattleSim = preload("res://scripts/sim/battle_sim.gd")
 const CollectionChecks = preload("res://tools/checks_collection.gd")
+const CrucibleChecks = preload("res://tools/checks_crucible.gd")
 
 var failures: int = 0
 
@@ -26,8 +28,11 @@ func _init() -> void:
 		_check_board(catalog)
 		_check_arsenal(catalog)
 		CollectionChecks.new(self, catalog).run()
+		CrucibleChecks.new(self, catalog).run()
 		if "--report" in OS.get_cmdline_user_args():
 			_report(catalog)
+		if "--report" in OS.get_cmdline_user_args() or "--crucible" in OS.get_cmdline_user_args():
+			CrucibleChecks.new(self, catalog).report()
 	print("%s (%d failure(s))" % ["ALL PASS" if failures == 0 else "FAILED", failures])
 	quit(1 if failures > 0 else 0)
 

@@ -1,18 +1,28 @@
 extends Control
 ## After a battle: who did what (so the player can see why it went this way),
-## experience and level-ups, and anything unlocked.
+## experience and level-ups, and anything unlocked; or, after a Crucible
+## encounter, how the run stands.
 
+## Back to the map, or to the Crucible (see back_text).
 signal map_requested
 signal laboratory_requested
 signal retry_requested
+## The Crucible run's next encounter.
+signal next_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const CodexText = preload("res://scripts/ui/codex_text.gd")
+const CrucibleLines = preload("res://scripts/ui/crucible_result.gd")
 
 var catalog: RefCounted
 var stage: Dictionary = {}
 var outcome: Dictionary = {}
+## Progression.apply_battle's report, or Progression.apply_crucible's when `crucible`.
 var report: Dictionary = {}
+var crucible: bool = false
+var back_text: String = "Map"
+## The Crucible run's next encounter, or "" once the run has ended.
+var next_name: String = ""
 ## Ids of every challenge met so far, to list the ones still open on this stage.
 var progression_challenges: Array = []
 var save_error: String = ""
@@ -42,17 +52,45 @@ func _ready() -> void:
 	var heading := Style.hbox(14)
 	column.add_child(heading)
 	heading.add_child(Style.label({"win": "Victory", "loss": "Defeat"}.get(outcome.result, "Time up"), 34, Style.GOOD if won else Style.BAD))
-	var subtitle: String = stage.name
-	if report.first_clear:
-		subtitle += " cleared for the first time!"
-	elif not won:
-		subtitle += ": your spirits return to the laboratory, wiser for it."
-	var sub := Style.label(subtitle, 17, Style.MUTED)
+	var sub := Style.label(_subtitle(), 17, Style.MUTED)
 	sub.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	heading.add_child(sub)
 	column.add_child(_why_table())
 	column.add_child(Style.wrapped(_insight(), 15, Style.TEXT))
 	column.add_child(HSeparator.new())
+	if crucible:
+		CrucibleLines.fill(column, catalog, report)
+	else:
+		_campaign_lines(column)
+	if not save_error.is_empty():
+		column.add_child(Style.wrapped(save_error, 14, Style.BAD))
+	var buttons := Style.hbox(10)
+	buttons.alignment = BoxContainer.ALIGNMENT_END
+	if not crucible:
+		buttons.add_child(Style.button("Retry", func(): retry_requested.emit()))
+	buttons.add_child(Style.button("Laboratory", func(): laboratory_requested.emit()))
+	var back := Style.button(back_text, func(): map_requested.emit(), 18)
+	buttons.add_child(back)
+	var focus: Button = back
+	if not next_name.is_empty():
+		focus = Style.button("Next: " + next_name, func(): next_requested.emit(), 18)
+		buttons.add_child(focus)
+	outer.add_child(buttons)
+	focus.call_deferred("grab_focus")
+
+
+func _subtitle() -> String:
+	if crucible:
+		return CrucibleLines.subtitle(catalog, report)
+	if report.first_clear:
+		return stage.name + " cleared for the first time!"
+	if outcome.result != "win":
+		return stage.name + ": your spirits return to the laboratory, wiser for it."
+	return stage.name
+
+
+## Experience, level-ups, challenges, masteries, feats and unlocks from a campaign stage.
+func _campaign_lines(column: VBoxContainer) -> void:
 	for line in report.xp.filter(func(l): return not l.get("resting", false)):
 		var spirit: Dictionary = catalog.spirit(line.spirit)
 		var text: String = "%s  +%d XP" % [spirit.name, int(line.gained)]
@@ -87,16 +125,6 @@ func _ready() -> void:
 		column.add_child(Style.wrapped(lines[1], 13))
 	if report.first_clear and stage.has("clear_text"):
 		column.add_child(Style.wrapped(stage.clear_text, 15, Style.GOLD))
-	if not save_error.is_empty():
-		column.add_child(Style.wrapped(save_error, 14, Style.BAD))
-	var buttons := Style.hbox(10)
-	buttons.alignment = BoxContainer.ALIGNMENT_END
-	buttons.add_child(Style.button("Retry", func(): retry_requested.emit()))
-	buttons.add_child(Style.button("Laboratory", func(): laboratory_requested.emit()))
-	var map := Style.button("Map", func(): map_requested.emit(), 18)
-	buttons.add_child(map)
-	outer.add_child(buttons)
-	map.call_deferred("grab_focus")
 
 
 func _why_table() -> GridContainer:

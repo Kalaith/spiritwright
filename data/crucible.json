@@ -1,0 +1,340 @@
+{
+	"schema_version": 1,
+	"unlock": {
+		"stage": "storm_crown",
+		"text": "The Crucible opens once the Storm Crown has fallen."
+	},
+	"encounters_per_run": 6,
+	"classic": { "encounters": ["overgrown_court", "unbroken_wall", "bellows", "spire_battery", "drowned_choir", "hunting_sky"], "final": "storm_reborn" },
+	"tiers": [
+		{
+			"id": "adept",
+			"name": "Adept",
+			"level": 20,
+			"enemy_bonus": 2,
+			"text": "Your golems fight at Lv 20 and every enemy 2 levels above that; bosses and champions stand higher still."
+		},
+		{
+			"id": "master",
+			"name": "Master",
+			"level": 30,
+			"enemy_bonus": 8,
+			"requires": "crucible_champion",
+			"text": "Your golems fight at Lv 30 and every enemy 8 levels above that, its boss higher still."
+		}
+	],
+	"encounters": [
+		{
+			"id": "overgrown_court",
+			"name": "The Overgrown Court",
+			"test": "Sustain",
+			"seed": 1101,
+			"text": "The Root Warden mends itself every turn while moss and reeds heal the rest. Bring enough damage to outpace the healing, or Burn and Weaken to slow it.",
+			"variants": [
+				[
+					{ "spirit": "root_warden", "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "moss_charm", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "reed_sprite", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "bogwood", "sigil": "", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "moss_wisp", "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "wood", "sigil": "moss_charm", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "moss_wisp", "frame": "conduit", "arms": "lantern", "legs": "stilts", "material": "wood", "sigil": "mending", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "reed_sprite", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "mending", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "reed_sprite", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2, "offset": -1 }
+				],
+				[
+					{ "spirit": "root_warden", "frame": "colossus", "arms": "aegis", "legs": "pillar", "material": "wood", "sigil": "mending", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "moss_wisp", "frame": "strider", "arms": "flail", "legs": "pillar", "material": "bogwood", "sigil": "moss_charm", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "reed_sprite", "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "wood", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "moss_wisp", "frame": "conduit", "arms": "lantern", "legs": "pillar", "material": "wood", "sigil": "mending", "row": "back", "lane": 0, "offset": 0 },
+					{ "spirit": "reed_sprite", "frame": "conduit", "arms": "lantern", "legs": "stilts", "material": "wood", "sigil": "", "row": "back", "lane": 2, "offset": -1 },
+					{ "spirit": "moss_wisp", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "moss_charm", "row": "back", "lane": 1, "offset": -1 }
+				]
+			]
+		},
+		{
+			"id": "drowned_choir",
+			"name": "The Drowned Choir",
+			"test": "Status",
+			"seed": 1202,
+			"text": "The Fen Mother soaks your whole team as battle begins; frost wisps freeze the soaked and volt shades jolt them. Cleansing, RES and stun-proof legs keep a team on its feet.",
+			"variants": [
+				[
+					{ "spirit": "fen_mother", "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "guard_bell", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "bog_lurker", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "bogwood", "sigil": "", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "volt_shade", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0, "offset": 0 },
+					{ "spirit": "frost_wisp", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 2, "offset": -1 },
+					{ "spirit": "volt_shade", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "fulgurite", "sigil": "", "row": "front", "lane": 2, "offset": -1 }
+				],
+				[
+					{ "spirit": "fen_mother", "frame": "bulwark", "arms": "aegis", "legs": "pillar", "material": "bogwood", "sigil": "mending", "row": "front", "lane": 1, "offset": 3 },
+					{ "spirit": "brine_sprite", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "ice", "sigil": "guard_bell", "row": "front", "lane": 2, "offset": 1 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 1, "offset": 1 },
+					{ "spirit": "spark_newt", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 0, "offset": 1 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 2, "offset": 0 },
+					{ "spirit": "volt_shade", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "fulgurite", "sigil": "", "row": "front", "lane": 0, "offset": 0 }
+				]
+			]
+		},
+		{
+			"id": "bellows",
+			"name": "The Bellows",
+			"test": "Retaliation",
+			"seed": 1303,
+			"text": "Strike the Kiln Tyrant and you catch fire; strike a slag brute and it strikes back. Teams that land many small blows pay for each one. Heavy single hits, Burn immunity and cleansing pay off.",
+			"variants": [
+				[
+					{ "spirit": "kiln_tyrant", "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "bronze", "sigil": "thorn_crest", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "slag_brute", "frame": "bulwark", "arms": "shield", "legs": "treads", "material": "stone", "sigil": "thorn_crest", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "slag_brute", "frame": "bulwark", "arms": "aegis", "legs": "pillar", "material": "bronze", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "cinder_mote", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "ember_sigil", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "cinder_mote", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "ember_sigil", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "slag_brute", "frame": "conduit", "arms": "lantern", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 2, "offset": -1 }
+				],
+				[
+					{ "spirit": "kiln_tyrant", "frame": "colossus", "arms": "aegis", "legs": "treads", "material": "obsidian", "sigil": "thorn_crest", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "slag_brute", "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "bronze", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "slag_brute", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "thorn_crest", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "cinder_mote", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "wood", "sigil": "ember_sigil", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "cinder_mote", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "obsidian", "sigil": "", "row": "back", "lane": 2, "offset": -1 }
+				]
+			]
+		},
+		{
+			"id": "unbroken_wall",
+			"name": "The Unbroken Wall",
+			"test": "Defence",
+			"seed": 1404,
+			"text": "The Crag Sovereign draws every blow and wards its team when worn down; ogres and aegis walls ward themselves when struck. Pierce, splash and magic break a wall that blunts plain blows.",
+			"variants": [
+				[
+					{ "spirit": "crag_sovereign", "frame": "colossus", "arms": "shield", "legs": "tower", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 1, "offset": 5 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0, "offset": 3 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2, "offset": 3 },
+					{ "spirit": "rubble_imp", "frame": "conduit", "arms": "lantern", "legs": "pillar", "material": "stone", "sigil": "mending", "row": "back", "lane": 1, "offset": 2 },
+					{ "spirit": "rime_ogre", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "stone", "sigil": "hunters_brand", "row": "back", "lane": 0, "offset": 2 },
+					{ "spirit": "rubble_imp", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "warden_seal", "row": "back", "lane": 2, "offset": 2 }
+				],
+				[
+					{ "spirit": "crag_sovereign", "frame": "colossus", "arms": "aegis", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 1, "offset": 5 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "ice", "sigil": "guard_bell", "row": "front", "lane": 0, "offset": 3 },
+					{ "spirit": "rubble_imp", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2, "offset": 3 },
+					{ "spirit": "rime_ogre", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "hunters_brand", "row": "back", "lane": 1, "offset": 2 },
+					{ "spirit": "rubble_imp", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "stone", "sigil": "warden_seal", "row": "back", "lane": 0, "offset": 2 },
+					{ "spirit": "rime_ogre", "frame": "conduit", "arms": "lantern", "legs": "pillar", "material": "ice", "sigil": "mending", "row": "back", "lane": 2, "offset": 2 }
+				]
+			]
+		},
+		{
+			"id": "hunting_sky",
+			"name": "The Hunting Sky",
+			"test": "Protection",
+			"seed": 1505,
+			"text": "Gale kites burst ahead and storm hawks on spider legs hunt your weakest golem wherever it stands. A team that guards its fragile golems, or has none, holds.",
+			"variants": [
+				[
+					{ "spirit": "storm_hawk", "frame": "strider", "arms": "twin_blades", "legs": "spider", "material": "bronze", "sigil": "hunters_brand", "row": "front", "lane": 1, "offset": 3 },
+					{ "spirit": "gale_kite", "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "gale_kite", "frame": "strider", "arms": "spear", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "storm_hawk", "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "hunters_brand", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "dust_devil", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "war_drum", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "gale_kite", "frame": "strider", "arms": "bow", "legs": "skates", "material": "crystal", "sigil": "", "row": "back", "lane": 2, "offset": -1 }
+				],
+				[
+					{ "spirit": "storm_hawk", "frame": "strider", "arms": "scythe", "legs": "spider", "material": "obsidian", "sigil": "leech_fang", "row": "front", "lane": 1, "offset": 3 },
+					{ "spirit": "gale_kite", "frame": "strider", "arms": "twin_blades", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "storm_hawk", "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "hunters_brand", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "gale_kite", "frame": "strider", "arms": "bow", "legs": "skates", "material": "wood", "sigil": "war_drum", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "dust_devil", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "dust_devil", "frame": "strider", "arms": "bow", "legs": "spider", "material": "fulgurite", "sigil": "", "row": "back", "lane": 2, "offset": -1 }
+				]
+			]
+		},
+		{
+			"id": "spire_battery",
+			"name": "The Spire Battery",
+			"test": "Reach",
+			"seed": 1606,
+			"text": "Cannons and storm staves fire from behind a braced aegis line. Hammers cannot reach them while the wall stands: bows, staves and spider legs strike the back row.",
+			"variants": [
+				[
+					{ "spirit": "thunder_drake", "frame": "conduit", "arms": "storm_staff", "legs": "stilts", "material": "fulgurite", "sigil": "surge_lens", "row": "back", "lane": 1, "offset": 3 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1, "offset": 0 },
+					{ "spirit": "rubble_imp", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "volt_shade", "frame": "conduit", "arms": "cannon", "legs": "stilts", "material": "crystal", "sigil": "", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "spark_newt", "frame": "conduit", "arms": "storm_staff", "legs": "stilts", "material": "fulgurite", "sigil": "hex_eye", "row": "back", "lane": 2, "offset": -1 }
+				],
+				[
+					{ "spirit": "thunder_drake", "frame": "conduit", "arms": "cannon", "legs": "stilts", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 1, "offset": 3 },
+					{ "spirit": "slag_brute", "frame": "colossus", "arms": "aegis", "legs": "tower", "material": "bronze", "sigil": "", "row": "front", "lane": 1, "offset": 0 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "ice", "sigil": "guard_bell", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "volt_shade", "frame": "conduit", "arms": "storm_staff", "legs": "stilts", "material": "fulgurite", "sigil": "", "row": "back", "lane": 0, "offset": 0 },
+					{ "spirit": "brine_sprite", "frame": "conduit", "arms": "cannon", "legs": "stilts", "material": "ice", "sigil": "", "row": "back", "lane": 2, "offset": -1 },
+					{ "spirit": "spark_newt", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0, "offset": -1 }
+				]
+			]
+		},
+		{
+			"id": "ash_pack",
+			"name": "The Ash Pack",
+			"test": "Speed",
+			"seed": 1707,
+			"text": "Ash hounds come sooner each time they are struck and dust devils hurry the pack along. Splash, Storm Coils and slowing blunt a swarm that acts twice to your once.",
+			"variants": [
+				[
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "war_drum", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "spear", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 0, "offset": -1 },
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "twin_blades", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 2, "offset": -1 },
+					{ "spirit": "dust_devil", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1, "offset": -1 },
+					{ "spirit": "dust_devil", "frame": "strider", "arms": "bow", "legs": "skates", "material": "fulgurite", "sigil": "", "row": "back", "lane": 0, "offset": -2 },
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "hunters_brand", "row": "back", "lane": 2, "offset": -2 }
+				],
+				[
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "flail", "legs": "skates", "material": "obsidian", "sigil": "war_drum", "row": "front", "lane": 1, "offset": 2 },
+					{ "spirit": "dust_devil", "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0, "offset": -1 },
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "leech_fang", "row": "front", "lane": 2, "offset": -1 },
+					{ "spirit": "dust_devil", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1, "offset": -1 },
+					{ "spirit": "ash_hound", "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0, "offset": -2 },
+					{ "spirit": "dust_devil", "frame": "conduit", "arms": "cannon", "legs": "skates", "material": "crystal", "sigil": "", "row": "back", "lane": 2, "offset": -2 }
+				]
+			]
+		},
+		{
+			"id": "rime_court",
+			"name": "The Rime Court",
+			"test": "Control",
+			"seed": 1808,
+			"text": "Frost wisps chill every golem they strike and Rime Ogres turn blows into wards. A team that only wins by acting first will find itself acting last; plan for a long, slow fight.",
+			"variants": [
+				[
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "rime_crown", "row": "front", "lane": 1, "offset": 4 },
+					{ "spirit": "frost_wisp", "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "ice", "sigil": "frost_sigil", "row": "front", "lane": 0, "offset": 1 },
+					{ "spirit": "rime_ogre", "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "frost_sigil", "row": "front", "lane": 2, "offset": 1 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 1, "offset": 1 },
+					{ "spirit": "brine_sprite", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 0, "offset": 0 },
+					{ "spirit": "frost_wisp", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 2, "offset": 0 }
+				],
+				[
+					{ "spirit": "rime_ogre", "frame": "colossus", "arms": "aegis", "legs": "pillar", "material": "ice", "sigil": "rime_crown", "row": "front", "lane": 1, "offset": 3 },
+					{ "spirit": "frost_wisp", "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "brine_sprite", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "ice", "sigil": "frost_sigil", "row": "front", "lane": 0, "offset": 0 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "brine_sprite", "frame": "strider", "arms": "bow", "legs": "pillar", "material": "ice", "sigil": "frost_sigil", "row": "back", "lane": 2, "offset": -1 }
+				]
+			]
+		}
+	],
+	"finals": [
+		{
+			"id": "storm_reborn",
+			"name": "The Storm Crown Reborn",
+			"test": "Everything",
+			"seed": 1909,
+			"text": "The Storm Sovereign hurries its whole court and its bolts leap between your golems, behind a colossus wall, soaking sprites and forked drakes. Only a team ready for every test so far will stand.",
+			"variants": [
+				[
+					{ "spirit": "storm_sovereign", "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "crystal", "sigil": "phoenix_ember", "row": "front", "lane": 1, "offset": 3 },
+					{ "spirit": "thunder_drake", "frame": "colossus", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0, "offset": 1 },
+					{ "spirit": "thunder_drake", "frame": "strider", "arms": "flail", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 2, "offset": 0 },
+					{ "spirit": "thunder_drake", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "bronze", "sigil": "surge_lens", "row": "back", "lane": 1, "offset": 1 },
+					{ "spirit": "brine_sprite", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 0, "offset": 0 },
+					{ "spirit": "brine_sprite", "frame": "conduit", "arms": "lantern", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2, "offset": 0 }
+				]
+			]
+		},
+		{
+			"id": "sovereign_echo",
+			"name": "The Sovereigns' Echo",
+			"test": "Everything",
+			"seed": 2010,
+			"text": "Every sovereign of the road answers the Crucible at once: the Warden mends, the Mother soaks, the Tyrant burns, the Crag draws your blows and the Storm hurries them all.",
+			"variants": [
+				[
+					{ "spirit": "crag_sovereign", "frame": "bulwark", "arms": "shield", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 1, "offset": 0 },
+					{ "spirit": "kiln_tyrant", "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "bronze", "sigil": "", "row": "front", "lane": 0, "offset": -1 },
+					{ "spirit": "root_warden", "frame": "bulwark", "arms": "aegis", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 2, "offset": -1 },
+					{ "spirit": "storm_sovereign", "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1, "offset": 0 },
+					{ "spirit": "fen_mother", "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 0, "offset": -1 },
+					{ "spirit": "frost_wisp", "frame": "conduit", "arms": "lantern", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2, "offset": -2 }
+				]
+			]
+		}
+	],
+	"finishes": [
+		{
+			"id": "ember_gilt",
+			"name": "Ember Gilt",
+			"color": "ff9a4a",
+			"text": "Trim edged in banked fire."
+		},
+		{
+			"id": "champion_gold",
+			"name": "Champion's Gold",
+			"color": "f2cf63",
+			"text": "Gilded joints and a bright crown, worn by a team that ran the whole gauntlet."
+		},
+		{
+			"id": "shifting_lustre",
+			"name": "Shifting Lustre",
+			"color": "b98cff",
+			"text": "A violet sheen that never sits still."
+		},
+		{
+			"id": "lean_iron",
+			"name": "Lean Iron",
+			"color": "9fd6e8",
+			"text": "Cold blue steel for a small team that would not break."
+		},
+		{
+			"id": "master_obsidian",
+			"name": "Master's Crimson",
+			"color": "ff5d7a",
+			"text": "A deep crimson glow, earned at Master."
+		}
+	],
+	"titles": [
+		{ "id": "initiate", "name": "Crucible Initiate" },
+		{ "id": "champion", "name": "Crucible Champion" },
+		{ "id": "wanderer", "name": "Shifting Wanderer" },
+		{ "id": "lean_champion", "name": "The Lean Champion" },
+		{ "id": "master", "name": "Master of the Crucible" }
+	],
+	"milestones": [
+		{
+			"id": "crucible_initiate",
+			"name": "Into the Fire",
+			"text": "Win three encounters in one Crucible run.",
+			"rules": { "reach": 3 },
+			"rewards": { "titles": ["initiate"], "finishes": ["ember_gilt"] }
+		},
+		{
+			"id": "crucible_champion",
+			"name": "Boss Royale",
+			"text": "Complete the Classic Royale: all six encounters and the final, with one team.",
+			"rules": { "complete": true, "mode": "classic" },
+			"rewards": { "spirits": ["vesper"], "titles": ["champion"], "finishes": ["champion_gold"] }
+		},
+		{
+			"id": "crucible_shifting",
+			"name": "Shifting Sands",
+			"text": "Complete a Shifting Royale.",
+			"rules": { "complete": true, "mode": "shifting" },
+			"rewards": { "titles": ["wanderer"], "finishes": ["shifting_lustre"] }
+		},
+		{
+			"id": "crucible_lean",
+			"name": "Lean Royale",
+			"text": "Complete any Royale with four golems or fewer.",
+			"rules": { "complete": true, "max_golems": 4 },
+			"rewards": { "titles": ["lean_champion"], "finishes": ["lean_iron"] }
+		},
+		{
+			"id": "crucible_master",
+			"name": "Master's Royale",
+			"text": "Complete any Royale at Master.",
+			"rules": { "complete": true, "tier": "master" },
+			"rewards": { "titles": ["master"], "finishes": ["master_obsidian"] }
+		}
+	]
+}
