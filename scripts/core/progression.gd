@@ -5,7 +5,9 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
-const SAVE_SCHEMA: int = 4
+const SAVE_SCHEMA: int = 5
+## Where newly built golems stand, in order of preference: centre lanes first.
+const BUILD_CELLS: Array[String] = ["front:1", "back:1", "front:0", "front:2", "back:0", "back:2"]
 
 var catalog: Catalog
 ## spirit id -> {"level", "xp", "last_frame", "last_allies"}
@@ -96,6 +98,7 @@ func to_dict() -> Dictionary:
 ## Schema 2 predates materials: every golem is rebuilt in the first starting
 ## material, and the materials the start and cleared stages grant unlock.
 ## Schema 3 predates golem cores: those saves already field a full team.
+## Schema 4 predates lanes: each row's golems take its centre lane first.
 func migrate(data: Variant) -> Variant:
 	if not data is Dictionary or not data.get("spirits") is Dictionary:
 		return data
@@ -118,6 +121,17 @@ func migrate(data: Variant) -> Variant:
 	if int(data.get("schema", 0)) == 3:
 		data["cores"] = 0
 		data["schema"] = 4
+	if int(data.get("schema", 0)) == 4 and data.get("team") is Array:
+		var taken: Array = []
+		for loadout in data.team:
+			if not loadout is Dictionary:
+				continue
+			for cell in BUILD_CELLS:
+				if cell.begins_with(String(loadout.get("row", "")) + ":") and not cell in taken:
+					taken.append(cell)
+					loadout["lane"] = int(cell.get_slice(":", 1))
+					break
+		data["schema"] = 5
 	return data
 
 
@@ -168,9 +182,9 @@ func valid(data: Variant) -> bool:
 		var sigil: Variant = loadout.get("sigil", "")
 		if not sigil is String or (sigil != "" and not sigil in data.unlocks.sigils):
 			return false
-		if not loadout.get("row") in Catalog.ROWS:
+		if not loadout.get("row") in Catalog.ROWS or not Catalog.valid_lane(loadout.get("lane")):
 			return false
-	return true
+	return Catalog.distinct_cells(data.team)
 
 
 func _apply(data: Dictionary) -> void:
@@ -188,6 +202,7 @@ func _apply(data: Dictionary) -> void:
 	team = data.team.duplicate(true)
 	for loadout in team:
 		loadout["sigil"] = String(loadout.get("sigil", ""))
+		loadout["lane"] = int(loadout.lane)
 	cores = int(data.cores)
 	cleared = data.cleared.duplicate()
 	battles = int(data.battles)
@@ -233,7 +248,8 @@ func enemy_team(stage: Dictionary) -> Array:
 
 
 ## Changes one loadout field. Choosing a spirit already in another slot swaps
-## the two. Returns false when the choice is not unlocked.
+## the two, and so does moving to a cell ("front:0") another golem stands in.
+## Returns false when the choice is not unlocked.
 func set_slot(slot: int, key: String, value: String) -> bool:
 	if slot < 0 or slot >= team.size():
 		return false
@@ -251,9 +267,17 @@ func set_slot(slot: int, key: String, value: String) -> bool:
 		"sigil":
 			if value != "" and not value in unlocks.sigils:
 				return false
-		"row":
-			if not value in Catalog.ROWS:
+		"cell":
+			var row: String = value.get_slice(":", 0)
+			if value.get_slice_count(":") != 2 or not row in Catalog.ROWS or not value.get_slice(":", 1).is_valid_int() 					or not Catalog.valid_lane(value.get_slice(":", 1).to_int()):
 				return false
+			for other in range(team.size()):
+				if other != slot and Catalog.cell_of(team[other]) == value:
+					team[other].row = team[slot].row
+					team[other].lane = team[slot].lane
+			team[slot].row = row
+			team[slot].lane = value.get_slice(":", 1).to_int()
+			return true
 		_:
 			return false
 	team[slot][key] = value
@@ -321,25 +345,27 @@ func xp_to_next(level: int) -> int:
 	return int(catalog.num("xp_per_level") + catalog.num("xp_per_level_growth") * (level - 1))
 
 
-## XP one spirit earns from a stage: every enemy level is worth
-## xp.per_enemy_level, scaled by the outcome, and by how far the spirit's level
-## sits below (more) or above (less) the enemies' average level.
+## XP one spirit earns from a stage: the enemies' average level times
+## xp.per_stage_level, scaled by the outcome, and by how far the spirit's level
+## sits below (more) or above (less) that average. Levels cost a steady amount
+## more each time, so a spirit keeps pace with the stages without grinding.
 func stage_xp(stage: Dictionary, spirit_level: int, outcome_factor: float) -> int:
+	var average: float = _average_level(stage)
+	var level_factor: float = clampf(1.0 + (average - spirit_level) * catalog.num("xp.level_gap_step"),
+		catalog.num("xp.min_factor"), catalog.num("xp.max_factor"))
+	return max(1, int(round(average * catalog.num("xp.per_stage_level") * outcome_factor * level_factor)))
+
+
+func _average_level(stage: Dictionary) -> float:
 	var total_levels: int = 0
 	for enemy in stage.enemies:
 		total_levels += int(enemy.level)
-	var gap: float = float(total_levels) / max(1, stage.enemies.size()) - spirit_level
-	var level_factor: float = clampf(1.0 + gap * catalog.num("xp.level_gap_step"),
-		catalog.num("xp.min_factor"), catalog.num("xp.max_factor"))
-	return max(1, int(round(total_levels * catalog.num("xp.per_enemy_level") * outcome_factor * level_factor)))
+	return float(total_levels) / max(1, stage.enemies.size())
 
 
 ## Average enemy level of a stage, rounded, for the campaign screen.
 func stage_level(stage: Dictionary) -> int:
-	var total_levels: int = 0
-	for enemy in stage.enemies:
-		total_levels += int(enemy.level)
-	return int(round(float(total_levels) / max(1, stage.enemies.size())))
+	return int(round(_average_level(stage)))
 
 
 func can_build() -> bool:
@@ -356,15 +382,16 @@ func resting_spirits() -> Array:
 
 
 ## The laboratory spends a golem core on a new body for the first resting
-## spirit, built from the first unlocked part of each kind. A golem joins the
-## back row when the front row already has someone in it.
+## spirit, built from the first unlocked part of each kind, standing in the
+## first free cell of BUILD_CELLS.
 func build_golem() -> bool:
 	if not can_build():
 		return false
-	var front_taken: bool = team.any(func(loadout): return loadout.row == "front")
+	var taken: Array = team.map(func(loadout): return Catalog.cell_of(loadout))
+	var cell: String = BUILD_CELLS.filter(func(c): return not c in taken)[0]
 	team.append({"spirit": resting_spirits()[0], "frame": unlocks.frames[0], "arms": unlocks.arms[0],
 		"legs": unlocks.legs[0], "material": unlocks.materials[0], "sigil": "",
-		"row": "back" if front_taken else "front"})
+		"row": cell.get_slice(":", 0), "lane": cell.get_slice(":", 1).to_int()})
 	cores -= 1
 	return true
 

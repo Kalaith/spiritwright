@@ -22,6 +22,7 @@ func _init() -> void:
 		_check_slice(catalog)
 		_check_spirits(catalog)
 		_check_materials(catalog)
+		_check_board(catalog)
 		if "--report" in OS.get_cmdline_user_args():
 			_report(catalog)
 	print("%s (%d failure(s))" % ["ALL PASS" if failures == 0 else "FAILED", failures])
@@ -76,10 +77,14 @@ func _check_progression(catalog: Catalog) -> void:
 	_check("the gate yields a golem core", progression.cores == 1 and report.rewards.any(func(r): return r.kind == "cores"))
 	_check("stage two opens", progression.stage_state("ruins_court") == "open")
 	_check("the laboratory builds a second golem", progression.build_golem() and progression.team.size() == 2
-		and progression.cores == 0 and progression.team[1].spirit == "pyra" and progression.team[1].row == "back")
+		and progression.cores == 0 and progression.team[1].spirit == "pyra" and Catalog.cell_of(progression.team[1]) == "back:1")
+	_check("moving into an occupied cell swaps the two golems", progression.set_slot(1, "cell", "front:1")
+		and Catalog.cell_of(progression.team[0]) == "back:1" and Catalog.cell_of(progression.team[1]) == "front:1")
+	_check("a cell off the board is refused", not progression.set_slot(0, "cell", "front:3")
+		and not progression.set_slot(0, "cell", "middle:0"))
 	_check("swapping spirits keeps them unique", progression.set_slot(0, "spirit", "pyra")
 		and progression.team[1].spirit == "neris")
-	progression.cores = 2
+	progression.cores = int(catalog.num("team_size")) - 1
 	_check("a save cannot hold more golems than team_size", not progression.valid(progression.to_dict()))
 	progression.cores = 0
 	var gate_xp: int = progression.stage_xp(catalog.stages["ruins_gate"], 1, catalog.num("xp.repeat_win"))
@@ -144,19 +149,19 @@ func _check_spirits(catalog: Catalog) -> void:
 	_check("thorns lash the attacker", _has(thorns, {"type": "damage", "cause": "effect", "unit": "b0", "source": "a0"}))
 
 	var storm: Dictionary = _duel(catalog, [
-			["sefa", awaken, _loadout("sefa", "conduit", "cannon", "pillar", "back")],
-			["volta", awaken, _loadout("volta", "conduit", "cannon", "pillar", "back")],
+			["sefa", awaken, _loadout("sefa", "conduit", "cannon", "pillar", "back", "stone", 0)],
+			["volta", awaken, _loadout("volta", "conduit", "cannon", "pillar", "back", "stone", 1)],
 			["pyra", awaken, _loadout("pyra", "strider", "hammer", "pillar", "front")]],
-		[["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "spider", "front")],
-			["moss_wisp", 6, _loadout("moss_wisp", "bulwark", "shield", "spider", "front")],
-			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "spider", "front")]])
+		[["moss_wisp", 6, _loadout("moss_wisp", "bulwark", "shield", "spider", "front", "stone", 1)],
+			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "spider", "back", "stone", 0)],
+			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "spider", "back", "stone", 2)]])
 	_check("tailwind hastens allies", _has(storm, {"type": "haste", "cause": "Tailwind"}))
 	_check("conduction jolts soaked enemies", _has(storm, {"type": "damage", "cause": "effect", "source": "a1"}))
 	_check("overcharge stuns soaked enemies", _has(storm, {"type": "status", "status": "stun", "cause": "Overcharge"}))
 	# Wildfire needs a kill that leaves someone standing: Pyra alone against a weak pair.
 	var wildfire: Dictionary = _duel(catalog, [["pyra", 10, _loadout("pyra", "strider", "hammer", "pillar", "front")]],
 		[["cinder_mote", 1, _loadout("cinder_mote", "strider", "shield", "pillar", "front")],
-			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "pillar", "front")]])
+			["rubble_imp", 6, _loadout("rubble_imp", "bulwark", "shield", "pillar", "front", "stone", 0)]])
 	_check("wildfire spreads burn on a kill", _has(wildfire, {"type": "status", "status": "burn", "cause": "Wildfire"}))
 
 	var migrated: Variant = Progression.new(catalog).migrate({"schema": 1, "spirits": {"pyra": {"level": 1, "xp": 0, "last_frame": ""}}})
@@ -188,7 +193,7 @@ func _check_materials(catalog: Catalog) -> void:
 	_check("glacier soaks its attacker", _has(glacier, {"type": "status", "status": "soaked", "unit": "b0", "cause": "Glacier"}))
 	var wire: Dictionary = _duel(catalog, [["volta", 3, _loadout("volta", "conduit", "cannon", "pillar", "back", "bronze")]],
 		[["rubble_imp", 3, _loadout("rubble_imp", "bulwark", "shield", "pillar", "front")],
-			["moss_wisp", 3, _loadout("moss_wisp", "bulwark", "shield", "pillar", "front")]])
+			["moss_wisp", 3, _loadout("moss_wisp", "bulwark", "shield", "pillar", "front", "stone", 0)]])
 	_check("live wire arcs every hit", _has(wire, {"type": "chain", "unit": "a0"}))
 
 	var progression := Progression.new(catalog)
@@ -207,15 +212,90 @@ func _check_materials(catalog: Catalog) -> void:
 		and migrated.team.size() == 3 and migrated.cores == 0
 		and migrated.unlocks.materials == ["stone", "wood", "ice"] and migrated.team[0].material == "stone",
 		JSON.stringify(migrated.get("unlocks", {})))
+	_check("schema 4 saves spread each row across its lanes, centre first", migrated.schema == 5
+		and migrated.team.map(func(l): return Catalog.cell_of(l)) == ["front:1", "front:0", "back:1"],
+		JSON.stringify(migrated.team))
+
+
+## The 3x2 board: arms aim at a row and strike the nearest lane in it, the back
+## row is only reached past an empty front (or by bows and Spider Legs), and the
+## defensive parts guard, brace, harden and mend.
+func _check_board(catalog: Catalog) -> void:
+	var imp := func(lane: int, row: String = "front", arms: String = "shield") -> Dictionary:
+		return _loadout("rubble_imp", "bulwark", arms, "pillar", row, "stone", lane)
+	var wall: Array = [["rubble_imp", 6, imp.call(0, "front", "hammer")], ["rubble_imp", 6, imp.call(2, "front", "hammer")],
+		["cinder_mote", 1, _loadout("cinder_mote", "strider", "shield", "pillar", "back", "stone", 2)]]
+	var hammer: Dictionary = _duel(catalog, [["odo", 6, _loadout("odo", "bulwark", "hammer", "pillar", "front", "stone", 2)]], wall)
+	var hammer_targets: Array = _attacks(hammer, "a0")
+	_check("melee strikes the front-row enemy in its own lane first", not hammer_targets.is_empty() and hammer_targets[0] == "b1",
+		str(hammer_targets))
+	var front_left: bool = false
+	for event in hammer.events:
+		if event.type == "attack" and event.unit == "a0" and event.target == "b2":
+			front_left = _alive_before(hammer, "b0", event) or _alive_before(hammer, "b1", event)
+			break
+	_check("a hammer cannot reach the back row while the front row stands", not front_left)
+	var bow: Dictionary = _duel(catalog, [["sefa", 6, _loadout("sefa", "strider", "bow", "pillar", "back", "stone", 0)]], wall)
+	var bow_targets: Array = _attacks(bow, "a0")
+	_check("a bow lobs over the front row at the back row", not bow_targets.is_empty() and bow_targets[0] == "b2", str(bow_targets))
+	var reaching: Dictionary = _duel(catalog, [["odo", 6, _loadout("odo", "bulwark", "hammer", "pillar", "back")]], wall)
+	_check("melee from the back row reaches at reduced power", _said(reaching, "damage", "reaching from the back row"))
+
+	var far_guard: Dictionary = _duel(catalog, [["sefa", 6, _loadout("sefa", "strider", "bow", "pillar", "back")]],
+		[["rubble_imp", 6, imp.call(0)], ["cinder_mote", 6, _loadout("cinder_mote", "strider", "shield", "pillar", "back", "stone", 2)]])
+	_check("a shield only guards its own and neighbouring lanes", not _has(far_guard, {"type": "intercept"}))
+	var near_guard: Dictionary = _duel(catalog, [["sefa", 6, _loadout("sefa", "strider", "bow", "pillar", "back")]],
+		[["rubble_imp", 6, imp.call(1)], ["cinder_mote", 6, _loadout("cinder_mote", "strider", "shield", "pillar", "back", "stone", 2)]])
+	_check("a shield steps in for the neighbouring lane", _has(near_guard, {"type": "intercept", "unit": "b0", "protected": "b1"}))
+
+	var aegis: Dictionary = _duel(catalog, [["odo", 3, _loadout("odo", "bulwark", "aegis", "tower", "front")],
+			["neris", 3, _loadout("neris", "conduit", "cannon", "pillar", "back", "stone", 1, "mending")]],
+		[["rubble_imp", 4, imp.call(1, "front", "hammer")], ["brine_sprite", 4, _loadout("brine_sprite", "strider", "bow", "pillar", "back")]])
+	_check("aegis arms ward the golem sharing their lane", _has(aegis, {"type": "ward", "unit": "a1", "cause": "Aegis Arms"}))
+	_check("tower legs brace the front row", _said(aegis, "damage", "Braced"))
+	_check("the mending rune heals the most wounded", _has(aegis, {"type": "heal", "cause": "Mending Rune"}))
+	var stoneskin: Dictionary = _duel(catalog, [["odo", 3, _loadout("odo", "bulwark", "shield", "pillar", "front", "stone", 1, "stoneskin")]],
+		[["rubble_imp", 4, imp.call(1, "front", "hammer")]])
+	_check("the stoneskin rune hardens when struck", _has(stoneskin, {"type": "ward", "unit": "a0", "cause": "Stoneskin Rune"}))
+
+	var six: Array = []
+	for cell in Progression.BUILD_CELLS:
+		six.append(_loadout("rubble_imp", "bulwark", "hammer", "pillar", cell.get_slice(":", 0), "stone", cell.get_slice(":", 1).to_int()))
+	_check("six golems fill the six cells", Catalog.distinct_cells(six))
+	six[5].lane = 1
+	_check("two golems cannot share a cell", not Catalog.distinct_cells(six))
+
+
+## Whether any event of `type` reads with `fragment` in its text.
+func _said(outcome: Dictionary, type: String, fragment: String) -> bool:
+	return outcome.events.any(func(e): return e.type == type and String(e.text).contains(fragment))
+
+
+## Target ids of every attack `unit_id` makes, in order.
+func _attacks(outcome: Dictionary, unit_id: String) -> Array:
+	return outcome.events.filter(func(e): return e.type == "attack" and e.unit == unit_id).map(func(e): return e.target)
+
+
+## Whether `unit_id` was still standing when `moment` happened.
+func _alive_before(outcome: Dictionary, unit_id: String, moment: Dictionary) -> bool:
+	for event in outcome.events:
+		if event == moment:
+			return true
+		if event.type == "death" and event.unit == unit_id:
+			return false
+	return true
 
 
 func _strip(loadout: Dictionary) -> Dictionary:
 	loadout.erase("material")
+	loadout.erase("lane")
 	return loadout
 
 
-func _loadout(spirit: String, frame: String, arms: String, legs: String, row: String, material: String = "stone") -> Dictionary:
-	return {"spirit": spirit, "frame": frame, "arms": arms, "legs": legs, "material": material, "sigil": "", "row": row}
+func _loadout(spirit: String, frame: String, arms: String, legs: String, row: String, material: String = "stone",
+		lane: int = 1, sigil: String = "") -> Dictionary:
+	return {"spirit": spirit, "frame": frame, "arms": arms, "legs": legs, "material": material, "sigil": sigil,
+		"row": row, "lane": lane}
 
 
 func _has(outcome: Dictionary, fields: Dictionary) -> bool:
@@ -249,7 +329,7 @@ func _report(catalog: Catalog) -> void:
 			pass
 		var enemies: Array = progression.enemy_team(stage)
 		var wins: int = 0
-		var samples: int = 1500
+		var samples: int = 500
 		var best: Array = []
 		var best_margin: int = -1
 		var hits: int = 0
@@ -303,6 +383,12 @@ func _random_team(progression: Progression, rng: RandomNumberGenerator) -> Array
 		var swap: Variant = ids[i]
 		ids[i] = ids[j]
 		ids[j] = swap
+	var cells: Array = Progression.BUILD_CELLS.duplicate()
+	for i in range(cells.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var swap_cell: Variant = cells[i]
+		cells[i] = cells[j]
+		cells[j] = swap_cell
 	var team: Array = []
 	for slot in range(progression.team.size()):
 		var sigils: Array = [""] + progression.unlocks.sigils
@@ -313,7 +399,8 @@ func _random_team(progression: Progression, rng: RandomNumberGenerator) -> Array
 			"legs": _pick(progression.unlocks.legs, rng),
 			"material": _pick(progression.unlocks.materials, rng),
 			"sigil": _pick(sigils, rng),
-			"row": "front" if slot == 0 else _pick(["front", "back"], rng),
+			"row": String(cells[slot]).get_slice(":", 0),
+			"lane": String(cells[slot]).get_slice(":", 1).to_int(),
 		})
 	return team
 

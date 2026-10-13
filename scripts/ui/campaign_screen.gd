@@ -185,9 +185,9 @@ func _enemy_row(golem: Dictionary) -> Control:
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)
 	info.add_child(Style.label("%s  Lv %d  %s" % [golem.name, golem.level, catalog.element_label(golem.element)], 15, Style.TEXT))
-	var build: String = "%s %s / %s / %s, %s row" % [catalog.part("materials", golem.material).name,
+	var build: String = "%s %s / %s / %s. %s" % [catalog.part("materials", golem.material).name,
 		catalog.part("frames", golem.frame).name.trim_suffix(" Frame"),
-		catalog.part("arms", golem.arms).name, catalog.part("legs", golem.legs).name, golem.row]
+		catalog.part("arms", golem.arms).name, catalog.part("legs", golem.legs).name, Style.cell_name(golem.row, golem.lane)]
 	info.add_child(Style.wrapped(build, 13))
 	if not golem.reaction.is_empty():
 		info.add_child(Style.wrapped("%s: %s" % [golem.reaction.name, golem.reaction.text], 12, catalog.element_color(golem.element)))

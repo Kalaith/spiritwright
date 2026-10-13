@@ -8,6 +8,10 @@ const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils", "material
 ## Catalog kind -> the key a loadout uses for it.
 const LOADOUT_KEYS: Dictionary = {"frames": "frame", "arms": "arms", "legs": "legs", "materials": "material"}
 const ROWS: Array[String] = ["front", "back"]
+## Each side stands on LANES lanes of two rows: six cells, one golem in each.
+const LANES: int = 3
+## Which row an arms' attack aims at; it falls back to the other row once that one is empty.
+const AIMS: Array[String] = ["front", "back"]
 ## Map illustrations a stage can stand beside (drawn by map_landmarks.gd and
 ## map_landmarks_wild.gd).
 const LANDMARKS: Array[String] = ["gate", "court", "stair", "cloister", "vault", "heart", "bridge", "hut", "tower",
@@ -19,7 +23,9 @@ const TRIGGERS: Array[String] = ["battle_start", "turn_start", "hit", "hurt", "l
 const ACTIONS: Array[String] = ["status", "ward", "heal", "chain", "damage", "haste"]
 const STATUSES: Array[String] = ["burn", "soaked", "taunt", "regen", "stun"]
 ## Who an effect lands on. "team" includes the owner; "allies" does not.
-const RECEIVERS: Array[String] = ["self", "target", "attacker", "team", "allies", "enemies"]
+## "lane" is the owner and whoever shares its lane; "wounded" is the living
+## ally (or owner) with the lowest share of its HP, if anyone is hurt.
+const RECEIVERS: Array[String] = ["self", "target", "attacker", "team", "allies", "enemies", "lane", "wounded"]
 ## Receivers that only exist for some triggers: the struck target on a hit,
 ## the attacker when hurt.
 const RECEIVER_TRIGGERS: Dictionary = {"target": ["hit"], "attacker": ["hurt"]}
@@ -170,8 +176,12 @@ func _add_part(kind: String, entry: Variant) -> void:
 	if kind == "arms":
 		var attack: Variant = entry.get("attack")
 		if not attack is Dictionary or not attack.get("kind") in ["physical", "magical"] \
-				or not attack.get("range") in ["melee", "ranged"] or int(attack.get("cost", 0)) <= 0:
+				or not attack.get("range") in ["melee", "ranged"] or not attack.get("aim") in AIMS 				or int(attack.get("cost", 0)) <= 0:
 			errors.append("Arms %s need a valid attack" % id)
+		_validate_effects("arms " + id, entry.get("effects", []))
+	if kind == "legs" and entry.has("brace"):
+		if not (entry.brace is float or entry.brace is int) or float(entry.brace) <= 0.0 or float(entry.brace) >= 1.0:
+			errors.append("Legs %s brace must be a fraction between 0 and 1" % id)
 	if kind == "sigils":
 		_validate_effects("sigil " + id, entry.get("effects", []))
 	if kind == "materials":
@@ -254,6 +264,28 @@ func _validate_loadout(owner: String, loadout: Variant, wild: bool) -> void:
 		errors.append(owner + " uses an unknown sigil")
 	if not loadout.get("row") in ROWS:
 		errors.append(owner + " needs row front or back")
+	if not valid_lane(loadout.get("lane")):
+		errors.append("%s needs a lane from 0 to %d" % [owner, LANES - 1])
+
+
+static func valid_lane(lane: Variant) -> bool:
+	return (lane is int or lane is float) and int(lane) == lane and int(lane) >= 0 and int(lane) < LANES
+
+
+## "front:1" style key for the cell a loadout stands in.
+static func cell_of(loadout: Dictionary) -> String:
+	return "%s:%d" % [loadout.get("row", ""), int(loadout.get("lane", -1))]
+
+
+## True when no two loadouts share a cell.
+static func distinct_cells(team: Array) -> bool:
+	var seen: Dictionary = {}
+	for loadout in team:
+		var cell: String = cell_of(loadout)
+		if seen.has(cell):
+			return false
+		seen[cell] = true
+	return true
 
 
 func _validate_campaign() -> void:
@@ -277,6 +309,8 @@ func _validate_campaign() -> void:
 		return
 	for loadout in team:
 		_validate_loadout("start team", loadout, false)
+	if errors.is_empty() and not distinct_cells(team):
+		errors.append("The start team puts two golems in one cell")
 	var golems: int = team.size()
 	for index in range(campaign.regions.size()):
 		golems += _validate_region(index)
@@ -312,13 +346,15 @@ func _validate_region(index: int) -> int:
 		if stage.has("clear_text") and not stage.clear_text is String:
 			errors.append("Stage %s clear_text must be text" % id)
 		var enemies: Variant = stage.get("enemies")
-		if not enemies is Array or enemies.is_empty() or enemies.size() > 3:
-			errors.append("Stage %s needs 1-3 enemies" % id)
+		if not enemies is Array or enemies.is_empty() or enemies.size() > LANES * ROWS.size():
+			errors.append("Stage %s needs 1-%d enemies" % [id, LANES * ROWS.size()])
 			continue
 		for enemy in enemies:
 			_validate_loadout("stage " + id, enemy, true)
 			if int(enemy.get("level", 0)) < 1:
 				errors.append("Stage %s enemy needs a level" % id)
+		if enemies.all(func(e): return e is Dictionary) and not distinct_cells(enemies):
+			errors.append("Stage %s puts two enemies in one cell" % id)
 		if not _is_point(stage.get("map_pos")) or not stage.get("landmark") in LANDMARKS:
 			errors.append("Stage %s needs a map_pos and a landmark (%s)" % [id, ", ".join(LANDMARKS)])
 		for kind in stage.get("rewards", {}):
@@ -364,10 +400,12 @@ func _is_point(value: Variant) -> bool:
 
 
 func _validate_balance() -> void:
-	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp_per_level_growth", "xp.per_enemy_level", "xp.first_clear", "xp.repeat_win", "xp.loss",
+	if int(balance.get("team_size", 0)) > LANES * ROWS.size():
+		errors.append("team_size cannot exceed the %d cells of the board" % (LANES * ROWS.size()))
+	for path in ["team_size", "level_cap", "awaken_level", "xp_per_level", "xp_per_level_growth", "xp.per_stage_level", "xp.first_clear", "xp.repeat_win", "xp.loss",
 			"xp.level_gap_step", "xp.min_factor", "xp.max_factor",
 			"growth.hp_per_point", "growth.start_progress", "battle.gauge_threshold", "battle.gauge_base",
-			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "status.burn_damage_per_stack",
+			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "battle.back_row_melee_factor", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",
 			"status.regen_heal"]:
 		var node: Variant = balance

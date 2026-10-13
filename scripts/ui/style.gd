@@ -104,6 +104,11 @@ static func hbox(separation: int = 8) -> HBoxContainer:
 	return node
 
 
+## "Front, lane 2": lanes count from the top of the battlefield.
+static func cell_name(row: String, lane: int) -> String:
+	return "%s, lane %d" % [row.capitalize(), lane + 1]
+
+
 static func spacer() -> Control:
 	var node := Control.new()
 	node.size_flags_horizontal = Control.SIZE_EXPAND_FILL

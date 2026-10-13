@@ -1,5 +1,5 @@
 extends RefCounted
-## Turns a loadout (spirit + frame + arms + legs + material + sigil + row) into the
+## Turns a loadout (spirit + frame + arms + legs + material + sigil + row + lane) into the
 ## resolved golem the battle simulation consumes. The breakdown keeps every
 ## stat source so the laboratory can show exactly where a number comes from.
 
@@ -104,6 +104,8 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		effects.append(_tagged(effect, trait_def.name))
 	for effect in reaction.get("effects", []):
 		effects.append(_tagged(effect, reaction.name))
+	for effect in arms.get("effects", []):
+		effects.append(_tagged(effect, arms.name))
 	var is_awake: bool = awakened(catalog, spirit_def, level)
 	if is_awake:
 		for effect in spirit_def.awakening.effects:
@@ -117,6 +119,7 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		"element": spirit_def.element,
 		"level": level,
 		"row": row,
+		"lane": int(loadout.lane),
 		"frame": frame.id,
 		"arms": arms.id,
 		"legs": legs.id,
@@ -130,6 +133,7 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 		"attack": arms.attack,
 		"stable": legs.get("stable", false),
 		"reach": legs.get("reach", false),
+		"brace": float(legs.get("brace", 0.0)),
 		"effects": effects,
 	}
 

@@ -1,7 +1,7 @@
 extends Control
-## The golem laboratory: a card for every golem built so far, an empty cradle
-## for each one still to come (built by spending a golem core) and the spirit
-## roster. Every change goes through Progression (which validates it) and is
+## The golem laboratory: a card for every golem built so far, a cradle for
+## each golem core on the bench (and one empty cradle while there is room),
+## the formation on the board and the spirit roster. Every change goes through Progression (which validates it) and is
 ## saved immediately.
 
 signal map_requested
@@ -15,7 +15,7 @@ const Catalog = preload("res://scripts/core/catalog.gd")
 var catalog: RefCounted
 var progression: RefCounted
 var stage_id: String = ""
-var _cards: HBoxContainer
+var _cards: GridContainer
 var _roster: VBoxContainer
 var _status: Label
 
@@ -47,7 +47,10 @@ func _ready() -> void:
 	card_scroll.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	body.add_child(card_scroll)
-	_cards = Style.hbox(10)
+	_cards = GridContainer.new()
+	_cards.columns = 3
+	_cards.add_theme_constant_override("h_separation", 10)
+	_cards.add_theme_constant_override("v_separation", 10)
 	_cards.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	card_scroll.add_child(_cards)
 	var side := Style.panel(12)
@@ -71,22 +74,26 @@ func _rebuild() -> void:
 		card.progression = progression
 		card.slot = slot
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		card.custom_minimum_size.x = 270
+		card.custom_minimum_size.x = 260
 		card.changed.connect(_on_changed)
 		_cards.add_child(card)
-	var slots: int = int(catalog.num("team_size"))
-	for slot in range(progression.team.size(), slots):
+	var room: int = int(catalog.num("team_size")) - progression.team.size()
+	for slot in range(progression.team.size(), progression.team.size() + min(room, progression.cores + 1)):
 		var cradle := CradleCard.new()
 		cradle.catalog = catalog
 		cradle.progression = progression
 		cradle.slot = slot
 		cradle.ready_to_build = progression.can_build() and slot - progression.team.size() < progression.cores
 		cradle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		cradle.custom_minimum_size.x = 270
+		cradle.custom_minimum_size.x = 260
 		cradle.build_requested.connect(_on_build)
 		_cards.add_child(cradle)
 	for child in _roster.get_children():
 		child.queue_free()
+	_roster.add_child(Style.label("Formation", 20, Style.GOLD))
+	_roster.add_child(_formation())
+	_roster.add_child(Style.wrapped("Enemies stand to the right: the front row meets them first. Pick a golem's cell on its card.", 12))
+	_roster.add_child(HSeparator.new())
 	_roster.add_child(Style.label("Spirits", 20, Style.GOLD))
 	for id in catalog.player_spirit_ids:
 		if progression.spirits.has(id):
@@ -94,6 +101,27 @@ func _rebuild() -> void:
 	var locked: int = catalog.player_spirit_ids.size() - progression.spirits.size()
 	if locked > 0:
 		_roster.add_child(Style.wrapped("%d more spirit(s) wait somewhere in the ruins." % locked, 13))
+
+
+## Who stands in each of the six cells: back row on the left, front on the right.
+func _formation() -> GridContainer:
+	var grid := GridContainer.new()
+	grid.columns = 3
+	grid.add_theme_constant_override("h_separation", 6)
+	grid.add_theme_constant_override("v_separation", 4)
+	for header in ["", "Back", "Front"]:
+		grid.add_child(Style.label(header, 13, Style.MUTED))
+	for lane in range(Catalog.LANES):
+		grid.add_child(Style.label("Lane %d" % (lane + 1), 13, Style.MUTED))
+		for row in ["back", "front"]:
+			var name: String = "-"
+			for loadout in progression.team:
+				if Catalog.cell_of(loadout) == "%s:%d" % [row, lane]:
+					name = catalog.spirit(loadout.spirit).name
+			var cell := Style.label(name, 14, Style.ALLY if name != "-" else Style.MUTED)
+			cell.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+			grid.add_child(cell)
+	return grid
 
 
 func _on_changed(slot: int, key: String, value: String) -> void:

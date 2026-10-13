@@ -3,6 +3,9 @@ extends RefCounted
 ## produces the same event log; all randomness comes from `rng`. It never
 ## touches the scene tree. The battle view replays `events` afterwards.
 ##
+## Board: each side stands on three lanes (0-2) of two rows, front and back;
+## where a golem stands decides who it can reach and who reaches it.
+##
 ## Cadence: every tick each golem's gauge fills by (base + SPD); at the
 ## threshold it acts and pays its arms' action cost back out of the gauge.
 
@@ -64,7 +67,7 @@ func _add_team(team: Array, side: int) -> void:
 		var label: String = golem.name
 		if int(counts[golem.name]) > 1:
 			seen[golem.name] = int(seen.get(golem.name, 0)) + 1
-			label += " " + "ABC"[int(seen[golem.name]) - 1]
+			label += " " + "ABCDEF"[int(seen[golem.name]) - 1]
 		var unit: Dictionary = golem.duplicate(true)
 		unit.merge({
 			"id": SIDES[side] + str(slot), "index": units.size(), "side": side, "slot": slot,
@@ -106,17 +109,32 @@ func _take_turn(unit: Dictionary) -> void:
 	_attack(unit, target)
 
 
+## Taunt overrides everything; Spider Legs hunt the weakest enemy anywhere.
+## Otherwise the arms decide which row they aim at ("front" for blades and
+## cannons, "back" for bows lobbed over the line) and the nearest lane in that
+## row is struck; a row only falls back to the other once it is empty.
 func _choose_target(unit: Dictionary) -> Variant:
 	var enemies: Array = units.filter(func(u): return u.alive and u.side != unit.side)
 	if enemies.is_empty():
 		return null
 	var taunting: Array = enemies.filter(func(u): return u.taunt > 0)
 	if not taunting.is_empty():
-		return taunting[0]
-	if unit.attack.range == "ranged" or unit.reach:
+		return _nearest(unit, taunting)
+	if unit.reach:
 		return _weakest(enemies)
-	var front: Array = enemies.filter(func(u): return u.row == "front")
-	return front[0] if not front.is_empty() else enemies[0]
+	var aimed: Array = enemies.filter(func(u): return u.row == unit.attack.aim)
+	return _nearest(unit, aimed if not aimed.is_empty() else enemies)
+
+
+## The candidate whose lane is closest to the unit's own; ties go to the lower lane.
+func _nearest(unit: Dictionary, candidates: Array) -> Dictionary:
+	var best: Dictionary = candidates[0]
+	for candidate in candidates:
+		var distance: int = abs(int(candidate.lane) - int(unit.lane))
+		var best_distance: int = abs(int(best.lane) - int(unit.lane))
+		if distance < best_distance or (distance == best_distance and candidate.lane < best.lane):
+			best = candidate
+	return best
 
 
 func _weakest(candidates: Array) -> Dictionary:
@@ -129,33 +147,44 @@ func _weakest(candidates: Array) -> Dictionary:
 
 func _attack(unit: Dictionary, target: Dictionary) -> void:
 	if target.row == "back":
-		for guard in units:
-			if guard.alive and guard.side == target.side and guard.row == "front" \
-					and guard.attack.get("intercept", false) and guard.intercept_ready:
-				guard.intercept_ready = false
-				_log({"type": "intercept", "unit": guard.id, "protected": target.id},
-					"%s steps in front of %s." % [guard.label, target.label])
-				target = guard
-				break
+		var guard: Variant = _guard_for(target)
+		if guard != null:
+			guard.intercept_ready = false
+			_log({"type": "intercept", "unit": guard.id, "protected": target.id},
+				"%s steps in front of %s." % [guard.label, target.label])
+			target = guard
 	_log({"type": "attack", "unit": unit.id, "target": target.id, "range": unit.attack.range},
 		"%s attacks %s." % [unit.label, target.label])
 	var magical: bool = unit.attack.kind == "magical"
-	var power: int = int(unit.attack.power) + int(unit.stats.mag if magical else unit.stats.str)
+	var power: float = float(unit.attack.power) + float(unit.stats.mag if magical else unit.stats.str)
+	var note: String = ""
+	# A melee golem in the back row has to reach past its own front line.
+	if unit.attack.range == "melee" and unit.row == "back" and not unit.reach:
+		power *= catalog.num("battle.back_row_melee_factor")
+		note += " (reaching from the back row)"
 	# Armour blunts a share of each blow, but a hit always keeps a floor of its power.
 	var armour: float = float(target.stats.res if magical else target.stats.def) * catalog.num("battle.armour_factor")
 	var floor_damage: float = power * catalog.num("battle.min_damage_fraction")
 	var amount: int = max(1, int(round(max(power - armour, floor_damage))))
 	amount += rng.randi_range(0, int(catalog.num("battle.damage_variance")))
-	var note: String = ""
 	if magical and target.soaked > 0:
 		amount = int(round(amount * (1.0 + catalog.num("status.soaked_magic_bonus"))))
-		note = " (Soaked)"
+		note += " (Soaked)"
+	if target.row == "front" and float(target.brace) > 0.0:
+		amount = max(1, int(round(amount * (1.0 - float(target.brace)))))
+		note += " (Braced)"
 	var dealt: int = _damage(target, amount, unit, "attack", "%s takes %d%s." % [target.label, amount, note])
 	unit.hits += 1
 	var stun_every: int = int(unit.attack.get("stun_every", 0))
 	if target.alive and stun_every > 0 and unit.hits % stun_every == 0:
 		_stun(target, "the hammer blow")
 	_fire(unit, "hit", {"target": target, "damage": dealt})
+
+
+## A ready front-row Shield golem in the same or a neighbouring lane, nearest first.
+func _guard_for(target: Dictionary) -> Variant:
+	var guards: Array = units.filter(func(u): return u.alive and u.side == target.side and u.row == "front" 			and u.attack.get("intercept", false) and u.intercept_ready and abs(int(u.lane) - int(target.lane)) <= 1)
+	return _nearest(target, guards) if not guards.is_empty() else null
 
 
 ## Applies damage through Ward, records it and fires hurt/low-HP triggers.
@@ -242,6 +271,17 @@ func _receivers(unit: Dictionary, to: String, context: Dictionary) -> Array:
 			return units.filter(func(u): return u.alive and u.side == unit.side and u != unit)
 		"enemies":
 			return units.filter(func(u): return u.alive and u.side != unit.side)
+		"lane":
+			return units.filter(func(u): return u.alive and u.side == unit.side and u.lane == unit.lane)
+		"wounded":
+			var hurt: Array = units.filter(func(u): return u.alive and u.side == unit.side and u.hp < u.max_hp)
+			if hurt.is_empty():
+				return []
+			var worst: Dictionary = hurt[0]
+			for ally in hurt:
+				if float(ally.hp) / ally.max_hp < float(worst.hp) / worst.max_hp:
+					worst = ally
+			return [worst]
 	return []
 
 

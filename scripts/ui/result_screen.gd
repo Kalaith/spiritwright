@@ -24,8 +24,17 @@ func _ready() -> void:
 	var panel := Style.panel(20)
 	panel.custom_minimum_size = Vector2(900, 0)
 	center.add_child(panel)
+	# Six golems a side make a long table: the panel scrolls rather than overflow.
+	var outer := Style.vbox(10)
+	panel.add_child(outer)
+	var scroll := ScrollContainer.new()
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	scroll.custom_minimum_size = Vector2(860, 0)
+	outer.add_child(scroll)
 	var column := Style.vbox(10)
-	panel.add_child(column)
+	column.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(column)
+	column.resized.connect(func(): scroll.custom_minimum_size.y = min(column.size.y, get_viewport_rect().size.y - 140.0))
 	var won: bool = outcome.result == "win"
 	var heading := Style.hbox(14)
 	column.add_child(heading)
@@ -66,7 +75,7 @@ func _ready() -> void:
 	buttons.add_child(Style.button("Laboratory", func(): laboratory_requested.emit()))
 	var map := Style.button("Map", func(): map_requested.emit(), 18)
 	buttons.add_child(map)
-	column.add_child(buttons)
+	outer.add_child(buttons)
 	map.call_deferred("grab_focus")
 
 

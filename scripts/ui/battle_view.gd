@@ -44,7 +44,7 @@ func _ready() -> void:
 	_build_ui()
 	for unit in outcome.units:
 		units[unit.id] = {
-			"id": unit.id, "label": unit.label, "level": unit.level, "side": unit.side, "slot": unit.slot,
+			"id": unit.id, "label": unit.label, "level": unit.level, "side": unit.side, "lane": unit.lane,
 			"row": unit.row, "hp": unit.max_hp, "max_hp": unit.max_hp, "ward": 0, "burn": 0, "soaked": 0,
 			"taunt": 0, "regen": 0, "stun": 0, "alive": true, "flash": 0.0, "alpha": 1.0, "offset": Vector2.ZERO,
 			"look": GolemArt.look_for(catalog, unit, Style.ALLY if unit.side == 0 else Style.ENEMY),
@@ -272,12 +272,12 @@ func _facing(unit: Dictionary) -> float:
 	return 1.0 if unit.side == 0 else -1.0
 
 
-## Feet position: row sets the distance from the centre line, slot sets depth.
+## Feet position: row sets the distance from the centre line, lane sets depth.
 func _home(unit: Dictionary) -> Vector2:
 	var arena_top: float = 60.0
 	var arena_bottom: float = size.y - 150.0
-	var depth: float = arena_top + (arena_bottom - arena_top) * (0.4 + 0.29 * unit.slot)
-	var distance: float = (110.0 if unit.row == "front" else 290.0) + 26.0 * unit.slot
+	var depth: float = arena_top + (arena_bottom - arena_top) * (0.4 + 0.29 * unit.lane)
+	var distance: float = (110.0 if unit.row == "front" else 290.0) + 26.0 * unit.lane
 	return Vector2(size.x / 2.0 - distance * _facing(unit), depth)
 
 
@@ -286,7 +286,7 @@ func _draw() -> void:
 	Backdrop.draw(self, size, horizon, size.y - 150.0)
 	draw_line(Vector2(size.x / 2.0, horizon), Vector2(size.x / 2.0, size.y - 150.0), Color(1, 1, 1, 0.06), 2.0)
 	var order: Array = units.values()
-	order.sort_custom(func(a, b): return a.slot < b.slot or (a.slot == b.slot and a.side < b.side))
+	order.sort_custom(func(a, b): return a.lane < b.lane or (a.lane == b.lane and a.side < b.side))
 	for unit in order:
 		var at: Vector2 = _home(unit) + unit.offset
 		if not _attack.is_empty() and _attack.unit == unit.id and unit.alive:

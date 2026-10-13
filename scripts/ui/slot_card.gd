@@ -1,7 +1,7 @@
 extends PanelContainer
-## One golem in the laboratory: pick the spirit, its row, every part and the
-## material the body is made of, and see the resolved stats with where each
-## number comes from.
+## One golem in the laboratory: pick the spirit, where it stands on the board,
+## every part and the material the body is made of, and see the resolved stats
+## with where each number comes from.
 
 signal changed(slot: int, key: String, value: String)
 
@@ -26,11 +26,7 @@ func _ready() -> void:
 	var title := Style.label("Golem %d" % (slot + 1), 18, Style.GOLD)
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
-	var front: bool = loadout.row == "front"
-	var row := Style.button("Front row" if front else "Back row",
-		func(): changed.emit(slot, "row", "back" if front else "front"), 14)
-	row.tooltip_text = "Melee attackers hit the front row first. Shield Arms in the front row protect the back row."
-	head.add_child(row)
+	head.add_child(_cell_picker(loadout))
 	var preview := GolemPreview.new()
 	preview.custom_minimum_size = Vector2(0, 128)
 	preview.backdrop = Color("16151f")
@@ -74,6 +70,29 @@ func _ready() -> void:
 		notes.append(catalog.part("sigils", loadout.sigil).text)
 	for note in notes:
 		column.add_child(Style.wrapped("- " + note, 12))
+
+
+## The six cells of the board; picking one another golem holds swaps the two.
+func _cell_picker(loadout: Dictionary) -> OptionButton:
+	var picker := OptionButton.new()
+	picker.add_theme_font_size_override("font_size", 14)
+	picker.fit_to_longest_item = false
+	picker.clip_text = true
+	picker.custom_minimum_size.x = 130
+	picker.tooltip_text = "Blades and cannons strike the nearest front-row golem; bows and Spider Legs reach the back row. Melee from the back row hits at half power. Shields guard the back row in their own and neighbouring lanes."
+	var cells: Array[String] = []
+	for row in Catalog.ROWS:
+		for lane in range(Catalog.LANES):
+			var cell: String = "%s:%d" % [row, lane]
+			var text: String = Style.cell_name(row, lane)
+			for other in progression.team:
+				if other != loadout and Catalog.cell_of(other) == cell:
+					text += " (swap with %s)" % catalog.spirit(other.spirit).name
+			picker.add_item(text, cells.size())
+			cells.append(cell)
+	picker.select(cells.find(Catalog.cell_of(loadout)))
+	picker.item_selected.connect(func(index: int): changed.emit(slot, "cell", cells[index]))
+	return picker
 
 
 func _selector(grid: GridContainer, label_text: String, key: String, options: Array, current: String) -> void:

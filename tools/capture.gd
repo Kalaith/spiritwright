@@ -67,12 +67,15 @@ func _run() -> void:
 	# The newer spirits, one win away from awakening.
 	main.progression.apply_battle(main.catalog.stages["ruins_cloister"], "win")
 	main.progression.apply_battle(main.catalog.stages["ruins_vault"], "win")
-	var builds: Array = [["briar", "bulwark", "shield", "pillar", "front", "wood"],
-		["sefa", "conduit", "cannon", "pillar", "back", "crystal"], ["volta", "conduit", "cannon", "spider", "back", "bronze"]]
+	var builds: Array = [["briar", "bulwark", "aegis", "tower", "front", "wood", 1],
+		["sefa", "strider", "bow", "pillar", "back", "crystal", 1], ["volta", "conduit", "cannon", "spider", "back", "bronze", 2]]
 	for slot in range(builds.size()):
 		var build: Array = builds[slot]
-		main.progression.team[slot] = {"spirit": build[0], "frame": build[1], "arms": build[2],
-			"legs": build[3], "material": build[5], "sigil": "", "row": build[4]}
+		# Through set_slot, so spirits and cells stay unique across the larger team.
+		var fields: Dictionary = {"spirit": build[0], "frame": build[1], "arms": build[2], "legs": build[3],
+			"material": build[5], "sigil": "", "cell": "%s:%d" % [build[4], build[6]]}
+		for key in fields:
+			main.progression.set_slot(slot, key, fields[key])
 		main.progression.spirits[build[0]].level = 4
 		main.progression.spirits[build[0]].xp = 90
 	main.start_battle("ruins_stair")
