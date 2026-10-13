@@ -195,6 +195,9 @@
 		{
 			"id": "moss_wisp",
 			"name": "Moss Wisp",
+			"title": "the Mossling",
+			"temperament": "calm",
+			"description": "A soft green glow that gathers wherever stone has been left alone too long.",
 			"element": "nature",
 			"base": { "hp": 28, "str": 4, "mag": 3, "spd": 4, "def": 2, "res": 3 },
 			"growth": { "hp": 50, "str": 40, "mag": 35, "spd": 40, "def": 35, "res": 30 },
@@ -204,11 +207,21 @@
 				"effects": [
 					{ "on": "low_hp", "do": "heal", "flat": 6, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Spore Cloud",
+				"text": "As battle begins, it and every ally gain Regen for 2 turns.",
+				"effects": [
+					{ "on": "battle_start", "do": "status", "status": "regen", "amount": 2, "to": "team" }
+				]
 			}
 		},
 		{
 			"id": "rubble_imp",
 			"name": "Rubble Imp",
+			"title": "the Pebblekin",
+			"temperament": "stubborn",
+			"description": "A grumbling heap of gravel that has never once been talked out of anything.",
 			"element": "earth",
 			"base": { "hp": 30, "str": 5, "mag": 1, "spd": 3, "def": 4, "res": 1 },
 			"growth": { "hp": 55, "str": 45, "mag": 10, "spd": 30, "def": 45, "res": 20 },
@@ -217,11 +230,21 @@
 				"text": "+2 DEF while standing in the front row.",
 				"front_row": { "def": 2 },
 				"effects": []
+			},
+			"awakening": {
+				"name": "Rockslide",
+				"text": "The first time its HP falls below half, it gains Ward equal to its DEF.",
+				"effects": [
+					{ "on": "low_hp", "do": "ward", "stat": "def", "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "brine_sprite",
 			"name": "Brine Sprite",
+			"title": "the Saltspray",
+			"temperament": "curious",
+			"description": "A splash of sea that wandered inland and keeps asking where the tide went.",
 			"element": "water",
 			"base": { "hp": 24, "str": 2, "mag": 5, "spd": 5, "def": 1, "res": 4 },
 			"growth": { "hp": 40, "str": 20, "mag": 50, "spd": 45, "def": 20, "res": 40 },
@@ -231,11 +254,21 @@
 				"effects": [
 					{ "on": "hit", "do": "status", "status": "soaked", "amount": 2, "to": "target" }
 				]
+			},
+			"awakening": {
+				"name": "Undertow",
+				"text": "Its hits on a Soaked enemy drag its action gauge back by 15.",
+				"effects": [
+					{ "on": "hit", "do": "haste", "flat": -15, "if_target": ["soaked"], "to": "target" }
+				]
 			}
 		},
 		{
 			"id": "cinder_mote",
 			"name": "Cinder Mote",
+			"title": "the Flicker",
+			"temperament": "brash",
+			"description": "A spark that burns brightest just before it gutters out.",
 			"element": "fire",
 			"base": { "hp": 24, "str": 5, "mag": 2, "spd": 6, "def": 2, "res": 1 },
 			"growth": { "hp": 40, "str": 55, "mag": 20, "spd": 50, "def": 25, "res": 15 },
@@ -245,11 +278,21 @@
 				"effects": [
 					{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" }
 				]
+			},
+			"awakening": {
+				"name": "Flashpoint",
+				"text": "The first time its HP falls below half, every enemy catches Burn (+1 stack).",
+				"effects": [
+					{ "on": "low_hp", "do": "status", "status": "burn", "amount": 1, "to": "enemies" }
+				]
 			}
 		},
 		{
 			"id": "root_warden",
 			"name": "Root Warden",
+			"title": "the Old Growth",
+			"temperament": "loyal",
+			"description": "The ruins' ancient keeper. It does not forgive easily, but it remembers who stood beside it.",
 			"boss": true,
 			"element": "nature",
 			"base": { "hp": 60, "str": 6, "mag": 3, "spd": 3, "def": 5, "res": 4 },
@@ -260,11 +303,21 @@
 				"effects": [
 					{ "on": "turn_start", "do": "heal", "flat": 5, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Deep Roots",
+				"text": "As battle begins, it draws every blow to itself (Taunt for 2 turns).",
+				"effects": [
+					{ "on": "battle_start", "do": "status", "status": "taunt", "amount": 2, "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "bog_lurker",
 			"name": "Bog Lurker",
+			"title": "the Mirefoot",
+			"temperament": "stubborn",
+			"description": "A patient lump of marsh that only moves when it wants to, which is rarely.",
 			"element": "water",
 			"base": { "hp": 32, "str": 4, "mag": 4, "spd": 3, "def": 3, "res": 4 },
 			"growth": { "hp": 60, "str": 35, "mag": 40, "spd": 25, "def": 40, "res": 40 },
@@ -274,11 +327,21 @@
 				"effects": [
 					{ "on": "hurt", "do": "status", "status": "soaked", "amount": 2, "to": "attacker" }
 				]
+			},
+			"awakening": {
+				"name": "Sinkhole",
+				"text": "When struck, it drags the attacker's action gauge back by 10 (once between its turns).",
+				"effects": [
+					{ "on": "hurt", "do": "haste", "flat": -10, "to": "attacker", "cooldown": 1 }
+				]
 			}
 		},
 		{
 			"id": "spark_newt",
 			"name": "Spark Newt",
+			"title": "the Skitter",
+			"temperament": "curious",
+			"description": "Quick, bright and never in the same place twice.",
 			"element": "lightning",
 			"base": { "hp": 24, "str": 3, "mag": 6, "spd": 7, "def": 1, "res": 3 },
 			"growth": { "hp": 40, "str": 25, "mag": 55, "spd": 55, "def": 20, "res": 30 },
@@ -288,11 +351,21 @@
 				"effects": [
 					{ "on": "hit", "do": "chain", "fraction": 0.4 }
 				]
+			},
+			"awakening": {
+				"name": "Static Skin",
+				"text": "Whoever strikes it takes 2 plus a quarter of its MAG.",
+				"effects": [
+					{ "on": "hurt", "do": "damage", "flat": 2, "stat": "mag", "fraction": 0.25, "to": "attacker" }
+				]
 			}
 		},
 		{
 			"id": "reed_sprite",
 			"name": "Reed Sprite",
+			"title": "the Whistler",
+			"temperament": "patient",
+			"description": "Hums through hollow reeds. The fen grows quieter when it sings.",
 			"element": "nature",
 			"base": { "hp": 26, "str": 3, "mag": 5, "spd": 5, "def": 2, "res": 4 },
 			"growth": { "hp": 45, "str": 25, "mag": 45, "spd": 45, "def": 25, "res": 40 },
@@ -302,11 +375,21 @@
 				"effects": [
 					{ "on": "battle_start", "do": "status", "status": "regen", "amount": 3, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Reed Song",
+				"text": "At the start of each of its turns, mends the most wounded ally for 2 plus a quarter of its MAG.",
+				"effects": [
+					{ "on": "turn_start", "do": "heal", "flat": 2, "stat": "mag", "fraction": 0.25, "to": "wounded" }
+				]
 			}
 		},
 		{
 			"id": "fen_mother",
 			"name": "Fen Mother",
+			"title": "the Drowned Matron",
+			"temperament": "calm",
+			"description": "The fen's old mother. She guards whatever she decides is hers.",
 			"boss": true,
 			"element": "water",
 			"base": { "hp": 64, "str": 4, "mag": 7, "spd": 4, "def": 4, "res": 6 },
@@ -318,11 +401,21 @@
 					{ "on": "battle_start", "do": "status", "status": "soaked", "amount": 1, "to": "enemies" },
 					{ "on": "turn_start", "do": "heal", "flat": 4, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Mourning Tide",
+				"text": "When an ally falls, she and every ally gain Ward equal to her RES.",
+				"effects": [
+					{ "on": "ally_death", "do": "ward", "stat": "res", "to": "team" }
+				]
 			}
 		},
 		{
 			"id": "ash_hound",
 			"name": "Ash Hound",
+			"title": "the Cinderpup",
+			"temperament": "loyal",
+			"description": "Runs with the pack, and the pack is whoever fed it last.",
 			"element": "fire",
 			"base": { "hp": 28, "str": 6, "mag": 2, "spd": 7, "def": 2, "res": 1 },
 			"growth": { "hp": 45, "str": 55, "mag": 15, "spd": 55, "def": 30, "res": 20 },
@@ -332,11 +425,21 @@
 				"effects": [
 					{ "on": "hurt", "do": "haste", "flat": 20, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Pack Howl",
+				"text": "When it defeats an enemy, every ally's action gauge fills by 20.",
+				"effects": [
+					{ "on": "kill", "do": "haste", "flat": 20, "to": "allies" }
+				]
 			}
 		},
 		{
 			"id": "dust_devil",
 			"name": "Dust Devil",
+			"title": "the Whirl",
+			"temperament": "curious",
+			"description": "A spinning column of grit that cannot sit still.",
 			"element": "wind",
 			"base": { "hp": 24, "str": 4, "mag": 4, "spd": 8, "def": 1, "res": 2 },
 			"growth": { "hp": 40, "str": 40, "mag": 40, "spd": 60, "def": 20, "res": 25 },
@@ -346,11 +449,21 @@
 				"effects": [
 					{ "on": "hit", "do": "haste", "flat": 12, "to": "allies" }
 				]
+			},
+			"awakening": {
+				"name": "Grit Storm",
+				"text": "Its hits leave the target Weakened for 1 turn (every 2 of its turns).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "weaken", "amount": 1, "to": "target", "cooldown": 2 }
+				]
 			}
 		},
 		{
 			"id": "slag_brute",
 			"name": "Slag Brute",
+			"title": "the Slagheap",
+			"temperament": "stubborn",
+			"description": "Cooled lava with a temper that never quite did.",
 			"element": "earth",
 			"base": { "hp": 36, "str": 6, "mag": 1, "spd": 2, "def": 5, "res": 1 },
 			"growth": { "hp": 65, "str": 50, "mag": 10, "spd": 20, "def": 50, "res": 20 },
@@ -360,11 +473,21 @@
 				"effects": [
 					{ "on": "hurt", "do": "damage", "flat": 2, "stat": "def", "fraction": 0.5, "to": "attacker" }
 				]
+			},
+			"awakening": {
+				"name": "Molten Core",
+				"text": "The first time its HP falls below half, it mends 4 plus its DEF.",
+				"effects": [
+					{ "on": "low_hp", "do": "heal", "flat": 4, "stat": "def", "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "kiln_tyrant",
 			"name": "Kiln Tyrant",
+			"title": "the Forgelord",
+			"temperament": "brash",
+			"description": "Lord of the Great Kiln, who melts down whatever it cannot rule.",
 			"boss": true,
 			"element": "fire",
 			"base": { "hp": 66, "str": 7, "mag": 4, "spd": 4, "def": 5, "res": 3 },
@@ -376,11 +499,21 @@
 					{ "on": "hit", "do": "status", "status": "burn", "amount": 1, "to": "target" },
 					{ "on": "hurt", "do": "status", "status": "burn", "amount": 1, "to": "attacker" }
 				]
+			},
+			"awakening": {
+				"name": "Crucible",
+				"text": "When it defeats an enemy, it mends 6 plus half its STR.",
+				"effects": [
+					{ "on": "kill", "do": "heal", "flat": 6, "stat": "str", "fraction": 0.5, "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "frost_wisp",
 			"name": "Frost Wisp",
+			"title": "the Rimelight",
+			"temperament": "patient",
+			"description": "A cold light that drifts over snowfields and waits for travellers to tire.",
 			"element": "water",
 			"base": { "hp": 24, "str": 2, "mag": 6, "spd": 6, "def": 2, "res": 4 },
 			"growth": { "hp": 40, "str": 20, "mag": 55, "spd": 50, "def": 25, "res": 45 },
@@ -390,11 +523,21 @@
 				"effects": [
 					{ "on": "hit", "do": "status", "status": "stun", "amount": 1, "if_target": ["soaked"], "to": "target", "cooldown": 3 }
 				]
+			},
+			"awakening": {
+				"name": "Hoarfrost",
+				"text": "Its hits leave the target Soaked for 1 turn (every 2 of its turns).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "soaked", "amount": 1, "to": "target", "cooldown": 2 }
+				]
 			}
 		},
 		{
 			"id": "gale_kite",
 			"name": "Gale Kite",
+			"title": "the Updraft",
+			"temperament": "brash",
+			"description": "Rides the first gust of any fight and is gone before the second.",
 			"element": "wind",
 			"base": { "hp": 24, "str": 5, "mag": 3, "spd": 8, "def": 1, "res": 2 },
 			"growth": { "hp": 40, "str": 50, "mag": 30, "spd": 60, "def": 20, "res": 25 },
@@ -404,11 +547,21 @@
 				"effects": [
 					{ "on": "battle_start", "do": "haste", "flat": 40, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Slipstream",
+				"text": "When it defeats an enemy, its action gauge fills by 40.",
+				"effects": [
+					{ "on": "kill", "do": "haste", "flat": 40, "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "rime_ogre",
 			"name": "Rime Ogre",
+			"title": "the Frostback",
+			"temperament": "calm",
+			"description": "Huge, slow and kind, in a glacial sort of way.",
 			"element": "earth",
 			"base": { "hp": 38, "str": 6, "mag": 2, "spd": 2, "def": 4, "res": 3 },
 			"growth": { "hp": 65, "str": 50, "mag": 15, "spd": 20, "def": 45, "res": 35 },
@@ -418,11 +571,21 @@
 				"effects": [
 					{ "on": "hurt", "do": "ward", "stat": "res", "to": "self", "cooldown": 1 }
 				]
+			},
+			"awakening": {
+				"name": "Glacial Guard",
+				"text": "When an ally falls, it draws every blow to itself (Taunt for 2 turns).",
+				"effects": [
+					{ "on": "ally_death", "do": "status", "status": "taunt", "amount": 2, "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "crag_sovereign",
 			"name": "Crag Sovereign",
+			"title": "the Mountain King",
+			"temperament": "stubborn",
+			"description": "The White Crag's ruler. It has outlasted every storm and every challenger.",
 			"boss": true,
 			"element": "earth",
 			"base": { "hp": 72, "str": 7, "mag": 3, "spd": 3, "def": 6, "res": 5 },
@@ -434,11 +597,21 @@
 					{ "on": "battle_start", "do": "status", "status": "taunt", "amount": 2, "to": "self" },
 					{ "on": "low_hp", "do": "ward", "stat": "res", "to": "team" }
 				]
+			},
+			"awakening": {
+				"name": "Landslide",
+				"text": "Its hits leave the target Exposed for 2 turns (every 2 of its turns).",
+				"effects": [
+					{ "on": "hit", "do": "status", "status": "expose", "amount": 2, "to": "target", "cooldown": 2 }
+				]
 			}
 		},
 		{
 			"id": "storm_hawk",
 			"name": "Storm Hawk",
+			"title": "the Talon",
+			"temperament": "brash",
+			"description": "Strikes from above and is climbing again before the thunder.",
 			"element": "wind",
 			"base": { "hp": 26, "str": 6, "mag": 3, "spd": 8, "def": 2, "res": 2 },
 			"growth": { "hp": 40, "str": 55, "mag": 25, "spd": 60, "def": 25, "res": 25 },
@@ -448,11 +621,21 @@
 				"effects": [
 					{ "on": "hurt", "do": "haste", "flat": 20, "to": "self" }
 				]
+			},
+			"awakening": {
+				"name": "Stoop",
+				"text": "Its hits on a Soaked or Exposed enemy strike again for 2 plus half its STR.",
+				"effects": [
+					{ "on": "hit", "do": "damage", "flat": 2, "stat": "str", "fraction": 0.5, "if_target": ["soaked", "expose"], "to": "target" }
+				]
 			}
 		},
 		{
 			"id": "volt_shade",
 			"name": "Volt Shade",
+			"title": "the Afterimage",
+			"temperament": "patient",
+			"description": "A flicker at the edge of sight that is never quite where it seems.",
 			"element": "lightning",
 			"base": { "hp": 24, "str": 2, "mag": 7, "spd": 6, "def": 1, "res": 4 },
 			"growth": { "hp": 40, "str": 20, "mag": 60, "spd": 50, "def": 20, "res": 40 },
@@ -462,11 +645,21 @@
 				"effects": [
 					{ "on": "hit", "do": "damage", "stat": "mag", "fraction": 0.5, "if_target": ["soaked"], "to": "target" }
 				]
+			},
+			"awakening": {
+				"name": "Afterimage",
+				"text": "Once a battle, a blow that would destroy it leaves it standing with a quarter of its HP.",
+				"effects": [
+					{ "on": "fatal", "do": "revive", "fraction": 0.25, "to": "self" }
+				]
 			}
 		},
 		{
 			"id": "thunder_drake",
 			"name": "Thunder Drake",
+			"title": "the Stormscale",
+			"temperament": "loyal",
+			"description": "An old drake of the high peaks that guards its flight like family.",
 			"element": "lightning",
 			"base": { "hp": 30, "str": 6, "mag": 5, "spd": 5, "def": 3, "res": 3 },
 			"growth": { "hp": 55, "str": 50, "mag": 45, "spd": 45, "def": 35, "res": 35 },
@@ -476,11 +669,21 @@
 				"effects": [
 					{ "on": "hit", "do": "chain", "fraction": 0.5, "if_target": ["burn", "soaked"] }
 				]
+			},
+			"awakening": {
+				"name": "Static Field",
+				"text": "As battle begins, every enemy is Exposed until its first turn.",
+				"effects": [
+					{ "on": "battle_start", "do": "status", "status": "expose", "amount": 1, "to": "enemies" }
+				]
 			}
 		},
 		{
 			"id": "storm_sovereign",
 			"name": "Storm Sovereign",
+			"title": "the Crowned Tempest",
+			"temperament": "patient",
+			"description": "The storm that sits on the Crown. It answers only to someone who has never lost a vessel.",
 			"boss": true,
 			"element": "lightning",
 			"base": { "hp": 70, "str": 6, "mag": 8, "spd": 6, "def": 4, "res": 5 },
@@ -491,6 +694,13 @@
 				"effects": [
 					{ "on": "battle_start", "do": "haste", "flat": 40, "to": "team" },
 					{ "on": "hit", "do": "chain", "fraction": 0.4 }
+				]
+			},
+			"awakening": {
+				"name": "Tempest Crown",
+				"text": "When it defeats an enemy, every remaining enemy is Soaked for 2 turns.",
+				"effects": [
+					{ "on": "kill", "do": "status", "status": "soaked", "amount": 2, "to": "enemies" }
 				]
 			}
 		}

@@ -129,6 +129,32 @@ func _run() -> void:
 	for i in range(3):
 		await _seconds(3.0)
 		await _shot("17_arsenal_battle_%d" % i)
+	# The Codex: the collection, the challenges and the feats.
+	main.progression.spirits["cinder_mote"] = main.progression._fresh_spirit(8)
+	main.progression.challenges.append_array(["gate_cold", "court_line", "stair_cold"])
+	main.show_codex()
+	await _frames(10)
+	await _shot("18_codex_spirits")
+	main.screen._show("Challenges")
+	await _frames(10)
+	await _shot("19_codex_challenges")
+	main.screen._show("Feats")
+	await _frames(10)
+	await _shot("20_codex_feats")
+	main.selected_stage = "ruins_stair"
+	main.show_map()
+	await _seconds(1.0)
+	await _shot("21_map_challenges")
+	# The finale has fallen: the map offers New Game+ at the foot of the scouting report.
+	for id in main.catalog.stages:
+		if not id in main.progression.cleared:
+			main.progression.cleared.append(id)
+	main.selected_stage = main.catalog.finale_id
+	main.show_map()
+	await _frames(10)
+	main.screen._details.get_parent().scroll_vertical = 100000
+	await _seconds(1.0)
+	await _shot("22_map_new_game_plus")
 	await _gallery()
 	for suffix in ["", ".bak", ".tmp"]:
 		DirAccess.remove_absolute(main.progression.save_path + suffix)

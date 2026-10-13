@@ -6,6 +6,7 @@ const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
 const Progression = preload("res://scripts/core/progression.gd")
 const BattleSim = preload("res://scripts/sim/battle_sim.gd")
+const Challenges = preload("res://scripts/core/challenges.gd")
 
 var checks: Object
 var catalog: Catalog
@@ -18,6 +19,9 @@ func _init(runner: Object, data: Catalog) -> void:
 
 func run() -> void:
 	_check_new_game_plus()
+	_check_collection()
+	_check_challenges()
+	_check_feats()
 
 
 func _check(name: String, ok: bool, detail: String = "") -> void:
@@ -76,3 +80,210 @@ func _check_new_game_plus() -> void:
 	var migrated: Variant = progression.migrate(old)
 	_check("schema 5 saves are the first playthrough with a spoiled record", progression.valid(migrated)
 		and migrated.cycle == 0 and migrated.run.falls > 0, JSON.stringify(migrated.get("run", {})))
+
+
+## For the balance report: how often random builds that keep a challenge's
+## composition rules (elements, arms, materials, rows, sigils, size, require)
+## win and meet it, on a replay at the team's levels now and ten levels on
+## (and 25 on, for an extreme challenge). 0%
+## at both flags a challenge to look at; "no parts" means nothing unlocked yet fits.
+func challenge_report(progression: Progression, stage: Dictionary, rng: RandomNumberGenerator) -> void:
+	var team: Array = progression.team
+	var enemies: Array = progression.enemy_team(stage)
+	var samples: int = 150
+	for challenge in stage.get("challenges", []):
+		var rates: Array = []
+		var bonuses: Array = [0, 10, 25] if challenge.get("extreme", false) else [0, 10]
+		for bonus in bonuses:
+			var levels: Dictionary = {}
+			for id in progression.spirits:
+				levels[id] = progression.spirits[id].level
+				progression.spirits[id].level = min(int(catalog.num("level_cap")), levels[id] + bonus)
+			var met: int = 0
+			var possible: bool = true
+			for i in range(samples):
+				progression.team = team
+				var trial: Array = _conforming_team(progression, challenge.rules, rng)
+				if trial.is_empty():
+					possible = false
+					break
+				progression.team = trial
+				var outcome: Dictionary = BattleSim.new().run(catalog, progression.resolved_team(), enemies, int(stage.seed))
+				if outcome.result == "win" and Challenges.met(challenge.rules,
+						outcome.units.filter(func(u): return u.side == 0), progression.cycle):
+					met += 1
+			for id in levels:
+				progression.spirits[id].level = levels[id]
+			rates.append("%5.1f%%" % (100.0 * met / samples) if possible else "no parts")
+		var reward: String = ", ".join(challenge.get("rewards", {}).get("spirits", []))
+		print("    challenge %-26s %s now, %s ten levels on%s%s" % [challenge.name, rates[0], rates[1],
+			("  EXTREME, %s 25 levels on" % rates[2]) if rates.size() > 2 else "",
+			("  recruits " + reward) if not reward.is_empty() else ""])
+	progression.team = team
+
+
+## A random team from what is unlocked that keeps every composition rule, or
+## [] when nothing unlocked can.
+func _conforming_team(progression: Progression, rules: Dictionary, rng: RandomNumberGenerator) -> Array:
+	var require: Dictionary = rules.get("require", {})
+	var fits := func(field: String, id: String) -> bool:
+		match field:
+			"spirit":
+				var element: String = catalog.spirit(id).element
+				return not element in rules.get("forbid_elements", []) 					and (not rules.has("only_elements") or element in rules.only_elements)
+			"arms":
+				return not id in rules.get("forbid_arms", []) 					and (not rules.has("attack_kind") or catalog.part("arms", id).attack.kind == rules.attack_kind)
+			"material":
+				return not rules.has("only_materials") or id in rules.only_materials
+		return true
+	var pools: Dictionary = {"spirit": _shuffled(progression.spirits.keys().filter(func(id): return fits.call("spirit", id)), rng)}
+	for field in ["frame", "arms", "legs", "material"]:
+		var kind: String = {"frame": "frames", "material": "materials"}.get(field, field)
+		pools[field] = progression.unlocks[kind].filter(func(id): return fits.call(field, id))
+	pools["sigil"] = [""] if rules.get("no_sigils", false) else [""] + progression.unlocks.sigils
+	var cells: Array = _shuffled(Progression.BUILD_CELLS.filter(func(c): return not c.begins_with(String(rules.get("empty_row", "-")) + ":")), rng)
+	# The golem that answers "require" goes first: its spirit and cell are picked to match.
+	if require.has("spirit"):
+		pools.spirit = [require.spirit] + pools.spirit.filter(func(id): return id != require.spirit)
+	if require.has("element"):
+		var matching: Array = pools.spirit.filter(func(id): return catalog.spirit(id).element == require.element)
+		pools.spirit = matching.slice(0, 1) + pools.spirit.filter(func(id): return not id in matching.slice(0, 1))
+	if require.has("row"):
+		cells.sort_custom(func(x, y): return x.begins_with(require.row) and not y.begins_with(require.row))
+	var size: int = mini(mini(progression.team.size(), int(rules.get("max_golems", 6))), mini(pools.spirit.size(), cells.size()))
+	if size == 0 or pools.values().any(func(pool): return pool.is_empty()):
+		return []
+	if (require.has("spirit") and not progression.spirits.has(require.spirit)) 			or (require.has("element") and catalog.spirit(pools.spirit[0]).element != require.element):
+		return []
+	var built: Array = []
+	for slot in range(size):
+		var loadout: Dictionary = {"spirit": pools.spirit[slot], "row": String(cells[slot]).get_slice(":", 0),
+			"lane": String(cells[slot]).get_slice(":", 1).to_int()}
+		for field in ["frame", "arms", "legs", "material", "sigil"]:
+			var options: Array = pools[field]
+			loadout[field] = require[field] if slot == 0 and require.has(field) else options[rng.randi_range(0, options.size() - 1)]
+		built.append(loadout)
+	if require.has("row") and built[0].row != require.row:
+		return []
+	for field in ["frame", "arms", "legs", "material", "sigil"]:
+		if require.has(field) and not require[field] in pools[field]:
+			return []
+	return built
+
+
+func _shuffled(items: Array, rng: RandomNumberGenerator) -> Array:
+	var copy: Array = items.duplicate()
+	for i in range(copy.size() - 1, 0, -1):
+		var j: int = rng.randi_range(0, i)
+		var swap: Variant = copy[i]
+		copy[i] = copy[j]
+		copy[j] = swap
+	return copy
+
+
+## Every spirit can join exactly one way, and the collection splits about
+## 60% from playing, 30% from challenges and 10% from extreme feats.
+func _check_collection() -> void:
+	var found: Dictionary = Challenges.spirit_sources(catalog)
+	var stray: Array = catalog.player_spirit_ids.filter(func(id): return found.get(id, []).size() != 1)
+	_check("every spirit joins in exactly one way", stray.is_empty(), str(stray))
+	var tiers: Dictionary = {"play": 0, "challenge": 0, "extreme": 0}
+	for id in found:
+		tiers[found[id][0].tier] += 1
+	var total: float = float(catalog.player_spirit_ids.size())
+	_check("the collection is about 60% play, 30% challenges, 10% extreme",
+		absf(tiers.play / total - 0.6) < 0.05 and absf(tiers.challenge / total - 0.3) < 0.05
+		and absf(tiers.extreme / total - 0.1) < 0.05, str(tiers))
+	var progression := _fresh()
+	var stage: Dictionary = catalog.stages["ruins_heart"]
+	var wild: Array = progression.enemy_team(stage)
+	progression.spirits["root_warden"] = progression._fresh_spirit(int(wild[0].level))
+	progression.set_slot(0, "spirit", "root_warden")
+	_check("a wild spirit fights without its awakening", not wild[0].awakened and not wild[0].preference.active)
+	_check("the same spirit awakens once recruited", progression.resolve_slot(0).awakened)
+
+
+func _check_challenges() -> void:
+	var golem := func(element: String, row: String, alive: bool = true, kind: String = "physical") -> Dictionary:
+		return {"spirit": "pyra", "element": element, "row": row, "alive": alive, "material": "stone",
+			"arms": "hammer", "attack": {"kind": kind}, "sigil": "", "level": 5, "frame": "strider", "legs": "pillar"}
+	var team: Array = [golem.call("fire", "front"), golem.call("water", "back", false)]
+	_check("no_falls sees a fallen golem", not Challenges.met({"no_falls": true}, team, 0))
+	_check("front_stands ignores the back row", Challenges.met({"front_stands": true}, team, 0)
+		and not Challenges.met({"front_stands": true}, [golem.call("earth", "front", false)], 0))
+	_check("forbid_elements and only_elements read each golem's element",
+		not Challenges.met({"forbid_elements": ["fire"]}, team, 0) and Challenges.met({"only_elements": ["fire", "water"]}, team, 0))
+	_check("max_golems counts the team", Challenges.met({"max_golems": 2}, team, 0) and not Challenges.met({"max_golems": 1}, team, 0))
+	_check("require needs one golem matching every field", Challenges.met({"require": {"element": "water", "row": "back"}}, team, 0)
+		and not Challenges.met({"require": {"element": "water", "row": "front"}}, team, 0))
+	_check("attack_kind, empty_row, max_level and min_cycle", not Challenges.met({"attack_kind": "magical"}, team, 0)
+		and not Challenges.met({"empty_row": "back"}, team, 0) and Challenges.met({"max_level": 5}, team, 0)
+		and not Challenges.met({"min_cycle": 1}, team, 0) and Challenges.met({"min_cycle": 1}, team, 1))
+	_check("the catalog rejects an unknown challenge rule", not Challenges.problems(catalog, "probe",
+		{"id": "x", "name": "x", "text": "x", "rules": {"fly": true}}, false).is_empty())
+	_check("a feat cannot use a battle-only rule", not Challenges.problems(catalog, "probe",
+		{"id": "x", "name": "x", "text": "x", "rules": {"front_stands": true}}, true).is_empty())
+
+	# Cold Hearth on the Broken Stair: win without a Fire spirit and the Cinder Mote joins.
+	var progression := _fresh()
+	for id in ["ruins_gate", "ruins_court"]:
+		progression.apply_battle(catalog.stages[id], "win")
+		progression.build_golem()
+	var stage: Dictionary = catalog.stages["ruins_stair"]
+	var fiery: Dictionary = BattleSim.new().run(catalog, progression.resolved_team(), progression.enemy_team(stage), int(stage.seed))
+	var report: Dictionary = progression.apply_battle(stage, fiery.result, fiery.units)
+	_check("a team with Pyra does not meet Cold Hearth", not "stair_cold" in report.challenges
+		and not progression.spirits.has("cinder_mote"))
+	for slot in range(progression.team.size()):
+		if progression.team[slot].spirit == "pyra":
+			progression.set_slot(slot, "spirit", "rubble_imp")
+	for id in progression.spirits:
+		progression.spirits[id].level = 5
+	var cold: Dictionary = BattleSim.new().run(catalog, progression.resolved_team(), progression.enemy_team(stage), int(stage.seed))
+	report = progression.apply_battle(stage, cold.result, cold.units)
+	_check("winning without Fire meets Cold Hearth and the Cinder Mote joins", cold.result == "win"
+		and "stair_cold" in report.challenges and progression.spirits.has("cinder_mote")
+		and report.rewards.any(func(r): return r.kind == "spirits" and r.id == "cinder_mote"), cold.result)
+	report = progression.apply_battle(stage, cold.result, cold.units)
+	_check("a met challenge is not met twice", report.challenges.is_empty() and progression.valid(progression.to_dict()))
+
+
+## Feats are judged once every stage of a playthrough is cleared.
+func _check_feats() -> void:
+	var progression := _fresh()
+	var stages: Array = catalog.stages.values()
+	for stage in stages.slice(0, stages.size() - 1):
+		progression.apply_battle(stage, "win")
+		while progression.build_golem():
+			pass
+	_check("no feat before the playthrough is complete", progression.feats.is_empty())
+	var report: Dictionary = progression.apply_battle(stages[-1], "win")
+	_check("a playthrough with no golem falling earns Unbroken and the Storm Sovereign",
+		"feat_unbroken" in report.feats and progression.spirits.has("storm_sovereign"), str(report.feats))
+	_check("a full team does not earn Skeleton Crew", not "feat_skeleton" in progression.feats)
+	_check("The Second Road waits for New Game+", not "feat_second_road" in progression.feats)
+	progression.start_new_game_plus()
+	progression.apply_battle(stages[0], "loss")
+	for stage in stages:
+		progression.apply_battle(stage, "win")
+	_check("a fall spoils Flawless Road but not the New Game+ feat", "feat_second_road" in progression.feats
+		and progression.run.falls > 0 and progression.valid(progression.to_dict()))
+
+	var spoiler := _fresh()
+	var lost: Dictionary = spoiler.apply_battle(stages[0], "loss")
+	_check("a defeat puts Unbroken and Flawless Road out of reach for the playthrough",
+		"feat_unbroken" in lost.spoiled and "feat_flawless" in lost.spoiled and not "feat_skeleton" in lost.spoiled,
+		str(lost.spoiled))
+
+	var crew := _fresh()
+	for stage in stages:
+		crew.apply_battle(stage, "win")
+		if crew.team.size() < 3:
+			crew.build_golem()
+	_check("three golems or fewer all the way earns Skeleton Crew and the Crag Sovereign",
+		"feat_skeleton" in crew.feats and crew.spirits.has("crag_sovereign"), str(crew.feats))
+	var old: Dictionary = crew.to_dict()
+	old.schema = 6
+	old.erase("challenges")
+	old.erase("feats")
+	_check("schema 6 saves migrate with an empty Codex", crew.valid(crew.migrate(old)))

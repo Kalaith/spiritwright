@@ -7,11 +7,13 @@ signal laboratory_requested
 signal fight_requested(stage_id: String)
 signal title_requested
 signal new_game_plus_requested
+signal codex_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
 const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
 const CampaignMap = preload("res://scripts/ui/campaign_map.gd")
+const CodexText = preload("res://scripts/ui/codex_text.gd")
 
 var catalog: RefCounted
 var progression: RefCounted
@@ -54,6 +56,7 @@ func _ready() -> void:
 	_region_text.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(_region_text)
 	bar.add_child(_lab_button())
+	bar.add_child(Style.button("Codex", func(): codex_requested.emit()))
 	bar.add_child(Style.button("Title", func(): title_requested.emit()))
 	var body := Style.hbox(12)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -112,6 +115,7 @@ func _show_region(index: int) -> void:
 	_region_name.text = region.name
 	_region_text.text = region.text
 	_region_count.text = "Region %d of %d" % [index + 1, catalog.regions().size()]
+	_region_count.text += "  -  Spirits %d of %d" % [progression.spirits.size(), catalog.player_spirit_ids.size()]
 	if progression.cycle > 0:
 		_region_count.text += "  -  New Game+ %d" % progression.cycle
 	_prev.disabled = index == 0
@@ -149,6 +153,12 @@ func _select(stage_id: String) -> void:
 	if state == "cleared":
 		heading.add_child(Style.label("CLEARED", 14, Style.GOOD))
 	_details.add_child(heading)
+	# On its own line: a boss's heading row is already as wide as the panel.
+	var stage_challenges: Array = stage.get("challenges", [])
+	if not stage_challenges.is_empty():
+		var met: int = stage_challenges.filter(func(c): return c.id in progression.challenges).size()
+		_details.add_child(Style.label("Challenges met %d of %d (listed below the rewards)" % [met, stage_challenges.size()], 14,
+			Style.GOOD if met == stage_challenges.size() else Style.GOLD))
 	_details.add_child(Style.wrapped(stage.text, 15, Style.TEXT))
 	_details.add_child(Style.label("Enemy team", 17, Style.MUTED))
 	for golem in progression.enemy_team(stage):
@@ -166,6 +176,12 @@ func _select(stage_id: String) -> void:
 			var lines: Array = Style.reward_text(catalog, reward[0], reward[1])
 			_details.add_child(Style.wrapped(lines[0], 15, Style.GOLD))
 			_details.add_child(Style.wrapped(lines[1], 13))
+	var challenges: Array = stage.get("challenges", [])
+	if not challenges.is_empty():
+		var done: int = challenges.filter(func(c): return c.id in progression.challenges).size()
+		_details.add_child(Style.label("Challenges  %d of %d  (any win counts)" % [done, challenges.size()], 17, Style.MUTED))
+		for entry in challenges:
+			_details.add_child(_challenge_row(entry))
 	var buttons := Style.hbox(10)
 	buttons.add_child(_lab_button())
 	var fight := Style.button("Fight!", func(): fight_requested.emit(selected), 20)
@@ -177,6 +193,16 @@ func _select(stage_id: String) -> void:
 		_details.add_child(Style.wrapped("A golem core waits in the laboratory: build another golem before you set out.", 13, Style.GOLD))
 	if progression.campaign_complete():
 		_details.add_child(_new_game_plus_offer())
+
+
+func _challenge_row(entry: Dictionary) -> Control:
+	var done: bool = entry.id in progression.challenges
+	var box := Style.vbox(0)
+	box.add_child(Style.wrapped(CodexText.challenge_line(entry, done), 14, CodexText.challenge_color(entry, done)))
+	var reward: String = CodexText.reward_line(catalog, entry)
+	if not reward.is_empty():
+		box.add_child(Style.wrapped("    " + reward, 13, Style.MUTED if done else Style.GOLD))
+	return box
 
 
 ## [kind, id] pairs a first clear would still give: in New Game+ most parts and

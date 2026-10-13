@@ -11,6 +11,7 @@ const CampaignScreen = preload("res://scripts/ui/campaign_screen.gd")
 const LaboratoryScreen = preload("res://scripts/ui/laboratory_screen.gd")
 const BattleView = preload("res://scripts/ui/battle_view.gd")
 const ResultScreen = preload("res://scripts/ui/result_screen.gd")
+const CodexScreen = preload("res://scripts/ui/codex_screen.gd")
 
 var catalog := Catalog.new()
 var progression: Progression
@@ -77,7 +78,24 @@ func show_map(_notice: String = "") -> void:
 	map.fight_requested.connect(start_battle)
 	map.title_requested.connect(show_title)
 	map.new_game_plus_requested.connect(_new_game_plus)
+	map.codex_requested.connect(func(): _codex_from(map))
 	_swap(map, show_title)
+
+
+func _codex_from(map: Control) -> void:
+	selected_stage = map.selected
+	show_codex()
+
+
+func show_codex() -> void:
+	var codex := CodexScreen.new()
+	codex.catalog = catalog
+	codex.progression = progression
+	codex.map_requested.connect(show_map)
+	codex.stage_requested.connect(func(stage_id: String):
+		selected_stage = stage_id
+		show_map())
+	_swap(codex, show_map)
 
 
 func _new_game_plus() -> void:
@@ -125,6 +143,7 @@ func _show_result(stage: Dictionary, outcome: Dictionary) -> void:
 	result.stage = stage
 	result.outcome = outcome
 	result.report = report
+	result.progression_challenges = progression.challenges
 	if not progression.save_game():
 		result.save_error = progression.last_error
 	result.map_requested.connect(show_map)

@@ -100,7 +100,7 @@ func _rebuild() -> void:
 			_roster.add_child(_roster_entry(id))
 	var locked: int = catalog.player_spirit_ids.size() - progression.spirits.size()
 	if locked > 0:
-		_roster.add_child(Style.wrapped("%d more spirit(s) wait somewhere in the ruins." % locked, 13))
+		_roster.add_child(Style.wrapped("%d more spirit(s) still to find: the Codex on the map shows where." % locked, 13))
 
 
 ## Who stands in each of the six cells: back row on the left, front on the right.

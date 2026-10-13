@@ -282,7 +282,7 @@ func _check_arsenal(catalog: Catalog) -> void:
 	var spear_team: Array = [Builds.resolve(catalog, _loadout("odo", "strider", "spear", "pillar", "front"), 8)]
 	var blunt_team: Array = spear_team.duplicate(true)
 	blunt_team[0].attack.erase("pierce")
-	var foes: Array = [Builds.resolve(catalog, _loadout("slag_brute", "bulwark", "shield", "tower", "back", "bronze"), 8)]
+	var foes: Array = [Builds.resolve(catalog, _loadout("slag_brute", "bulwark", "shield", "tower", "back", "bronze"), 8, {}, true)]
 	var pierced: Array = BattleSim.new().run(catalog, spear_team, foes, 3).events.filter(func(e): return e.type == "damage" and e.cause == "attack" and e.source == "a0")
 	var blunted: Array = BattleSim.new().run(catalog, blunt_team, foes, 3).events.filter(func(e): return e.type == "damage" and e.cause == "attack" and e.source == "a0")
 	_check("a pike punches through armour", int(pierced[0].amount) + int(pierced[0].absorbed) > int(blunted[0].amount) + int(blunted[0].absorbed))
@@ -376,7 +376,8 @@ func _has(outcome: Dictionary, fields: Dictionary) -> bool:
 func _duel(catalog: Catalog, side_a: Array, side_b: Array) -> Dictionary:
 	var teams: Array = []
 	for side in [side_a, side_b]:
-		teams.append(side.map(func(entry): return Builds.resolve(catalog, entry[2], entry[1])))
+		var wild: bool = teams.size() == 1
+		teams.append(side.map(func(entry): return Builds.resolve(catalog, entry[2], entry[1], {}, wild)))
 	return BattleSim.new().run(catalog, teams[0], teams[1], 11)
 
 
@@ -388,6 +389,13 @@ func _report(catalog: Catalog) -> void:
 	progression.new_game()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 1
+	var collection := CollectionChecks.new(self, catalog)
+	var tiers: Dictionary = {}
+	var sources: Dictionary = CollectionChecks.Challenges.spirit_sources(catalog)
+	for id in sources:
+		tiers[sources[id][0].tier] = tiers.get(sources[id][0].tier, []) + [id]
+	for tier in tiers:
+		print("  %d spirits join from %s: %s" % [tiers[tier].size(), tier, ", ".join(tiers[tier])])
 	for stage in catalog.stages.values():
 		while progression.build_golem():
 			pass
@@ -438,6 +446,7 @@ func _report(catalog: Catalog) -> void:
 		for loadout in best:
 			print("    best: %s" % [loadout])
 		progression.apply_battle(stage, "win")
+		collection.challenge_report(progression, stage, rng)
 
 
 func _random_team(progression: Progression, rng: RandomNumberGenerator) -> Array:

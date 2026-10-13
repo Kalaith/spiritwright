@@ -10,6 +10,7 @@
 		"first_clear": 1.5,
 		"repeat_win": 1.0,
 		"loss": 0.5,
+		"resting": 0.5,
 		"level_gap_step": 0.25,
 		"min_factor": 0.25,
 		"max_factor": 2.0

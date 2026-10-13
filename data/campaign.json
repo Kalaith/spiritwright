@@ -5,6 +5,12 @@
 		"unlocks": { "frames": ["bulwark", "strider"], "arms": ["hammer", "shield"], "legs": ["pillar"], "sigils": ["ember_sigil"], "materials": ["stone", "wood"] },
 		"team": [{ "spirit": "pyra", "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 1 }]
 	},
+	"feats": [
+		{"id": "feat_unbroken", "name": "Unbroken", "text": "Clear every stage of one playthrough, every boss and the Storm Crown included, without a golem of yours ever falling in any battle.", "rules": {"no_falls": true}, "rewards": {"spirits": ["storm_sovereign"]}, "extreme": true},
+		{"id": "feat_skeleton", "name": "Skeleton Crew", "text": "Clear every stage of one playthrough without ever fielding more than three golems.", "rules": {"max_golems": 3}, "rewards": {"spirits": ["crag_sovereign"]}, "extreme": true},
+		{"id": "feat_flawless", "name": "Flawless Road", "text": "Clear every stage of one playthrough without losing a single battle.", "rules": {"no_losses": true}, "rewards": {}, "extreme": true},
+		{"id": "feat_second_road", "name": "The Second Road", "text": "Clear every stage of a New Game+ playthrough.", "rules": {"min_cycle": 1}, "rewards": {}}
+	],
 	"regions": [
 		{
 			"id": "ruins",
@@ -21,7 +27,11 @@
 					"requires": [],
 					"seed": 101,
 					"enemies": [{ "spirit": "rubble_imp", "level": 1, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 }],
-					"rewards": { "cores": 1, "arms": ["cannon"] }
+					"rewards": { "cores": 1, "arms": ["cannon"] },
+					"challenges": [
+						{"id": "gate_cold", "name": "Cold Start", "text": "Win without a Fire spirit.", "rules": {"forbid_elements": ["fire"]}, "rewards": {}},
+						{"id": "gate_stone", "name": "Set in Stone", "text": "Win with a golem in a Stone body carrying Shield Arms.", "rules": {"require": {"material": "stone", "arms": "shield"}}, "rewards": {}}
+					]
 				},
 				{
 					"id": "ruins_court",
@@ -35,7 +45,11 @@
 						{ "spirit": "rubble_imp", "level": 1, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
 						{ "spirit": "brine_sprite", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 }
 					],
-					"rewards": { "cores": 1, "materials": ["ice"] }
+					"rewards": { "cores": 1, "materials": ["ice"] },
+					"challenges": [
+						{"id": "court_line", "name": "Hold the Line", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "court_lone", "name": "Lone Vessel", "text": "Win with a single golem.", "rules": {"max_golems": 1}, "rewards": {}}
+					]
 				},
 				{
 					"id": "ruins_stair",
@@ -50,7 +64,11 @@
 						{ "spirit": "cinder_mote", "level": 1, "frame": "strider", "arms": "shield", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
 						{ "spirit": "cinder_mote", "level": 1, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 2 }
 					],
-					"rewards": { "arms": ["bow"] }
+					"rewards": { "spirits": ["rubble_imp"], "arms": ["bow"] },
+					"challenges": [
+						{"id": "stair_cold", "name": "Cold Hearth", "text": "Win without a Fire spirit.", "rules": {"forbid_elements": ["fire"]}, "rewards": {"spirits": ["cinder_mote"]}},
+						{"id": "stair_back", "name": "Keep Your Distance", "text": "Win with nobody in the front row.", "rules": {"empty_row": "front"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "ruins_cloister",
@@ -65,7 +83,11 @@
 						{ "spirit": "moss_wisp", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "moss_charm", "row": "back", "lane": 1 },
 						{ "spirit": "moss_wisp", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "mending", "row": "back", "lane": 2 }
 					],
-					"rewards": { "spirits": ["briar"] }
+					"rewards": { "spirits": ["briar"] },
+					"challenges": [
+						{"id": "cloister_whole", "name": "Untouched Garden", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "cloister_spell", "name": "Spellwork", "text": "Win with every golem using magical arms.", "rules": {"attack_kind": "magical"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "ruins_vault",
@@ -80,7 +102,11 @@
 						{ "spirit": "brine_sprite", "level": 3, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "cinder_mote", "level": 2, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 2 }
 					],
-					"rewards": { "sigils": ["moss_charm"] }
+					"rewards": { "spirits": ["moss_wisp"], "sigils": ["moss_charm"] },
+					"challenges": [
+						{"id": "vault_echo", "name": "Echoless", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {"spirits": ["brine_sprite"]}},
+						{"id": "vault_wood", "name": "Grain of the Wood", "text": "Win with every golem in a Wood body.", "rules": {"only_materials": ["wood"]}, "rewards": {}}
+					]
 				},
 				{
 					"id": "ruins_heart",
@@ -97,6 +123,10 @@
 						{ "spirit": "moss_wisp", "level": 3, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "moss_charm", "row": "back", "lane": 1 }
 					],
 					"rewards": { "frames": ["conduit"], "legs": ["spider"], "sigils": ["stoneskin"] },
+					"challenges": [
+						{"id": "heart_felled", "name": "Felled", "text": "Defeat the Root Warden without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {"spirits": ["root_warden"]}},
+						{"id": "heart_pair", "name": "Two Against the Roots", "text": "Win with two golems or fewer.", "rules": {"max_golems": 2}, "rewards": {}}
+					],
 					"clear_text": "The Root Warden falls and the Ancient Ruins are free. Beyond its roots a trail sinks east into the Glimmer Fen: use > on the map to follow it."
 				}
 			],
@@ -168,7 +198,11 @@
 						{ "spirit": "spark_newt", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "bog_lurker", "level": 5, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 }
 					],
-					"rewards": { "cores": 1 }
+					"rewards": { "spirits": ["bog_lurker"], "cores": 1 },
+					"challenges": [
+						{"id": "crossing_dry", "name": "Dry Feet", "text": "Win without a Water spirit.", "rules": {"forbid_elements": ["water"]}, "rewards": {}},
+						{"id": "crossing_sure", "name": "Sure Footing", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}}
+					]
 				},
 				{
 					"id": "fen_stilts",
@@ -184,7 +218,11 @@
 						{ "spirit": "spark_newt", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "spark_newt", "level": 5, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 }
 					],
-					"rewards": { "legs": ["stilts"] }
+					"rewards": { "spirits": ["reed_sprite"], "legs": ["stilts"] },
+					"challenges": [
+						{"id": "stilts_fast", "name": "Stand Fast", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "stilts_brute", "name": "Brute Force", "text": "Win with every golem using physical arms.", "rules": {"attack_kind": "physical"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "fen_pool",
@@ -200,7 +238,11 @@
 						{ "spirit": "brine_sprite", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "brine_sprite", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 }
 					],
-					"rewards": { "sigils": ["leech_fang"] }
+					"rewards": { "sigils": ["leech_fang"] },
+					"challenges": [
+						{"id": "pool_bare", "name": "Unadorned", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}},
+						{"id": "pool_three", "name": "Three Reflections", "text": "Win with three golems or fewer.", "rules": {"max_golems": 3}, "rewards": {}}
+					]
 				},
 				{
 					"id": "fen_shards",
@@ -216,7 +258,11 @@
 						{ "spirit": "spark_newt", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "spark_newt", "level": 6, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 2 }
 					],
-					"rewards": { "materials": ["crystal"] }
+					"rewards": { "materials": ["crystal"] },
+					"challenges": [
+						{"id": "shards_insulated", "name": "Insulated", "text": "Win without a Lightning or Water spirit.", "rules": {"forbid_elements": ["lightning", "water"]}, "rewards": {"spirits": ["spark_newt"]}},
+						{"id": "shards_root", "name": "Rooted Front", "text": "Win with a Nature spirit in the front row.", "rules": {"require": {"element": "nature", "row": "front"}}, "rewards": {}}
+					]
 				},
 				{
 					"id": "fen_beacon",
@@ -232,7 +278,11 @@
 						{ "spirit": "moss_wisp", "level": 8, "frame": "conduit", "arms": "lantern", "legs": "stilts", "material": "wood", "sigil": "moss_charm", "row": "back", "lane": 1 },
 						{ "spirit": "bog_lurker", "level": 6, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": { "arms": ["lantern"], "sigils": ["thorn_crest"] }
+					"rewards": { "arms": ["lantern"], "sigils": ["thorn_crest"] },
+					"challenges": [
+						{"id": "beacon_light", "name": "Keep the Light", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "beacon_wall", "name": "All at the Wall", "text": "Win with nobody in the back row.", "rules": {"empty_row": "back"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "fen_mother",
@@ -250,6 +300,10 @@
 						{ "spirit": "reed_sprite", "level": 6, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0 }
 					],
 					"rewards": { "spirits": ["volta"], "arms": ["aegis"], "legs": ["tower"], "materials": ["bogwood"] },
+					"challenges": [
+						{"id": "mother_dry", "name": "Dry Land", "text": "Defeat the Fen Mother without a Water spirit and with no golem falling.", "rules": {"forbid_elements": ["water"], "no_falls": true}, "rewards": {"spirits": ["fen_mother"]}},
+						{"id": "mother_boat", "name": "Small Boat", "text": "Win with three golems or fewer.", "rules": {"max_golems": 3}, "rewards": {}}
+					],
 					"clear_text": "The Fen Mother sinks and the marsh falls quiet. To the east the reeds give way to the dry, burning grass of the Ember Steppe."
 				}
 			]
@@ -296,7 +350,11 @@
 						{ "spirit": "ash_hound", "level": 7, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 1 },
 						{ "spirit": "ash_hound", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": { "cores": 1 }
+					"rewards": { "spirits": ["ash_hound"], "cores": 1 },
+					"challenges": [
+						{"id": "camp_bite", "name": "No Bite Marks", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "camp_quench", "name": "Quench", "text": "Win with only Water and Earth spirits.", "rules": {"only_elements": ["water", "earth"]}, "rewards": {}}
+					]
 				},
 				{
 					"id": "steppe_kiln",
@@ -313,7 +371,11 @@
 						{ "spirit": "slag_brute", "level": 8, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
 						{ "spirit": "cinder_mote", "level": 8, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": { "materials": ["bronze"] }
+					"rewards": { "materials": ["bronze"] },
+					"challenges": [
+						{"id": "kiln_sparks", "name": "No Sparks", "text": "Win without a Fire spirit and with no golem falling.", "rules": {"forbid_elements": ["fire"], "no_falls": true}, "rewards": {"spirits": ["slag_brute"]}},
+						{"id": "kiln_cold", "name": "Stone Cold", "text": "Win with every golem in a Stone or Ice body.", "rules": {"only_materials": ["stone", "ice"]}, "rewards": {}}
+					]
 				},
 				{
 					"id": "steppe_tower",
@@ -330,7 +392,11 @@
 						{ "spirit": "dust_devil", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "ash_hound", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 }
 					],
-					"rewards": { "arms": ["spear"] }
+					"rewards": { "spirits": ["dust_devil"], "arms": ["spear"] },
+					"challenges": [
+						{"id": "tower_hold", "name": "Hold the Tower", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "tower_sorcery", "name": "Sorcery", "text": "Win with every golem using magical arms.", "rules": {"attack_kind": "magical"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "steppe_stones",
@@ -347,7 +413,11 @@
 						{ "spirit": "rubble_imp", "level": 9, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "dust_devil", "level": 9, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 }
 					],
-					"rewards": { "sigils": ["guard_bell"] }
+					"rewards": { "sigils": ["guard_bell"] },
+					"challenges": [
+						{"id": "stones_bare", "name": "Bare Stones", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}},
+						{"id": "stones_four", "name": "Four Stand", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {}}
+					]
 				},
 				{
 					"id": "steppe_gate",
@@ -364,7 +434,11 @@
 						{ "spirit": "ash_hound", "level": 10, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
 						{ "spirit": "cinder_mote", "level": 10, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": { "legs": ["treads"], "sigils": ["war_drum"] }
+					"rewards": { "legs": ["treads"], "sigils": ["war_drum"] },
+					"challenges": [
+						{"id": "burning_whole", "name": "Through the Flames", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "burning_break", "name": "Firebreak", "text": "Win with a Water spirit in the front row.", "rules": {"require": {"element": "water", "row": "front"}}, "rewards": {}}
+					]
 				},
 				{
 					"id": "steppe_tyrant",
@@ -383,6 +457,10 @@
 						{ "spirit": "slag_brute", "level": 11, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 2 }
 					],
 					"rewards": { "spirits": ["sefa"], "sigils": ["surge_lens", "hunters_brand"], "materials": ["obsidian"] },
+					"challenges": [
+						{"id": "tyrant_iron", "name": "Cold Iron", "text": "Defeat the Great Kiln without a Fire spirit.", "rules": {"forbid_elements": ["fire"]}, "rewards": {}},
+						{"id": "tyrant_alone", "name": "Trial by Fire", "text": "Defeat the Great Kiln with a single golem.", "rules": {"max_golems": 1}, "rewards": {"spirits": ["kiln_tyrant"]}, "extreme": true}
+					],
 					"clear_text": "The Great Kiln goes cold. North of the steppe, a pass climbs into the snow of the Frostspine."
 				}
 			]
@@ -430,7 +508,11 @@
 						{ "spirit": "gale_kite", "level": 13, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
 						{ "spirit": "gale_kite", "level": 13, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
 					],
-					"rewards": { "cores": 1 }
+					"rewards": { "spirits": ["gale_kite"], "cores": 1 },
+					"challenges": [
+						{"id": "trail_front", "name": "Breaking Trail", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "trail_hands", "name": "Bare Hands", "text": "Win with every golem using physical arms.", "rules": {"attack_kind": "physical"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "frost_bridge",
@@ -448,7 +530,11 @@
 						{ "spirit": "rime_ogre", "level": 13, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0 },
 						{ "spirit": "rime_ogre", "level": 13, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 2 }
 					],
-					"rewards": { "legs": ["skates"] }
+					"rewards": { "spirits": ["frost_wisp"], "legs": ["skates"] },
+					"challenges": [
+						{"id": "bridge_whole", "name": "Thin Ice", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "bridge_thaw", "name": "Thaw the Bridge", "text": "Win with a Fire spirit in the front row.", "rules": {"require": {"element": "fire", "row": "front"}}, "rewards": {}}
+					]
 				},
 				{
 					"id": "frost_stair",
@@ -466,7 +552,11 @@
 						{ "spirit": "gale_kite", "level": 14, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "rime_ogre", "level": 14, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2 }
 					],
-					"rewards": { "sigils": ["frost_sigil"] }
+					"rewards": { "sigils": ["frost_sigil"] },
+					"challenges": [
+						{"id": "glacier_break", "name": "Avalanche Breaker", "text": "Win with five golems or fewer and no front-row golem falling.", "rules": {"max_golems": 5, "front_stands": true}, "rewards": {"spirits": ["rime_ogre"]}},
+						{"id": "glacier_bare", "name": "Bare Ice", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}}
+					]
 				},
 				{
 					"id": "frost_cairn",
@@ -484,7 +574,11 @@
 						{ "spirit": "frost_wisp", "level": 15, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
 						{ "spirit": "brine_sprite", "level": 15, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
-					"rewards": { "sigils": ["vengeance_idol"] }
+					"rewards": { "sigils": ["vengeance_idol"] },
+					"challenges": [
+						{"id": "cairn_whole", "name": "Silent Cairn", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "cairn_four", "name": "Four Voices", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {}}
+					]
 				},
 				{
 					"id": "frost_spire",
@@ -502,7 +596,11 @@
 						{ "spirit": "gale_kite", "level": 15, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "frost_wisp", "level": 15, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
 					],
-					"rewards": { "arms": ["twin_blades"] }
+					"rewards": { "arms": ["twin_blades"] },
+					"challenges": [
+						{"id": "spire_front", "name": "Glass Wall", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "spire_bare", "name": "Clear Glass", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}}
+					]
 				},
 				{
 					"id": "frost_crag",
@@ -522,6 +620,10 @@
 						{ "spirit": "frost_wisp", "level": 14, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
 					"rewards": { "arms": ["flail"], "sigils": ["mending", "cleansing_charm"] },
+					"challenges": [
+						{"id": "crag_whole", "name": "Unshaken", "text": "Defeat the Crag Sovereign with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "crag_erosion", "name": "Erosion", "text": "Win with every golem using magical arms.", "rules": {"attack_kind": "magical"}, "rewards": {}}
+					],
 					"clear_text": "The White Crag cracks and the pass lies open. Above it, thunderheads gather around the Storm Crown."
 				}
 			]
@@ -569,7 +671,11 @@
 						{ "spirit": "volt_shade", "level": 17, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 },
 						{ "spirit": "volt_shade", "level": 17, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 }
 					],
-					"rewards": { "arms": ["storm_staff"] }
+					"rewards": { "spirits": ["storm_hawk"], "arms": ["storm_staff"] },
+					"challenges": [
+						{"id": "foot_front", "name": "Standing Stones", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "foot_grounded", "name": "Grounded", "text": "Win without a Lightning spirit.", "rules": {"forbid_elements": ["lightning"]}, "rewards": {}}
+					]
 				},
 				{
 					"id": "storm_vault",
@@ -587,7 +693,11 @@
 						{ "spirit": "brine_sprite", "level": 16, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
 						{ "spirit": "volt_shade", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
-					"rewards": { "materials": ["fulgurite"] }
+					"rewards": { "materials": ["fulgurite"] },
+					"challenges": [
+						{"id": "charged_rod", "name": "Lightning Rod", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {"spirits": ["volt_shade"]}},
+						{"id": "charged_whole", "name": "Discharge", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}}
+					]
 				},
 				{
 					"id": "storm_tower",
@@ -605,7 +715,11 @@
 						{ "spirit": "cinder_mote", "level": 18, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "thunder_drake", "level": 18, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
 					],
-					"rewards": { "arms": ["scythe"] }
+					"rewards": { "spirits": ["thunder_drake"], "arms": ["scythe"] },
+					"challenges": [
+						{"id": "struck_front", "name": "Lightning Strikes Twice", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+						{"id": "struck_brute", "name": "Iron Will", "text": "Win with every golem using physical arms.", "rules": {"attack_kind": "physical"}, "rewards": {}}
+					]
 				},
 				{
 					"id": "storm_ridge",
@@ -623,7 +737,11 @@
 						{ "spirit": "gale_kite", "level": 16, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "dust_devil", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2 }
 					],
-					"rewards": { "sigils": ["hex_eye"] }
+					"rewards": { "sigils": ["hex_eye"] },
+					"challenges": [
+						{"id": "ridge_whole", "name": "Into the Wind", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "ridge_bare", "name": "Bare Ridge", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}}
+					]
 				},
 				{
 					"id": "storm_spire",
@@ -641,7 +759,11 @@
 						{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
 						{ "spirit": "volt_shade", "level": 18, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
 					],
-					"rewards": { "sigils": ["storm_coil"] }
+					"rewards": { "sigils": ["storm_coil"] },
+					"challenges": [
+						{"id": "lspire_four", "name": "Four Against the Spire", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {}},
+						{"id": "lspire_front", "name": "Earthed", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}}
+					]
 				},
 				{
 					"id": "storm_crown",
@@ -662,6 +784,10 @@
 						{ "spirit": "thunder_drake", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
 					],
 					"rewards": { "frames": ["colossus"], "sigils": ["phoenix_ember"] },
+					"challenges": [
+						{"id": "crown_calm", "name": "Eye of Calm", "text": "Defeat the Storm Sovereign with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+						{"id": "crown_five", "name": "Five Against the Storm", "text": "Win with five golems or fewer.", "rules": {"max_golems": 5}, "rewards": {}}
+					],
 					"clear_text": "The Storm Sovereign is stilled and the sky clears over every region. More regions are not built yet: keep refining builds and replaying stages."
 				}
 			]

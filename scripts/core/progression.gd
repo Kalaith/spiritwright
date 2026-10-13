@@ -5,10 +5,12 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
-const SaveMigrations = preload("res://scripts/core/save_migrations.gd")
-const SAVE_SCHEMA: int = 6
-const BUILD_CELLS: Array[String] = SaveMigrations.BUILD_CELLS
-const RUN_KEYS: Array[String] = ["falls", "losses", "most_golems"]
+const SaveSchema = preload("res://scripts/core/save_schema.gd")
+const Challenges = preload("res://scripts/core/challenges.gd")
+const Experience = preload("res://scripts/core/experience.gd")
+const SAVE_SCHEMA: int = SaveSchema.VERSION
+const BUILD_CELLS: Array[String] = SaveSchema.BUILD_CELLS
+const RUN_KEYS: Array[String] = SaveSchema.RUN_KEYS
 
 var catalog: Catalog
 ## spirit id -> {"level", "xp", "last_frame", "last_allies"}
@@ -27,6 +29,9 @@ var cycle: int = 0
 ## This playthrough's record, for the feats: golems of yours that fell, battles
 ## not won, and the most golems fielded in one battle.
 var run: Dictionary = {}
+## Ids of every Codex challenge and feat ever met, across all playthroughs.
+var challenges: Array = []
+var feats: Array = []
 var save_path: String = "user://spiritwright_save.json"
 var save_enabled: bool = true
 var last_error: String = ""
@@ -53,6 +58,8 @@ func new_game() -> void:
 	battles = 0
 	cycle = 0
 	_reset_run()
+	challenges = []
+	feats = []
 
 
 func _reset_run() -> void:
@@ -105,71 +112,16 @@ func save_game() -> bool:
 
 func to_dict() -> Dictionary:
 	return {"schema": SAVE_SCHEMA, "spirits": spirits, "unlocks": unlocks, "team": team,
-		"cores": cores, "cleared": cleared, "battles": battles, "cycle": cycle, "run": run}
+		"cores": cores, "cleared": cleared, "battles": battles, "cycle": cycle, "run": run,
+		"challenges": challenges, "feats": feats}
 
 
 func migrate(data: Variant) -> Variant:
-	return SaveMigrations.migrate(catalog, data)
+	return SaveSchema.migrate(catalog, data)
 
 
 func valid(data: Variant) -> bool:
-	if not data is Dictionary or int(data.get("schema", 0)) != SAVE_SCHEMA:
-		return false
-	if not data.get("spirits") is Dictionary or data.spirits.is_empty():
-		return false
-	for id in data.spirits:
-		var entry: Variant = data.spirits[id]
-		if not catalog.spirit(id).get("playable", false) or not entry is Dictionary:
-			return false
-		var level: int = int(entry.get("level", 0))
-		if level < 1 or level > int(catalog.num("level_cap")) or int(entry.get("xp", -1)) < 0:
-			return false
-		if not entry.get("last_frame") is String or not entry.get("last_allies") is Array:
-			return false
-		for ally in entry.last_allies:
-			if not catalog.spirit(String(ally)).get("playable", false):
-				return false
-	if not data.get("unlocks") is Dictionary:
-		return false
-	for kind in Catalog.PART_KINDS:
-		if not data.unlocks.get(kind) is Array:
-			return false
-		for id in data.unlocks[kind]:
-			if catalog.part(kind, String(id)).is_empty():
-				return false
-	if not data.get("cleared") is Array or not (data.get("battles") is int or data.get("battles") is float):
-		return false
-	for id in data.cleared:
-		if not catalog.stages.has(id):
-			return false
-	if not (data.get("cores") is int or data.get("cores") is float) or int(data.cores) < 0:
-		return false
-	if not (data.get("cycle") is int or data.get("cycle") is float) or int(data.cycle) < 0:
-		return false
-	if not data.get("run") is Dictionary:
-		return false
-	for key in RUN_KEYS:
-		var count: Variant = data.run.get(key)
-		if not (count is int or count is float) or int(count) < 0:
-			return false
-	if not data.get("team") is Array or data.team.is_empty():
-		return false
-	if data.team.size() + int(data.cores) > int(catalog.num("team_size")):
-		return false
-	var used: Dictionary = {}
-	for loadout in data.team:
-		if not loadout is Dictionary or not data.spirits.has(loadout.get("spirit", "")) or used.has(loadout.spirit):
-			return false
-		used[loadout.spirit] = true
-		for key in Catalog.LOADOUT_KEYS:
-			if not loadout.get(Catalog.LOADOUT_KEYS[key], "") in data.unlocks[key]:
-				return false
-		var sigil: Variant = loadout.get("sigil", "")
-		if not sigil is String or (sigil != "" and not sigil in data.unlocks.sigils):
-			return false
-		if not loadout.get("row") in Catalog.ROWS or not Catalog.valid_lane(loadout.get("lane")):
-			return false
-	return Catalog.distinct_cells(data.team)
+	return SaveSchema.valid(catalog, data)
 
 
 func _apply(data: Dictionary) -> void:
@@ -195,6 +147,8 @@ func _apply(data: Dictionary) -> void:
 	run = {}
 	for key in RUN_KEYS:
 		run[key] = int(data.run[key])
+	challenges = data.challenges.map(func(id): return String(id))
+	feats = data.feats.map(func(id): return String(id))
 
 
 func stage_state(stage_id: String) -> String:
@@ -232,7 +186,7 @@ func resolved_team() -> Array:
 func enemy_team(stage: Dictionary) -> Array:
 	var resolved: Array = []
 	for enemy in stage.enemies:
-		resolved.append(Builds.resolve(catalog, enemy, enemy_level(int(enemy.level))))
+		resolved.append(Builds.resolve(catalog, enemy, enemy_level(int(enemy.level)), {}, true))
 	return resolved
 
 
@@ -279,65 +233,77 @@ func set_slot(slot: int, key: String, value: String) -> bool:
 	return true
 
 
-## Applies XP, last-used frames and first-clear rewards. Returns a report the
-## result screen shows: {"xp": [{spirit, gained, from, to, rises}], "rewards": [...], "first_clear"}.
+## Applies XP, last-used frames, first-clear rewards, challenges and feats.
+## Returns a report the result screen shows: {"xp": [lines, see _give_xp; resting
+## spirits' lines carry "resting"], "rewards": [{kind, id}], "first_clear",
+## "challenges": [ids], "feats": [ids], "spoiled": [feat ids this battle put out of
+## reach for the rest of the playthrough]}.
 ## `units` is the finished battle's golems (BattleSim's `units`); without them
 ## a win counts as nobody falling and a defeat as the whole team falling.
 func apply_battle(stage: Dictionary, outcome: String, units: Array = []) -> Dictionary:
 	battles += 1
 	var won: bool = outcome == "win"
+	var in_reach: Array = feats_in_reach()
 	_record_run(won, units)
 	var first_clear: bool = won and not stage.id in cleared
 	var xp_key: String = "xp.loss"
 	if won:
 		xp_key = "xp.first_clear" if first_clear else "xp.repeat_win"
-	var report: Dictionary = {"xp": [], "rewards": [], "first_clear": first_clear}
-	var cap: int = int(catalog.num("level_cap"))
+	var report: Dictionary = {"xp": [], "rewards": [], "first_clear": first_clear, "challenges": [], "feats": [],
+		"spoiled": in_reach.filter(func(id): return not id in feats_in_reach())}
 	for loadout in team:
 		var entry: Dictionary = spirits[loadout.spirit]
-		var spirit_def: Dictionary = catalog.spirit(loadout.spirit)
-		var gained: int = stage_xp(stage, int(entry.level), catalog.num(xp_key))
-		var line: Dictionary = {"spirit": loadout.spirit, "gained": gained, "from": entry.level, "rises": {}}
 		entry.last_frame = loadout.frame
 		entry.last_allies = _allies_of(loadout.spirit)
-		entry.xp += gained
-		while entry.xp >= xp_to_next(entry.level) and entry.level < cap:
-			entry.xp -= xp_to_next(entry.level)
-			var rises: Dictionary = Builds.level_up_gains(catalog, spirit_def, entry.level)
-			for stat in rises:
-				line.rises[stat] = int(line.rises.get(stat, 0)) + int(rises[stat])
-			entry.level += 1
-		if entry.level >= cap:
-			entry.xp = 0
-		line["to"] = entry.level
-		line["awakened"] = Builds.awakened(catalog, spirit_def, entry.level) 			and not Builds.awakened(catalog, spirit_def, int(line.from))
+		report.xp.append(_give_xp(loadout.spirit, stage_xp(stage, int(entry.level), catalog.num(xp_key))))
+	# Resting spirits watch from the laboratory and learn a share of it, so a
+	# spirit left on the bench can still be fielded later without grinding.
+	for id in resting_spirits():
+		var line: Dictionary = _give_xp(id, stage_xp(stage, int(spirits[id].level), catalog.num(xp_key) * catalog.num("xp.resting")))
+		line["resting"] = true
 		report.xp.append(line)
 	if first_clear:
 		cleared.append(stage.id)
-		var rewards: Dictionary = stage.get("rewards", {})
-		# A New Game+ team is usually already whole: cores only fill empty cradles.
-		var gained_cores: int = min(int(rewards.get("cores", 0)), int(catalog.num("team_size")) - team.size() - cores)
-		if gained_cores > 0:
-			cores += gained_cores
-			report.rewards.append({"kind": "cores", "id": str(gained_cores)})
-		for kind in rewards:
-			if kind == "cores":
-				continue
-			for id in rewards[kind]:
-				if kind == "spirits":
-					if not spirits.has(id):
-						spirits[id] = _fresh_spirit(_join_level())
-						report.rewards.append({"kind": kind, "id": id})
-				elif not id in unlocks[kind]:
-					unlocks[kind].append(id)
-					report.rewards.append({"kind": kind, "id": id})
-		for kind in Catalog.PART_KINDS:
-			var ordered: Array = []
-			for id in catalog.part_order[kind]:
-				if id in unlocks[kind]:
-					ordered.append(id)
-			unlocks[kind] = ordered
+		_grant(stage.get("rewards", {}), report.rewards)
+	if won and not units.is_empty():
+		var golems: Array = units.filter(func(unit): return unit.side == 0)
+		for id in stage.get("challenges", []).map(func(c): return c.id):
+			if not id in challenges and Challenges.met(catalog.challenges[id].rules, golems, cycle):
+				challenges.append(id)
+				report.challenges.append(id)
+				_grant(catalog.challenges[id].get("rewards", {}), report.rewards)
+	if first_clear and playthrough_complete():
+		for id in catalog.feats:
+			if not id in feats and Challenges.feat_met(catalog.feats[id].rules, run, cycle):
+				feats.append(id)
+				report.feats.append(id)
+				_grant(catalog.feats[id].get("rewards", {}), report.rewards)
 	return report
+
+
+func _give_xp(id: String, gained: int) -> Dictionary:
+	return Experience.give(catalog, id, spirits[id], gained)
+
+
+## Adds a stage's, challenge's or feat's rewards to the collection and lists
+## the new ones in `listed`. A New Game+ team is usually already whole, so
+## cores only fill empty cradles, and anything already owned is skipped.
+func _grant(rewards: Dictionary, listed: Array) -> void:
+	var gained_cores: int = min(int(rewards.get("cores", 0)), int(catalog.num("team_size")) - team.size() - cores)
+	if gained_cores > 0:
+		cores += gained_cores
+		listed.append({"kind": "cores", "id": str(gained_cores)})
+	for kind in rewards:
+		if kind == "cores":
+			continue
+		for id in rewards[kind]:
+			if kind == "spirits":
+				if not spirits.has(id):
+					spirits[id] = _fresh_spirit(_join_level())
+					listed.append({"kind": kind, "id": id})
+			elif not id in unlocks[kind]:
+				unlocks[kind] = catalog.part_order[kind].filter(func(part): return part in unlocks[kind] or part == id)
+				listed.append({"kind": kind, "id": id})
 
 
 func _record_run(won: bool, units: Array) -> void:
@@ -349,9 +315,23 @@ func _record_run(won: bool, units: Array) -> void:
 	run.most_golems = max(int(run.most_golems), team.size())
 
 
+## Feats not yet earned that this playthrough's record still leaves possible.
+func feats_in_reach() -> Array:
+	var open: Array = []
+	for id in catalog.feats:
+		if not id in feats and Challenges.feat_in_reach(catalog.feats[id].rules, run, cycle):
+			open.append(id)
+	return open
+
+
 ## Whether the final stage has fallen in this playthrough.
 func campaign_complete() -> bool:
 	return catalog.finale_id in cleared
+
+
+## Whether every stage has been cleared in this playthrough: when feats are judged.
+func playthrough_complete() -> bool:
+	return catalog.stages.keys().all(func(id): return id in cleared)
 
 
 ## Starts the next playthrough once the finale is won: every stage is fought
@@ -366,20 +346,13 @@ func start_new_game_plus() -> bool:
 	return true
 
 
-## XP a spirit at `level` needs to reach the next level: each level costs more.
 func xp_to_next(level: int) -> int:
-	return int(catalog.num("xp_per_level") + catalog.num("xp_per_level_growth") * (level - 1))
+	return Experience.xp_to_next(catalog, level)
 
 
-## XP one spirit earns from a stage: the enemies' average level times
-## xp.per_stage_level, scaled by the outcome, and by how far the spirit's level
-## sits below (more) or above (less) that average. Levels cost a steady amount
-## more each time, so a spirit keeps pace with the stages without grinding.
+## XP one spirit at `spirit_level` earns from this stage (see Experience.stage_xp).
 func stage_xp(stage: Dictionary, spirit_level: int, outcome_factor: float) -> int:
-	var average: float = _average_level(stage)
-	var level_factor: float = clampf(1.0 + (average - spirit_level) * catalog.num("xp.level_gap_step"),
-		catalog.num("xp.min_factor"), catalog.num("xp.max_factor"))
-	return max(1, int(round(average * catalog.num("xp.per_stage_level") * outcome_factor * level_factor)))
+	return Experience.stage_xp(catalog, _average_level(stage), spirit_level, outcome_factor)
 
 
 func _average_level(stage: Dictionary) -> float:

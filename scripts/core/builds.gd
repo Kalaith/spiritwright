@@ -68,9 +68,11 @@ static func awakened(catalog: Catalog, spirit_def: Dictionary, level: int) -> bo
 	return spirit_def.has("awakening") and level >= int(catalog.num("awaken_level"))
 
 
-## `level` and `history` (see `preference`) come from the spirit instance; wild
-## spirits pass none.
-static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: Dictionary = {}) -> Dictionary:
+## `level` and `history` (see `preference`) come from the spirit instance. A
+## `wild` spirit is an enemy: it fights without its awakening or temperament,
+## even if the same spirit can be recruited and grows both in the player's care.
+static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: Dictionary = {},
+		wild: bool = false) -> Dictionary:
 	var spirit_def: Dictionary = catalog.spirit(String(loadout.spirit))
 	var frame: Dictionary = catalog.part("frames", String(loadout.frame))
 	var arms: Dictionary = catalog.part("arms", String(loadout.arms))
@@ -88,7 +90,7 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 	breakdown.append({"label": material.name + " body", "stats": material.get("stats", {})})
 	if not reaction.is_empty():
 		breakdown.append({"label": reaction.name + " reaction", "stats": reaction.get("stats", {})})
-	var pref: Dictionary = preference(catalog, spirit_def, loadout, history)
+	var pref: Dictionary = {"active": false, "label": "", "text": "", "bonus": {}} if wild 		else preference(catalog, spirit_def, loadout, history)
 	if pref.active:
 		breakdown.append({"label": pref.label + " preference", "stats": pref.bonus})
 	if row == "front" and not trait_def.get("front_row", {}).is_empty():
@@ -107,7 +109,7 @@ static func resolve(catalog: Catalog, loadout: Dictionary, level: int, history: 
 	for part_def in [frame, arms, legs]:
 		for effect in part_def.get("effects", []):
 			effects.append(_tagged(effect, part_def.name))
-	var is_awake: bool = awakened(catalog, spirit_def, level)
+	var is_awake: bool = not wild and awakened(catalog, spirit_def, level)
 	if is_awake:
 		for effect in spirit_def.awakening.effects:
 			effects.append(_tagged(effect, spirit_def.awakening.name))

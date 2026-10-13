@@ -7,11 +7,14 @@ signal laboratory_requested
 signal retry_requested
 
 const Style = preload("res://scripts/ui/style.gd")
+const CodexText = preload("res://scripts/ui/codex_text.gd")
 
 var catalog: RefCounted
 var stage: Dictionary = {}
 var outcome: Dictionary = {}
 var report: Dictionary = {}
+## Ids of every challenge met so far, to list the ones still open on this stage.
+var progression_challenges: Array = []
 var save_error: String = ""
 
 
@@ -50,7 +53,7 @@ func _ready() -> void:
 	column.add_child(_why_table())
 	column.add_child(Style.wrapped(_insight(), 15, Style.TEXT))
 	column.add_child(HSeparator.new())
-	for line in report.xp:
+	for line in report.xp.filter(func(l): return not l.get("resting", false)):
 		var spirit: Dictionary = catalog.spirit(line.spirit)
 		var text: String = "%s  +%d XP" % [spirit.name, int(line.gained)]
 		var color: Color = Style.TEXT
@@ -61,6 +64,20 @@ func _ready() -> void:
 		column.add_child(Style.label(text, 15, color))
 		if line.awakened:
 			column.add_child(Style.wrapped("%s awakens! %s: %s" % [spirit.name, spirit.awakening.name, spirit.awakening.text], 15, Style.GOLD))
+	var grew: Array[String] = []
+	for line in report.xp.filter(func(l): return l.get("resting", false) and int(l.to) > int(l.from)):
+		grew.append("%s Lv %d%s" % [catalog.spirit(line.spirit).name, int(line.to), " (awakened!)" if line.awakened else ""])
+	if not grew.is_empty():
+		column.add_child(Style.wrapped("Resting spirits learned by watching: " + ", ".join(grew) + ".", 14, Style.GOLD.darkened(0.1)))
+	for id in report.challenges:
+		column.add_child(Style.wrapped("Challenge met!  " + CodexText.challenge_line(catalog.challenges[id], true), 17, Style.GOOD))
+	for id in report.feats:
+		column.add_child(Style.wrapped("Feat earned!  %s: %s" % [catalog.feats[id].name, catalog.feats[id].text], 18, Style.GOLD))
+	for id in report.spoiled:
+		column.add_child(Style.wrapped("%s is out of reach for the rest of this playthrough. New Game+ starts a fresh record." % catalog.feats[id].name, 14, Style.MUTED))
+	var open: Array = stage.get("challenges", []).filter(func(c): return not c.id in progression_challenges)
+	if not open.is_empty():
+		column.add_child(Style.wrapped("Still open here: " + ", ".join(open.map(func(c): return c.name)) + ".", 14))
 	for reward in report.rewards:
 		var lines: Array = Style.reward_text(catalog, reward.kind, reward.id)
 		column.add_child(Style.label("Unlocked  " + lines[0], 17, Style.GOLD))
