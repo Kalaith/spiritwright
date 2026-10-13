@@ -21,6 +21,7 @@ func run() -> void:
 	_check_new_game_plus()
 	_check_collection()
 	_check_challenges()
+	_check_masteries()
 	_check_feats()
 
 
@@ -246,6 +247,59 @@ func _check_challenges() -> void:
 		and report.rewards.any(func(r): return r.kind == "spirits" and r.id == "cinder_mote"), cold.result)
 	report = progression.apply_battle(stage, cold.result, cold.units)
 	_check("a met challenge is not met twice", report.challenges.is_empty() and progression.valid(progression.to_dict()))
+
+
+## A region is mastered, and its sigil earned, by meeting every challenge on its stages.
+func _check_masteries() -> void:
+	var sigils: Array = []
+	for region in catalog.regions():
+		sigils.append_array(region.get("mastery", {}).get("rewards", {}).get("sigils", []))
+	var elsewhere: Array = catalog.campaign.start.unlocks.get("sigils", []).duplicate()
+	for entry in catalog.stages.values() + catalog.challenges.values() + catalog.feats.values():
+		elsewhere.append_array(entry.get("rewards", {}).get("sigils", []))
+	_check("every region's mastery earns its own sigil, found nowhere else",
+		sigils.size() == catalog.regions().size() and sigils.all(func(id): return sigils.count(id) == 1 and not id in elsewhere),
+		str(sigils))
+
+	var progression := _fresh()
+	var ruins: Dictionary = catalog.regions()[0]
+	var ids: Array = Challenges.region_ids(ruins)
+	progression.challenges = ids.filter(func(id): return id != "gate_cold")
+	var golem: Dictionary = {"side": 0, "spirit": "neris", "element": "water", "row": "front", "alive": true}
+	var report: Dictionary = progression.apply_battle(catalog.stages["ruins_court"], "win", [golem])
+	_check("a region with a challenge still open is not mastered", report.masteries.is_empty()
+		and not "warden_seal" in progression.unlocks.sigils)
+	report = progression.apply_battle(catalog.stages["ruins_gate"], "win", [golem])
+	_check("meeting a region's last challenge masters it and earns its sigil", report.masteries == [ruins.id]
+		and "warden_seal" in progression.unlocks.sigils
+		and report.rewards.any(func(r): return r.kind == "sigils" and r.id == "warden_seal"), str(report.masteries))
+	report = progression.apply_battle(catalog.stages["ruins_gate"], "win", [golem])
+	_check("a region is mastered once", report.masteries.is_empty())
+	var saved: Dictionary = progression.to_dict()
+	saved.unlocks.sigils.erase("warden_seal")
+	progression._apply(saved)
+	_check("a save that met every challenge before masteries existed gets the sigil on load",
+		"warden_seal" in progression.unlocks.sigils and progression.valid(progression.to_dict()))
+
+	var imps: Array = [0, 2].map(func(lane): return ["rubble_imp", 2,
+		checks._loadout("rubble_imp", "strider", "hammer", "pillar", "front", "stone", lane)])
+	var duel := func(sigil: String, spirit: String = "pyra", arms: String = "hammer", row: String = "front") -> Dictionary:
+		return checks._duel(catalog, [[spirit, 12, checks._loadout(spirit, "strider", arms, "pillar", row, "stone", 1, sigil)]], imps)
+	var seal: Dictionary = duel.call("warden_seal", "odo", "shield")
+	_check("a warden's seal wards the team at the start", checks._has(seal, {"type": "ward", "unit": "a0", "cause": "Warden's Seal"}))
+	var lantern: Dictionary = duel.call("mire_lantern")
+	_check("a mire lantern soaks the target and arcs to another enemy",
+		checks._has(lantern, {"type": "status", "status": "soaked", "cause": "Mire Lantern"}) and checks._has(lantern, {"type": "chain", "unit": "a0"}))
+	var kiln: Dictionary = duel.call("kiln_heart", "odo")
+	_check("a kiln heart burns deep and a kill hurries the team",
+		checks._has(kiln, {"type": "status", "status": "burn", "value": 2, "cause": "Kiln Heart"})
+		and checks._has(kiln, {"type": "haste", "unit": "a0", "cause": "Kiln Heart"}))
+	var rime: Dictionary = duel.call("rime_crown")
+	_check("a rime crown slows every enemy at the start", checks._has(rime, {"type": "slow", "unit": "b0", "cause": "Rime Crown"})
+		and checks._has(rime, {"type": "slow", "unit": "b1", "cause": "Rime Crown"}))
+	var tempest: Dictionary = duel.call("tempest_eye", "volta", "cannon", "back")
+	_check("a tempest eye strikes every enemy and exposes its target", checks._said(tempest, "damage", "Tempest Eye")
+		and checks._has(tempest, {"type": "status", "status": "expose", "cause": "Tempest Eye"}))
 
 
 ## Feats are judged once every stage of a playthrough is cleared.

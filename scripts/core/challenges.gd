@@ -2,7 +2,8 @@ extends RefCounted
 ## Codex challenges and feats. A challenge is an optional rule set on one
 ## stage, met by any win whose golems keep every rule. A feat is a rule set on a
 ## whole playthrough, met when the playthrough's record keeps every rule once
-## every stage has been cleared in it. Both are data in campaign.json; the
+## every stage has been cleared in it. A region's mastery is earned by meeting
+## every challenge on its stages. Both are data in campaign.json; the
 ## rules are a small fixed vocabulary, checked exactly against the battle's
 ## final state, so a challenge can never disagree with what happened.
 
@@ -91,6 +92,29 @@ static func feat_met(rules: Dictionary, run: Dictionary, cycle: int) -> bool:
 ## rule it has not yet broken (a fall, a loss, a fourth golem) can still hold.
 static func feat_in_reach(rules: Dictionary, run: Dictionary, cycle: int) -> bool:
 	return feat_met(rules, run, cycle)
+
+
+## Ids of every challenge on a region's stages, in campaign order.
+static func region_ids(region: Dictionary) -> Array:
+	var ids: Array = []
+	for stage in region.stages:
+		ids.append_array(stage.get("challenges", []).map(func(c): return c.id))
+	return ids
+
+
+## Whether a region with a mastery has every one of its challenges in `met`.
+static func mastered(region: Dictionary, met: Array) -> bool:
+	return region.has("mastery") and region_ids(region).all(func(id): return id in met)
+
+
+## Regions that `newly` met challenges have just completed: each one's
+## mastery is earned at that moment, once.
+static func newly_mastered(catalog: Catalog, newly: Array, met: Array) -> Array:
+	var found: Array = []
+	for region in catalog.regions():
+		if mastered(region, met) and region_ids(region).any(func(id): return id in newly):
+			found.append(region)
+	return found
 
 
 ## Every way each playable spirit can join, by spirit id: a list of

@@ -1,6 +1,6 @@
 extends RefCounted
 ## Validation of campaign.json: the start block, regions, terrain, stages,
-## their enemies and rewards, challenges and feats. Fills Catalog.stages,
+## their enemies and rewards, challenges, region masteries and feats. Fills Catalog.stages,
 ## stage_region and finale_id as it goes, and reports into Catalog.errors.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
@@ -123,7 +123,29 @@ static func _validate_region(catalog: Catalog, index: int) -> int:
 			continue
 		for challenge in stage.get("challenges", []):
 			_add_challenge(catalog, "Stage %s challenge" % id, challenge, id)
+	if region.has("mastery"):
+		_validate_mastery(catalog, region)
 	return golems
+
+
+## A region's optional mastery: parts granted once every challenge on its
+## stages has been met.
+static func _validate_mastery(catalog: Catalog, region: Dictionary) -> void:
+	var owner: String = "Region %s mastery" % region.id
+	var mastery: Variant = region.mastery
+	if not mastery is Dictionary or not mastery.get("name") is String or not mastery.get("text") is String \
+			or not mastery.get("rewards") is Dictionary or mastery.rewards.is_empty():
+		catalog.errors.append(owner + " needs a name, text and rewards")
+		return
+	if region.stages.all(func(stage): return stage.get("challenges", []).is_empty()):
+		catalog.errors.append(owner + " needs at least one challenge in the region")
+	for kind in mastery.rewards:
+		if not kind in Catalog.PART_KINDS or not mastery.rewards[kind] is Array:
+			catalog.errors.append("%s cannot reward %s" % [owner, kind])
+			continue
+		for id in mastery.rewards[kind]:
+			if catalog.part(kind, String(id)).is_empty():
+				catalog.errors.append("%s rewards unknown %s %s" % [owner, kind, id])
 
 
 ## Validates and indexes a stage's challenge, or a feat when `stage_id` is empty.

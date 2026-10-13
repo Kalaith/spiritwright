@@ -290,6 +290,36 @@
 			"name": "Phoenix Ember",
 			"text": "Once per battle, a blow that would destroy it instead leaves it standing at 40% HP.",
 			"effects": [{ "on": "fatal", "do": "revive", "fraction": 0.4, "to": "self" }]
+		},
+		{
+			"id": "warden_seal",
+			"name": "Warden's Seal",
+			"text": "Mastery of the Ruins. At the start of battle the whole team gains 5 Ward; the first time this golem falls below half HP, the whole team gains Regen for 2 turns.",
+			"effects": [{ "on": "battle_start", "do": "ward", "flat": 5, "to": "team" }, { "on": "low_hp", "do": "status", "status": "regen", "amount": 2, "to": "team" }]
+		},
+		{
+			"id": "mire_lantern",
+			"name": "Mire Lantern",
+			"text": "Mastery of the Fen. Attacks Soak the target for 2 turns; hits on a Soaked enemy arc 35% of their damage to another enemy.",
+			"effects": [{ "on": "hit", "do": "status", "status": "soaked", "amount": 2, "to": "target" }, { "on": "hit", "do": "chain", "fraction": 0.35, "if_target": ["soaked"] }]
+		},
+		{
+			"id": "kiln_heart",
+			"name": "Kiln Heart",
+			"text": "Mastery of the Steppe. Attacks set the target Burning (+2 stacks); each kill sends the whole team surging forward (+25 gauge).",
+			"effects": [{ "on": "hit", "do": "status", "status": "burn", "amount": 2, "to": "target" }, { "on": "kill", "do": "haste", "flat": 25, "to": "team" }]
+		},
+		{
+			"id": "rime_crown",
+			"name": "Rime Crown",
+			"text": "Mastery of the Frostspine. At the start of battle every enemy is slowed (-30 gauge); attacks chill the target (-15 gauge).",
+			"effects": [{ "on": "battle_start", "do": "haste", "flat": -30, "to": "enemies" }, { "on": "hit", "do": "haste", "flat": -15, "to": "target" }]
+		},
+		{
+			"id": "tempest_eye",
+			"name": "Tempest Eye",
+			"text": "Mastery of the Storm Crown. At the start of each turn, lightning strikes every enemy for 2 + a quarter of MAG; attacks Expose the target for 1 turn.",
+			"effects": [{ "on": "turn_start", "do": "damage", "flat": 2, "stat": "mag", "fraction": 0.25, "to": "enemies" }, { "on": "hit", "do": "status", "status": "expose", "amount": 1, "to": "target" }]
 		}
 	],
 	"materials": [

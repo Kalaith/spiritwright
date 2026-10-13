@@ -102,13 +102,18 @@ func _spirits() -> void:
 
 
 func _challenges() -> void:
-	_content.add_child(Style.wrapped("Each stage holds challenges: win it while keeping their rules. They open from the first visit, and a replay with a new build counts. Pick a stage name to go there.", 14))
+	_content.add_child(Style.wrapped("Each stage holds challenges: win it while keeping their rules. They open from the first visit, and a replay with a new build counts. Meet every challenge in a region to master it and earn its sigil. Pick a stage name to go there.", 14))
 	for region in catalog.regions():
-		var ids: Array = []
-		for stage in region.stages:
-			ids.append_array(stage.get("challenges", []).map(func(c): return c.id))
+		var ids: Array = Challenges.region_ids(region)
 		var done: int = ids.filter(func(id): return id in progression.challenges).size()
 		_content.add_child(Style.label("%s  %d of %d" % [region.name, done, ids.size()], 20, Style.GOLD))
+		if region.has("mastery"):
+			var mastered: bool = Challenges.mastered(region, progression.challenges)
+			_content.add_child(Style.wrapped("%s %s: %s %s" % ["[x]" if mastered else "[ ]", region.mastery.name,
+				region.mastery.text, CodexText.reward_line(catalog, region.mastery)], 14, Style.GOOD if mastered else Style.GOLD))
+			for kind in region.mastery.rewards:
+				for id in region.mastery.rewards[kind]:
+					_content.add_child(Style.wrapped("    " + Style.reward_text(catalog, kind, id)[1], 13, Style.MUTED))
 		var grid := GridContainer.new()
 		grid.columns = 2
 		grid.add_theme_constant_override("h_separation", 16)

@@ -3,6 +3,8 @@ extends SceneTree
 ## throwaway save file. Needs a rendering window (not --headless):
 ##   godot --path . --script res://tools/capture.gd -- <output dir>
 
+const Challenges = preload("res://scripts/core/challenges.gd")
+
 var main: Control
 var out_dir: String = "user://captures"
 
@@ -131,7 +133,8 @@ func _run() -> void:
 		await _shot("17_arsenal_battle_%d" % i)
 	# The Codex: the collection, the challenges and the feats.
 	main.progression.spirits["cinder_mote"] = main.progression._fresh_spirit(8)
-	main.progression.challenges.append_array(["gate_cold", "court_line", "stair_cold"])
+	# Every Ruins challenge, so the Codex shows one region mastered.
+	main.progression.challenges.append_array(Challenges.region_ids(main.catalog.regions()[0]) + ["crossing_dry"])
 	main.show_codex()
 	await _frames(10)
 	await _shot("18_codex_spirits")

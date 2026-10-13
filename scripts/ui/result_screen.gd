@@ -71,6 +71,9 @@ func _ready() -> void:
 		column.add_child(Style.wrapped("Resting spirits learned by watching: " + ", ".join(grew) + ".", 14, Style.GOLD.darkened(0.1)))
 	for id in report.challenges:
 		column.add_child(Style.wrapped("Challenge met!  " + CodexText.challenge_line(catalog.challenges[id], true), 17, Style.GOOD))
+	for region in catalog.regions().filter(func(r): return r.id in report.get("masteries", [])):
+		column.add_child(Style.wrapped("%s mastered!  %s: %s %s" % [region.name, region.mastery.name, region.mastery.text,
+			CodexText.reward_line(catalog, region.mastery)], 18, Style.GOLD))
 	for id in report.feats:
 		column.add_child(Style.wrapped("Feat earned!  %s: %s" % [catalog.feats[id].name, catalog.feats[id].text], 18, Style.GOLD))
 	for id in report.spoiled:

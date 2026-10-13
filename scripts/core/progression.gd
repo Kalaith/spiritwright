@@ -149,6 +149,9 @@ func _apply(data: Dictionary) -> void:
 		run[key] = int(data.run[key])
 	challenges = data.challenges.map(func(id): return String(id))
 	feats = data.feats.map(func(id): return String(id))
+	# A save may have met a region's challenges before its mastery existed.
+	for region in catalog.regions().filter(func(r): return Challenges.mastered(r, challenges)):
+		_grant(region.mastery.rewards, [])
 
 
 func stage_state(stage_id: String) -> String:
@@ -236,7 +239,7 @@ func set_slot(slot: int, key: String, value: String) -> bool:
 ## Applies XP, last-used frames, first-clear rewards, challenges and feats.
 ## Returns a report the result screen shows: {"xp": [lines, see _give_xp; resting
 ## spirits' lines carry "resting"], "rewards": [{kind, id}], "first_clear",
-## "challenges": [ids], "feats": [ids], "spoiled": [feat ids this battle put out of
+## "challenges": [ids], "masteries": [region ids], "feats": [ids], "spoiled": [feat ids this battle put out of
 ## reach for the rest of the playthrough]}.
 ## `units` is the finished battle's golems (BattleSim's `units`); without them
 ## a win counts as nobody falling and a defeat as the whole team falling.
@@ -249,8 +252,8 @@ func apply_battle(stage: Dictionary, outcome: String, units: Array = []) -> Dict
 	var xp_key: String = "xp.loss"
 	if won:
 		xp_key = "xp.first_clear" if first_clear else "xp.repeat_win"
-	var report: Dictionary = {"xp": [], "rewards": [], "first_clear": first_clear, "challenges": [], "feats": [],
-		"spoiled": in_reach.filter(func(id): return not id in feats_in_reach())}
+	var report: Dictionary = {"xp": [], "rewards": [], "first_clear": first_clear, "challenges": [], "masteries": [],
+		"feats": [], "spoiled": in_reach.filter(func(id): return not id in feats_in_reach())}
 	for loadout in team:
 		var entry: Dictionary = spirits[loadout.spirit]
 		entry.last_frame = loadout.frame
@@ -272,6 +275,9 @@ func apply_battle(stage: Dictionary, outcome: String, units: Array = []) -> Dict
 				challenges.append(id)
 				report.challenges.append(id)
 				_grant(catalog.challenges[id].get("rewards", {}), report.rewards)
+		for region in Challenges.newly_mastered(catalog, report.challenges, challenges):
+			report.masteries.append(region.id)
+			_grant(region.mastery.rewards, report.rewards)
 	if first_clear and playthrough_complete():
 		for id in catalog.feats:
 			if not id in feats and Challenges.feat_met(catalog.feats[id].rules, run, cycle):

@@ -17,6 +17,7 @@
 			"name": "Ancient Ruins",
 			"text": "Moss-choked halls where old spirits sleep in broken stone. Wild spirits here guard, mend and endure.",
 			"laboratory": { "name": "Golem Laboratory", "map_pos": [118, 470] },
+			"mastery": {"name": "Warden of the Ruins", "text": "Meet every challenge in the Ancient Ruins.", "rewards": {"sigils": ["warden_seal"]}},
 			"stages": [
 				{
 					"id": "ruins_gate",
@@ -164,6 +165,7 @@
 			"name": "Glimmer Fen",
 			"text": "Lantern-lit marsh where the water hums with stray sparks. Spirits here soak, shock and slip away.",
 			"laboratory": { "name": "Fenwatch Workshop", "map_pos": [110, 300] },
+			"mastery": {"name": "Keeper of the Fen", "text": "Meet every challenge in the Glimmer Fen.", "rewards": {"sigils": ["mire_lantern"]}},
 			"terrain": {
 				"seed": 19,
 				"ground": "172019",
@@ -313,6 +315,7 @@
 			"name": "Ember Steppe",
 			"text": "Wind-scoured grassland, scorched black in long stripes. Its spirits run in packs and fight hot.",
 			"laboratory": { "name": "Nomad Forge", "map_pos": [110, 440] },
+			"mastery": {"name": "Master of the Kilns", "text": "Meet every challenge on the Ember Steppe, Trial by Fire included.", "rewards": {"sigils": ["kiln_heart"]}},
 			"terrain": {
 				"seed": 31,
 				"ground": "2a2117",
@@ -470,6 +473,7 @@
 			"name": "Frostspine Pass",
 			"text": "A narrow pass between white crags. Spirits here freeze, ward and wait for you to slip.",
 			"laboratory": { "name": "Pass Hut Workshop", "map_pos": [120, 470] },
+			"mastery": {"name": "Lord of the Pass", "text": "Meet every challenge in the Frostspine Pass.", "rewards": {"sigils": ["rime_crown"]}},
 			"terrain": {
 				"seed": 43,
 				"ground": "2a3038",
@@ -633,6 +637,7 @@
 			"name": "Storm Crown",
 			"text": "A mountain top wrapped in endless thunder. The strongest wild spirits gather here around their sovereign.",
 			"laboratory": { "name": "Stormrod Workshop", "map_pos": [130, 330] },
+			"mastery": {"name": "Eye of the Storm", "text": "Meet every challenge on the Storm Crown.", "rewards": {"sigils": ["tempest_eye"]}},
 			"terrain": {
 				"seed": 59,
 				"ground": "1a1a24",
