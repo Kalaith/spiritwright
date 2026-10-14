@@ -64,7 +64,9 @@ func _ready() -> void:
 	_left.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	gutter.add_child(_left)
 	var side := Style.panel(14)
-	side.custom_minimum_size.x = 440
+	# The scouting panel gives up some width when a larger interface size leaves less.
+	resized.connect(func() -> void: side.custom_minimum_size.x = 440 if size.x >= 1180 else 360)
+	side.custom_minimum_size.x = 440 if size.x >= 1180 else 360
 	body.add_child(side)
 	var scroll := ScrollContainer.new()
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -207,7 +209,9 @@ func _team_box() -> Control:
 	var heading: String = "Your team, locked for this run" if not run.is_empty() \
 		else "Your laboratory team (%d of %d golems) locks in when you begin" % [team.size(), int(catalog.num("team_size"))]
 	box.add_child(Style.label(heading, 17, Style.MUTED))
-	var row := Style.hbox(4)
+	# The team wraps onto a second line rather than widening the column.
+	var row := HFlowContainer.new()
+	row.add_theme_constant_override("h_separation", 4)
 	box.add_child(row)
 	for loadout in team:
 		var cell := Style.vbox(0)

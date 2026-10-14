@@ -12,6 +12,8 @@ const SlotCard = preload("res://scripts/ui/slot_card.gd")
 const CradleCard = preload("res://scripts/ui/cradle_card.gd")
 const Catalog = preload("res://scripts/core/catalog.gd")
 const SpiritPortrait = preload("res://scripts/ui/spirit_portrait.gd")
+## Three 260-wide cards, the 330-wide roster, gaps, scrollbar and margins.
+const WIDE_ENOUGH_FOR_THREE: float = 1190.0
 
 var catalog: RefCounted
 var progression: RefCounted
@@ -67,7 +69,15 @@ func _ready() -> void:
 	_roster = Style.vbox(10)
 	_roster.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	roster_scroll.add_child(_roster)
+	resized.connect(_fit_columns)
+	_fit_columns()
 	_rebuild()
+
+
+## Three golem cards abreast when there is room beside the roster (the
+## standard size), two when a larger interface size leaves less.
+func _fit_columns() -> void:
+	_cards.columns = 3 if size.x >= WIDE_ENOUGH_FOR_THREE else 2
 
 
 func _rebuild() -> void:

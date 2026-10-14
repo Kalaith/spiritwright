@@ -23,6 +23,8 @@ var _content: VBoxContainer
 var _scroll: ScrollContainer
 var _tab_buttons: Dictionary = {}
 var _sources: Dictionary = {}
+## The Spirits tab's card grid while it is on show.
+var _spirit_grid: GridContainer
 
 
 func _ready() -> void:
@@ -55,6 +57,9 @@ func _ready() -> void:
 	_content = Style.vbox(10)
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_scroll.add_child(_content)
+	resized.connect(func() -> void:
+		if is_instance_valid(_spirit_grid):
+			_spirit_grid.columns = _spirit_columns())
 	_show(tab)
 
 
@@ -93,10 +98,17 @@ func _show(tab_name: String) -> void:
 			_crucible()
 
 
+## Spirit cards abreast: four at the standard size, fewer when a larger
+## interface size leaves less room.
+func _spirit_columns() -> int:
+	return clampi(int((size.x - 40.0) / 300.0), 2, 4)
+
+
 func _spirits() -> void:
 	_content.add_child(Style.wrapped("Every spirit you meet can join you. Most come as you play; some only answer a challenge; a few only the hardest feats. Challenges and feats are met by any win that keeps their rules.", 14))
 	var grid := GridContainer.new()
-	grid.columns = 4
+	grid.columns = _spirit_columns()
+	_spirit_grid = grid
 	grid.add_theme_constant_override("h_separation", 10)
 	grid.add_theme_constant_override("v_separation", 10)
 	grid.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -175,7 +187,7 @@ func _challenges() -> void:
 func _stage_challenges(stage: Dictionary) -> Control:
 	var box := Style.vbox(2)
 	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.custom_minimum_size.x = 560
+	box.custom_minimum_size.x = 440
 	var state: String = progression.stage_state(stage.id)
 	var link := Style.button(stage.name + ("" if state != "locked" else "  (not yet reached)"),
 		func(): stage_requested.emit(stage.id), 15)
@@ -243,7 +255,7 @@ func _crucible() -> void:
 	for entry in all:
 		var box := Style.vbox(2)
 		box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		box.custom_minimum_size.x = 560
+		box.custom_minimum_size.x = 440
 		var beaten: bool = entry.id in record.seen
 		var kind: String = "Final" if entry.final else "Encounter"
 		box.add_child(Style.label("%s %s  (%s, tests %s)" % ["[x]" if beaten else "[ ]", entry.name, kind, entry.test], 16,
