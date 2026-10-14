@@ -1,0 +1,151 @@
+{
+	"schema_version": 1,
+	"id": "fen",
+	"name": "Glimmer Fen",
+	"text": "Lantern-lit marsh where the water hums with stray sparks. Spirits here soak, shock and slip away.",
+	"laboratory": { "name": "Fenwatch Workshop", "map_pos": [110, 300] },
+	"mastery": {"name": "Keeper of the Fen", "text": "Meet every challenge in the Glimmer Fen.", "rewards": {"sigils": ["mire_lantern"]}},
+	"terrain": {
+		"seed": 19,
+		"ground": "172019",
+		"patches": ["1d2a22", "22332a", "18241c", "2a3a2c"],
+		"dirt": "2a2a1e",
+		"rock": "3a3e3e",
+		"wall": "33373a",
+		"water": "1a4050",
+		"canopy": ["0f1a14", "13221a", "182a1f"],
+		"stream": [[-20, 470], [90, 450], [200, 470], [300, 430], [420, 470], [560, 430], [700, 460], [880, 420]],
+		"walls": [[[560, 110], [690, 96], 10]],
+		"woods": [
+			[[20, 40], 80],
+			[[180, -10], 60],
+			[[860, 300], 90],
+			[[880, 560], 80],
+			[[-20, 580], 60],
+			[[420, 600], 50]
+		]
+	},
+	"stages": [
+		{
+			"id": "fen_crossing",
+			"name": "Sagging Crossing",
+			"text": "A rope bridge over black water. A lurker clings beneath the planks and soaks anyone who strikes it, while a newt fizzes on the far post. A golem core is wedged between the planks.",
+			"map_pos": [235, 400],
+			"landmark": "bridge",
+			"requires": ["ruins_heart"],
+			"seed": 601,
+			"enemies": [
+				{ "spirit": "bog_lurker", "level": 6, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "spark_newt", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "bog_lurker", "level": 5, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 }
+			],
+			"rewards": { "spirits": ["bog_lurker"], "cores": 1 },
+			"challenges": [
+				{"id": "crossing_dry", "name": "Dry Feet", "text": "Win without a Water spirit.", "rules": {"forbid_elements": ["water"]}, "rewards": {}},
+				{"id": "crossing_sure", "name": "Sure Footing", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}}
+			]
+		},
+		{
+			"id": "fen_stilts",
+			"name": "Stilt Hamlet",
+			"text": "Abandoned huts on stilts. Reed sprites mend in the thatch while a newt arcs lightning from hut to hut.",
+			"map_pos": [360, 255],
+			"landmark": "hut",
+			"requires": ["fen_crossing"],
+			"seed": 602,
+			"enemies": [
+				{ "spirit": "bog_lurker", "level": 6, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "reed_sprite", "level": 7, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "spark_newt", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "spark_newt", "level": 5, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 }
+			],
+			"rewards": { "spirits": ["reed_sprite"], "legs": ["stilts"] },
+			"challenges": [
+				{"id": "stilts_fast", "name": "Stand Fast", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+				{"id": "stilts_brute", "name": "Brute Force", "text": "Win with every golem using physical arms.", "rules": {"attack_kind": "physical"}, "rewards": {}}
+			]
+		},
+		{
+			"id": "fen_pool",
+			"name": "Mirror Pool",
+			"text": "A still pool that soaks everything around it. Brine sprites spray from the water and the newt waiting in the reeds hits Soaked golems twice as hard.",
+			"map_pos": [505, 395],
+			"landmark": "court",
+			"requires": ["fen_stilts"],
+			"seed": 603,
+			"enemies": [
+				{ "spirit": "brine_sprite", "level": 7, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "spark_newt", "level": 7, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "leech_fang", "row": "front", "lane": 0 },
+				{ "spirit": "brine_sprite", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "brine_sprite", "level": 6, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 }
+			],
+			"rewards": { "sigils": ["leech_fang"] },
+			"challenges": [
+				{"id": "pool_bare", "name": "Unadorned", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}},
+				{"id": "pool_three", "name": "Three Reflections", "text": "Win with three golems or fewer.", "rules": {"max_golems": 3}, "rewards": {}}
+			]
+		},
+		{
+			"id": "fen_shards",
+			"name": "Glimmer Shards",
+			"text": "A side channel choked with humming crystal. Three newts feed on the charge, and their arcs leap from golem to golem.",
+			"map_pos": [660, 470],
+			"landmark": "spire",
+			"requires": ["fen_pool"],
+			"seed": 604,
+			"enemies": [
+				{ "spirit": "reed_sprite", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "wood", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "spark_newt", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 1 },
+				{ "spirit": "spark_newt", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "spark_newt", "level": 6, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 2 }
+			],
+			"rewards": { "materials": ["crystal"] },
+			"challenges": [
+				{"id": "shards_insulated", "name": "Insulated", "text": "Win without a Lightning or Water spirit.", "rules": {"forbid_elements": ["lightning", "water"]}, "rewards": {"spirits": ["spark_newt"]}},
+				{"id": "shards_root", "name": "Rooted Front", "text": "Win with a Nature spirit in the front row.", "rules": {"require": {"element": "nature", "row": "front"}}, "rewards": {}}
+			]
+		},
+		{
+			"id": "fen_beacon",
+			"name": "Drowned Beacon",
+			"text": "A leaning watchtower whose lamp still burns. Lurkers guard the door; a wisp mends them from the window.",
+			"map_pos": [625, 235],
+			"landmark": "tower",
+			"requires": ["fen_pool"],
+			"seed": 605,
+			"enemies": [
+				{ "spirit": "bog_lurker", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "bog_lurker", "level": 7, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "moss_wisp", "level": 8, "frame": "conduit", "arms": "lantern", "legs": "stilts", "material": "wood", "sigil": "moss_charm", "row": "back", "lane": 1 },
+				{ "spirit": "bog_lurker", "level": 6, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
+			],
+			"rewards": { "arms": ["lantern"], "sigils": ["thorn_crest"] },
+			"challenges": [
+				{"id": "beacon_light", "name": "Keep the Light", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+				{"id": "beacon_wall", "name": "All at the Wall", "text": "Win with nobody in the back row.", "rules": {"empty_row": "back"}, "rewards": {}}
+			]
+		},
+		{
+			"id": "fen_mother",
+			"name": "Mother of the Fen",
+			"text": "The Fen Mother rises from the deepest pool. She soaks your whole team at the first bell and mends 4 HP every turn; a newt arcs lightning from the reeds behind her. A lightning spirit flickers, trapped in her pool.",
+			"map_pos": [770, 140],
+			"landmark": "court",
+			"requires": ["fen_beacon"],
+			"seed": 606,
+			"boss": true,
+			"enemies": [
+				{ "spirit": "fen_mother", "level": 9, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "ice", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "spark_newt", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "reed_sprite", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "reed_sprite", "level": 6, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0 }
+			],
+			"rewards": { "spirits": ["volta"], "arms": ["aegis"], "legs": ["tower"], "materials": ["bogwood"] },
+			"challenges": [
+				{"id": "mother_dry", "name": "Dry Land", "text": "Defeat the Fen Mother without a Water spirit and with no golem falling.", "rules": {"forbid_elements": ["water"], "no_falls": true}, "rewards": {"spirits": ["fen_mother"]}},
+				{"id": "mother_boat", "name": "Small Boat", "text": "Win with three golems or fewer.", "rules": {"max_golems": 3}, "rewards": {}}
+			],
+			"clear_text": "The Fen Mother sinks and the marsh falls quiet. To the east the reeds give way to the dry, burning grass of the Ember Steppe."
+		}
+	]
+}

@@ -1,0 +1,159 @@
+{
+	"schema_version": 1,
+	"id": "steppe",
+	"name": "Ember Steppe",
+	"text": "Wind-scoured grassland, scorched black in long stripes. Its spirits run in packs and fight hot.",
+	"laboratory": { "name": "Nomad Forge", "map_pos": [110, 440] },
+	"mastery": {"name": "Master of the Kilns", "text": "Meet every challenge on the Ember Steppe, Trial by Fire included.", "rewards": {"sigils": ["kiln_heart"]}},
+	"terrain": {
+		"seed": 31,
+		"ground": "2a2117",
+		"patches": ["3a2c1c", "43331f", "33271a", "4a3a22"],
+		"dirt": "4a3220",
+		"rock": "4a3f38",
+		"wall": "4a3d33",
+		"water": "2a3a40",
+		"canopy": ["2a2010", "33281a", "3a2c18"],
+		"stream": [],
+		"walls": [
+			[[40, 120], [180, 110], 12],
+			[[540, 520], [700, 510], 12],
+			[[720, 380], [850, 370], 14]
+		],
+		"woods": [
+			[[-10, 40], 60],
+			[[860, 60], 70],
+			[[880, 520], 60],
+			[[300, 600], 50]
+		]
+	},
+	"stages": [
+		{
+			"id": "steppe_camp",
+			"name": "Ashen Camp",
+			"text": "A burnt-out camp where ash hounds circle. Every blow you land only makes them quicker. A golem core glows in the cold ashes.",
+			"map_pos": [225, 335],
+			"landmark": "camp",
+			"requires": ["fen_mother"],
+			"seed": 701,
+			"enemies": [
+				{ "spirit": "ash_hound", "level": 8, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "ash_hound", "level": 7, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "ash_hound", "level": 7, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "ash_hound", "level": 7, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 }
+			],
+			"rewards": { "spirits": ["ash_hound"], "cores": 1 },
+			"challenges": [
+				{"id": "camp_bite", "name": "No Bite Marks", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+				{"id": "camp_quench", "name": "Quench", "text": "Win with only Water and Earth spirits.", "rules": {"only_elements": ["water", "earth"]}, "rewards": {}}
+			]
+		},
+		{
+			"id": "steppe_kiln",
+			"name": "Cinder Kiln",
+			"text": "A clay kiln still roaring. Motes pour from its mouth while a slag brute stands guard and strikes back at every hit.",
+			"map_pos": [360, 430],
+			"landmark": "kiln",
+			"requires": ["steppe_camp"],
+			"seed": 702,
+			"enemies": [
+				{ "spirit": "slag_brute", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "bronze", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "cinder_mote", "level": 8, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "cinder_mote", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "ember_sigil", "row": "back", "lane": 1 },
+				{ "spirit": "slag_brute", "level": 8, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
+				{ "spirit": "cinder_mote", "level": 8, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
+			],
+			"rewards": { "materials": ["bronze"] },
+			"challenges": [
+				{"id": "kiln_sparks", "name": "No Sparks", "text": "Win without a Fire spirit and with no golem falling.", "rules": {"forbid_elements": ["fire"], "no_falls": true}, "rewards": {"spirits": ["slag_brute"]}},
+				{"id": "kiln_cold", "name": "Stone Cold", "text": "Win with every golem in a Stone or Ice body.", "rules": {"only_materials": ["stone", "ice"]}, "rewards": {}}
+			]
+		},
+		{
+			"id": "steppe_tower",
+			"name": "Dust Tower",
+			"text": "A lookout in a whirl of grit. Dust devils hurry their pack along with every strike.",
+			"map_pos": [480, 280],
+			"landmark": "tower",
+			"requires": ["steppe_kiln"],
+			"seed": 703,
+			"enemies": [
+				{ "spirit": "ash_hound", "level": 9, "frame": "strider", "arms": "spear", "legs": "spider", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "dust_devil", "level": 9, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "dust_devil", "level": 8, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "ash_hound", "level": 8, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 }
+			],
+			"rewards": { "spirits": ["dust_devil"], "arms": ["spear"] },
+			"challenges": [
+				{"id": "tower_hold", "name": "Hold the Tower", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+				{"id": "tower_sorcery", "name": "Sorcery", "text": "Win with every golem using magical arms.", "rules": {"attack_kind": "magical"}, "rewards": {}}
+			]
+		},
+		{
+			"id": "steppe_stones",
+			"name": "Sunstones",
+			"text": "An old ring of standing stones off the trail. Slag brutes rest in the shade and ward each other with bells.",
+			"map_pos": [330, 160],
+			"landmark": "monolith",
+			"requires": ["steppe_tower"],
+			"seed": 704,
+			"enemies": [
+				{ "spirit": "slag_brute", "level": 10, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "bronze", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "rubble_imp", "level": 10, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 10, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 1 },
+				{ "spirit": "rubble_imp", "level": 9, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 9, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 }
+			],
+			"rewards": { "sigils": ["guard_bell"] },
+			"challenges": [
+				{"id": "stones_bare", "name": "Bare Stones", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}},
+				{"id": "stones_four", "name": "Four Stand", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {}}
+			]
+		},
+		{
+			"id": "steppe_gate",
+			"name": "Burning Gate",
+			"text": "A ruined gateway wrapped in flame. Motes and hounds rush through it together.",
+			"map_pos": [630, 395],
+			"landmark": "gate",
+			"requires": ["steppe_tower"],
+			"seed": 705,
+			"enemies": [
+				{ "spirit": "ash_hound", "level": 10, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "hunters_brand", "row": "front", "lane": 1 },
+				{ "spirit": "cinder_mote", "level": 10, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "ember_sigil", "row": "front", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 10, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "ash_hound", "level": 10, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
+				{ "spirit": "cinder_mote", "level": 10, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 }
+			],
+			"rewards": { "legs": ["treads"], "sigils": ["war_drum"] },
+			"challenges": [
+				{"id": "burning_whole", "name": "Through the Flames", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+				{"id": "burning_break", "name": "Firebreak", "text": "Win with a Water spirit in the front row.", "rules": {"require": {"element": "water", "row": "front"}}, "rewards": {}}
+			]
+		},
+		{
+			"id": "steppe_tyrant",
+			"name": "The Great Kiln",
+			"text": "The Kiln Tyrant has made itself a body of bronze. Its blows set golems burning and striking it burns the striker too. A wind spirit howls, shut inside its kiln.",
+			"map_pos": [770, 235],
+			"landmark": "kiln",
+			"requires": ["steppe_gate"],
+			"seed": 706,
+			"boss": true,
+			"enemies": [
+				{ "spirit": "kiln_tyrant", "level": 13, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "bronze", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "slag_brute", "level": 11, "frame": "bulwark", "arms": "shield", "legs": "treads", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 11, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "slag_brute", "level": 11, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 0 },
+				{ "spirit": "slag_brute", "level": 11, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 2 }
+			],
+			"rewards": { "spirits": ["sefa"], "sigils": ["surge_lens", "hunters_brand"], "materials": ["obsidian"] },
+			"challenges": [
+				{"id": "tyrant_iron", "name": "Cold Iron", "text": "Defeat the Great Kiln without a Fire spirit.", "rules": {"forbid_elements": ["fire"]}, "rewards": {}},
+				{"id": "tyrant_alone", "name": "Trial by Fire", "text": "Defeat the Great Kiln with a single golem.", "rules": {"max_golems": 1}, "rewards": {"spirits": ["kiln_tyrant"]}, "extreme": true}
+			],
+			"clear_text": "The Great Kiln goes cold. North of the steppe, a pass climbs into the snow of the Frostspine."
+		}
+	]
+}

@@ -82,6 +82,9 @@ func load_all() -> bool:
 	crucible = JsonIO.read_object("res://data/crucible.json", errors, 1)
 	if not errors.is_empty():
 		return false
+	_load_regions()
+	if not errors.is_empty():
+		return false
 	balance_table = DotTable.from_dictionary(balance, "res://data/balance.json") as DotTable
 	elements = spirit_data.get("elements", {})
 	temperaments = spirit_data.get("temperaments", {})
@@ -104,6 +107,27 @@ func load_all() -> bool:
 	for message in errors:
 		push_error("Spiritwright data: " + message)
 	return errors.is_empty()
+
+
+## campaign.json lists its regions by id, in campaign order; each region lives
+## in data/regions/<id>.json. They are read into campaign.regions, so the rest
+## of the game sees one campaign.
+func _load_regions() -> void:
+	var ids: Variant = campaign.get("regions")
+	if not ids is Array or ids.is_empty() or not ids.all(func(id): return DataRules.nonempty(id)):
+		errors.append("campaign.json regions must list region ids")
+		return
+	var regions: Array = []
+	for id in ids:
+		var path: String = "res://data/regions/%s.json" % id
+		var region: Dictionary = JsonIO.read_object(path, errors, 1)
+		if region.is_empty():
+			continue
+		region.erase("schema_version")
+		if region.get("id") != id:
+			errors.append("%s must have the id %s" % [path, id])
+		regions.append(region)
+	campaign.regions = regions
 
 
 func part(kind: String, id: String) -> Dictionary:

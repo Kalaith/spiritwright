@@ -1,0 +1,149 @@
+{
+	"schema_version": 1,
+	"id": "ruins",
+	"name": "Ancient Ruins",
+	"text": "Moss-choked halls where old spirits sleep in broken stone. Wild spirits here guard, mend and endure.",
+	"laboratory": { "name": "Golem Laboratory", "map_pos": [118, 470] },
+	"mastery": {"name": "Warden of the Ruins", "text": "Meet every challenge in the Ancient Ruins.", "rewards": {"sigils": ["warden_seal"]}},
+	"stages": [
+		{
+			"id": "ruins_gate",
+			"name": "Mossy Gate",
+			"text": "A wild imp has wedged itself into the gatehouse rubble. Behind it lies a dormant golem core.",
+			"map_pos": [225, 420],
+			"landmark": "gate",
+			"requires": [],
+			"seed": 101,
+			"enemies": [{ "spirit": "rubble_imp", "level": 1, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 }],
+			"rewards": { "cores": 1, "arms": ["cannon"] },
+			"challenges": [
+				{"id": "gate_cold", "name": "Cold Start", "text": "Win without a Fire spirit.", "rules": {"forbid_elements": ["fire"]}, "rewards": {}},
+				{"id": "gate_stone", "name": "Set in Stone", "text": "Win with a golem in a Stone body carrying Shield Arms.", "rules": {"require": {"material": "stone", "arms": "shield"}}, "rewards": {}}
+			]
+		},
+		{
+			"id": "ruins_court",
+			"name": "Sunken Court",
+			"text": "A flooded courtyard. The sprite in the back wears a body of ice: strike it and you come away Soaked. A second golem core glints in the silt.",
+			"map_pos": [330, 280],
+			"landmark": "court",
+			"requires": ["ruins_gate"],
+			"seed": 202,
+			"enemies": [
+				{ "spirit": "rubble_imp", "level": 1, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "brine_sprite", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 }
+			],
+			"rewards": { "cores": 1, "materials": ["ice"] },
+			"challenges": [
+				{"id": "court_line", "name": "Hold the Line", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+				{"id": "court_lone", "name": "Lone Vessel", "text": "Win with a single golem.", "rules": {"max_golems": 1}, "rewards": {}}
+			]
+		},
+		{
+			"id": "ruins_stair",
+			"name": "Broken Stair",
+			"text": "Cinder motes hold the steps, the leader in a kindling body that singes whoever strikes it; behind them another looses arrows over the line at your back row.",
+			"map_pos": [485, 370],
+			"landmark": "stair",
+			"requires": ["ruins_court"],
+			"seed": 303,
+			"enemies": [
+				{ "spirit": "rubble_imp", "level": 1, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "cinder_mote", "level": 1, "frame": "strider", "arms": "shield", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "cinder_mote", "level": 1, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 2 }
+			],
+			"rewards": { "spirits": ["rubble_imp"], "arms": ["bow"] },
+			"challenges": [
+				{"id": "stair_cold", "name": "Cold Hearth", "text": "Win without a Fire spirit.", "rules": {"forbid_elements": ["fire"]}, "rewards": {"spirits": ["cinder_mote"]}},
+				{"id": "stair_back", "name": "Keep Your Distance", "text": "Win with nobody in the front row.", "rules": {"empty_row": "front"}, "rewards": {}}
+			]
+		},
+		{
+			"id": "ruins_cloister",
+			"name": "Thorn Cloister",
+			"text": "A side passage choked with brambles. A wisp skitters through the thorns after your weakest golem while a spirit sleeps in the briars.",
+			"map_pos": [650, 470],
+			"landmark": "cloister",
+			"requires": ["ruins_stair"],
+			"seed": 353,
+			"enemies": [
+				{ "spirit": "moss_wisp", "level": 3, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "stone", "sigil": "moss_charm", "row": "front", "lane": 1 },
+				{ "spirit": "moss_wisp", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "moss_charm", "row": "back", "lane": 1 },
+				{ "spirit": "moss_wisp", "level": 2, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "wood", "sigil": "mending", "row": "back", "lane": 2 }
+			],
+			"rewards": { "spirits": ["briar"] },
+			"challenges": [
+				{"id": "cloister_whole", "name": "Untouched Garden", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+				{"id": "cloister_spell", "name": "Spellwork", "text": "Win with every golem using magical arms.", "rules": {"attack_kind": "magical"}, "rewards": {}}
+			]
+		},
+		{
+			"id": "ruins_vault",
+			"name": "Echo Vault",
+			"text": "A belled guardian draws every blow while its allies pick you apart.",
+			"map_pos": [615, 215],
+			"landmark": "vault",
+			"requires": ["ruins_stair"],
+			"seed": 404,
+			"enemies": [
+				{ "spirit": "rubble_imp", "level": 3, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "brine_sprite", "level": 3, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "cinder_mote", "level": 2, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "stone", "sigil": "", "row": "back", "lane": 2 }
+			],
+			"rewards": { "spirits": ["moss_wisp"], "sigils": ["moss_charm"] },
+			"challenges": [
+				{"id": "vault_echo", "name": "Echoless", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {"spirits": ["brine_sprite"]}},
+				{"id": "vault_wood", "name": "Grain of the Wood", "text": "Win with every golem in a Wood body.", "rules": {"only_materials": ["wood"]}, "rewards": {}}
+			]
+		},
+		{
+			"id": "ruins_heart",
+			"name": "Heart of the Roots",
+			"text": "The Root Warden has grown a heartwood body and mends 5 HP every turn. Its bell drags every blow onto its healing bark: out-damage the mending or strike past it.",
+			"map_pos": [765, 140],
+			"landmark": "heart",
+			"requires": ["ruins_vault"],
+			"seed": 505,
+			"boss": true,
+			"enemies": [
+				{ "spirit": "root_warden", "level": 5, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "rubble_imp", "level": 3, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "moss_wisp", "level": 3, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "stone", "sigil": "moss_charm", "row": "back", "lane": 1 }
+			],
+			"rewards": { "frames": ["conduit"], "legs": ["spider"], "sigils": ["stoneskin"] },
+			"challenges": [
+				{"id": "heart_felled", "name": "Felled", "text": "Defeat the Root Warden without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {"spirits": ["root_warden"]}},
+				{"id": "heart_pair", "name": "Two Against the Roots", "text": "Win with two golems or fewer.", "rules": {"max_golems": 2}, "rewards": {}}
+			],
+			"clear_text": "The Root Warden falls and the Ancient Ruins are free. Beyond its roots a trail sinks east into the Glimmer Fen: use > on the map to follow it."
+		}
+	],
+	"terrain": {
+		"seed": 7,
+		"ground": "1b2018",
+		"patches": ["24301e", "2a3822", "1f2a1a", "303c25"],
+		"dirt": "2c271d",
+		"rock": "3d3f44",
+		"wall": "34363c",
+		"water": "17394d",
+		"canopy": ["10180f", "152013", "1a2716"],
+		"stream": [[372, -20], [362, 60], [348, 140], [338, 210], [330, 252], [280, 246], [210, 236], [150, 252], [80, 270], [-20, 258]],
+		"walls": [
+			[[40, 110], [210, 96], 14],
+			[[430, 500], [575, 520], 12],
+			[[700, 300], [850, 286], 14],
+			[[505, 60], [640, 48], 12]
+		],
+		"woods": [
+			[[30, 30], 70],
+			[[120, -10], 60],
+			[[860, 230], 80],
+			[[880, 420], 90],
+			[[830, 560], 70],
+			[[-10, 560], 60],
+			[[560, 600], 60],
+			[[250, 590], 50],
+			[[700, -20], 55]
+		]
+	}
+}

@@ -1,0 +1,166 @@
+{
+	"schema_version": 1,
+	"id": "storm",
+	"name": "Storm Crown",
+	"text": "A mountain top wrapped in endless thunder. The strongest wild spirits gather here around their sovereign.",
+	"laboratory": { "name": "Stormrod Workshop", "map_pos": [130, 330] },
+	"mastery": {"name": "Eye of the Storm", "text": "Meet every challenge on the Storm Crown.", "rewards": {"sigils": ["tempest_eye"]}},
+	"terrain": {
+		"seed": 59,
+		"ground": "1a1a24",
+		"patches": ["24243a", "2a2a44", "1f1f30", "30304a"],
+		"dirt": "2a2632",
+		"rock": "3e3e4c",
+		"wall": "35354a",
+		"water": "2a3a6a",
+		"canopy": ["12121e", "181828", "1e1e30"],
+		"stream": [],
+		"walls": [
+			[[40, 520], [200, 510], 12],
+			[[380, 90], [520, 80], 14],
+			[[700, 470], [850, 460], 14]
+		],
+		"woods": [
+			[[-10, 40], 60],
+			[[870, 300], 60],
+			[[880, 560], 70]
+		]
+	},
+	"stages": [
+		{
+			"id": "storm_foot",
+			"name": "Thunder Stones",
+			"text": "Standing stones that ring with every strike of lightning. Hawks nest on top and dive at whoever strikes them.",
+			"map_pos": [235, 220],
+			"landmark": "monolith",
+			"requires": ["frost_crag"],
+			"seed": 901,
+			"enemies": [
+				{ "spirit": "storm_hawk", "level": 18, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "volt_shade", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "volt_shade", "level": 17, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 0 },
+				{ "spirit": "storm_hawk", "level": 17, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "volt_shade", "level": 17, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "front", "lane": 2 },
+				{ "spirit": "volt_shade", "level": 17, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 }
+			],
+			"rewards": { "spirits": ["storm_hawk"], "arms": ["storm_staff"] },
+			"challenges": [
+				{"id": "foot_front", "name": "Standing Stones", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+				{"id": "foot_grounded", "name": "Grounded", "text": "Win without a Lightning spirit.", "rules": {"forbid_elements": ["lightning"]}, "rewards": {}}
+			]
+		},
+		{
+			"id": "storm_vault",
+			"name": "Charged Vault",
+			"text": "An old vault that stores the storm. Brine sprites soak you and volt shades turn the water into lightning.",
+			"map_pos": [365, 345],
+			"landmark": "vault",
+			"requires": ["storm_foot"],
+			"seed": 902,
+			"enemies": [
+				{ "spirit": "rime_ogre", "level": 17, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "brine_sprite", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "volt_shade", "level": 17, "frame": "conduit", "arms": "storm_staff", "legs": "pillar", "material": "fulgurite", "sigil": "surge_lens", "row": "back", "lane": 0 },
+				{ "spirit": "rime_ogre", "level": 16, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "brine_sprite", "level": 16, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
+				{ "spirit": "volt_shade", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
+			],
+			"rewards": { "materials": ["fulgurite"] },
+			"challenges": [
+				{"id": "charged_rod", "name": "Lightning Rod", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {"spirits": ["volt_shade"]}},
+				{"id": "charged_whole", "name": "Discharge", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}}
+			]
+		},
+		{
+			"id": "storm_tower",
+			"name": "Struck Tower",
+			"text": "A tower split by a thousand bolts. Drakes fork their lightning through any golem already Burning or Soaked.",
+			"map_pos": [500, 230],
+			"landmark": "tower",
+			"requires": ["storm_vault"],
+			"seed": 903,
+			"enemies": [
+				{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "scythe", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 1 },
+				{ "spirit": "cinder_mote", "level": 18, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "wood", "sigil": "ember_sigil", "row": "front", "lane": 0 },
+				{ "spirit": "thunder_drake", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "thunder_drake", "level": 18, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2 },
+				{ "spirit": "cinder_mote", "level": 18, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "thunder_drake", "level": 18, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
+			],
+			"rewards": { "spirits": ["thunder_drake"], "arms": ["scythe"] },
+			"challenges": [
+				{"id": "struck_front", "name": "Lightning Strikes Twice", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}},
+				{"id": "struck_brute", "name": "Iron Will", "text": "Win with every golem using physical arms.", "rules": {"attack_kind": "physical"}, "rewards": {}}
+			]
+		},
+		{
+			"id": "storm_ridge",
+			"name": "Howling Ridge",
+			"text": "A knife-edge ridge off the main climb. Hawks, kites and a dust devil all move before you do.",
+			"map_pos": [530, 450],
+			"landmark": "peak",
+			"requires": ["storm_tower"],
+			"seed": 904,
+			"enemies": [
+				{ "spirit": "storm_hawk", "level": 17, "frame": "strider", "arms": "hammer", "legs": "spider", "material": "bronze", "sigil": "hex_eye", "row": "front", "lane": 1 },
+				{ "spirit": "gale_kite", "level": 17, "frame": "strider", "arms": "hammer", "legs": "pillar", "material": "wood", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 17, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "surge_lens", "row": "back", "lane": 1 },
+				{ "spirit": "storm_hawk", "level": 16, "frame": "bulwark", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 2 },
+				{ "spirit": "gale_kite", "level": 16, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "dust_devil", "level": 16, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "back", "lane": 2 }
+			],
+			"rewards": { "sigils": ["hex_eye"] },
+			"challenges": [
+				{"id": "ridge_whole", "name": "Into the Wind", "text": "Win with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+				{"id": "ridge_bare", "name": "Bare Ridge", "text": "Win with no golem carrying a sigil.", "rules": {"no_sigils": true}, "rewards": {}}
+			]
+		},
+		{
+			"id": "storm_spire",
+			"name": "Lightning Spire",
+			"text": "A crystal spire that drinks the storm. A drake and a shade guard it behind a belled ogre.",
+			"map_pos": [655, 310],
+			"landmark": "spire",
+			"requires": ["storm_tower"],
+			"seed": 905,
+			"enemies": [
+				{ "spirit": "rime_ogre", "level": 18, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "flail", "legs": "spider", "material": "bronze", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "volt_shade", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "rime_ogre", "level": 18, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone", "sigil": "stoneskin", "row": "front", "lane": 2 },
+				{ "spirit": "thunder_drake", "level": 18, "frame": "strider", "arms": "bow", "legs": "spider", "material": "bronze", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "volt_shade", "level": 18, "frame": "bulwark", "arms": "hammer", "legs": "tower", "material": "ice", "sigil": "stoneskin", "row": "back", "lane": 2 }
+			],
+			"rewards": { "sigils": ["storm_coil"] },
+			"challenges": [
+				{"id": "lspire_four", "name": "Four Against the Spire", "text": "Win with four golems or fewer.", "rules": {"max_golems": 4}, "rewards": {}},
+				{"id": "lspire_front", "name": "Earthed", "text": "Win without a front-row golem falling.", "rules": {"front_stands": true}, "rewards": {}}
+			]
+		},
+		{
+			"id": "storm_crown",
+			"name": "The Storm Crown",
+			"text": "The Storm Sovereign waits on the summit. It hurries its whole team at the first bell and its bolts leap from golem to golem.",
+			"map_pos": [775, 150],
+			"landmark": "peak",
+			"requires": ["storm_spire"],
+			"seed": 906,
+			"boss": true,
+			"finale": true,
+			"enemies": [
+				{ "spirit": "storm_sovereign", "level": 21, "frame": "bulwark", "arms": "hammer", "legs": "pillar", "material": "crystal", "sigil": "guard_bell", "row": "front", "lane": 1 },
+				{ "spirit": "thunder_drake", "level": 19, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "bronze", "sigil": "", "row": "back", "lane": 1 },
+				{ "spirit": "brine_sprite", "level": 19, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "ice", "sigil": "", "row": "back", "lane": 0 },
+				{ "spirit": "thunder_drake", "level": 19, "frame": "colossus", "arms": "aegis", "legs": "tower", "material": "stone", "sigil": "", "row": "front", "lane": 0 },
+				{ "spirit": "brine_sprite", "level": 19, "frame": "strider", "arms": "bow", "legs": "pillar", "material": "wood", "sigil": "", "row": "back", "lane": 2 },
+				{ "spirit": "thunder_drake", "level": 18, "frame": "conduit", "arms": "cannon", "legs": "pillar", "material": "crystal", "sigil": "mending", "row": "front", "lane": 2 }
+			],
+			"rewards": { "frames": ["colossus"], "sigils": ["phoenix_ember"] },
+			"challenges": [
+				{"id": "crown_calm", "name": "Eye of Calm", "text": "Defeat the Storm Sovereign with no golem falling.", "rules": {"no_falls": true}, "rewards": {}},
+				{"id": "crown_five", "name": "Five Against the Storm", "text": "Win with five golems or fewer.", "rules": {"max_golems": 5}, "rewards": {}}
+			],
+			"clear_text": "The Storm Sovereign is stilled and the sky clears over every region. More regions are not built yet: keep refining builds and replaying stages."
+		}
+	]
+}

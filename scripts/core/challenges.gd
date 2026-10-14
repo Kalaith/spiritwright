@@ -3,8 +3,8 @@ extends RefCounted
 ## stage, met by any win whose golems keep every rule. A feat is a rule set on a
 ## whole playthrough, met when the playthrough's record keeps every rule once
 ## every stage has been cleared in it. A region's mastery is earned by meeting
-## every challenge on its stages. Both are data in campaign.json; the
-## rules are a small fixed vocabulary, checked exactly against the battle's
+## every challenge on its stages. Both are data in campaign.json and the
+## region files; the rules are a small fixed vocabulary, checked exactly against the battle's
 ## final state, so a challenge can never disagree with what happened.
 
 const Catalog = preload("res://scripts/core/catalog.gd")

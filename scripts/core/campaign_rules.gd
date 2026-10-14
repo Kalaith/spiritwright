@@ -1,5 +1,5 @@
 extends RefCounted
-## Validation of campaign.json: the start block, regions, terrain, stages,
+## Validation of campaign.json and its region files: the start block, regions, terrain, stages,
 ## their enemies and rewards, challenges, region masteries and feats. Fills Catalog.stages,
 ## stage_region and finale_id as it goes, and reports into Catalog.errors.
 

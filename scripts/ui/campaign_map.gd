@@ -20,7 +20,7 @@ var states: Dictionary = {}
 var selected: String = ""
 ## {"name", "map_pos"} from the region data.
 var laboratory: Dictionary = {}
-## The region's "terrain" block from campaign.json.
+## The region's "terrain" block from its region file.
 var terrain: Dictionary = {}
 ## One look per built golem, leader first.
 var party_looks: Array = []

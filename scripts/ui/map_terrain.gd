@@ -1,7 +1,7 @@
 extends RefCounted
 ## The ground of a region map: earth and moss patches, an optional stream,
 ## broken walls, woods at the edges and a dark vignette. Colours and layout come
-## from the region's "terrain" block in campaign.json; scatter comes from its
+## from the region's "terrain" block in its region file; scatter comes from its
 ## fixed seed, so the map is identical every time it is drawn. Positions are in
 ## the map's authored 860x560 space.
 
