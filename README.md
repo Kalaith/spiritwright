@@ -65,7 +65,7 @@ The Crucible is all data in `data/crucible.json`, validated by `crucible_rules.g
 - An **encounter** in `encounters` (or a **final** in `finals`) has `id`, `name`, `test` (the one word the scouting shows), `seed`, `text` and `variants`: one or more enemy teams of 1-6 loadouts, each with an `offset` added to the tier's level plus its `enemy_bonus`. A Classic Royale always fights variant 0; a Shifting Royale picks one by seed.
 - `classic` lists `encounters_per_run` encounter ids and a `final`. A Shifting Royale draws from every encounter and final, so adding one widens it without touching the Classic.
 - A **tier** has `id`, `name`, `level`, `enemy_bonus`, `text` and an optional `requires` (a milestone id). Milestones reward `spirits`, `titles` and `finishes` (each `finishes` entry has a `color`).
-- Run `-- --crucible` after any change: for every encounter and variant it prints the win rate of 300 random six-golem teams at Adept, the parts most over- and under-represented among the wins (what the encounter asks for), how many of the seven each team would win one by one (a flat spread means the encounters test different things), how far they get in a real run, and a few teams that finished. The checks fight hand-built teams of three different shapes through the Classic Royale and expect each to finish, and a team of many small burning blows to fall at the Bellows.
+- Run `-- --crucible` after any change: for every encounter and variant it prints the win rate of 150 random six-golem teams at Adept, the parts most over- and under-represented among the wins (what the encounter asks for), how many of the seven each team would win one by one (a flat spread means the encounters test different things), how far they get in a real run, and a few teams that finished. The checks fight hand-built teams of three different shapes through the Classic Royale and expect each to finish, and a team of many small burning blows to fall at the Bellows.
 
 ## Layout
 
@@ -99,7 +99,7 @@ The game loads the shared toolkit (`../godot_toolkit`) as `res://addons/hatchery
 $godot = '..\small_following\exports\tooling\Godot_v4.2.2-stable_win64_console.exe'
 & $godot --headless --path . --script res://tools/sim_checks.gd               # checks
 & $godot --headless --path . --script res://tools/sim_checks.gd -- --only=save # scenarios whose name contains "save"
-& $godot --headless --path . --script res://tools/sim_checks.gd -- --report   # + balance report (campaign and Crucible)
+& $godot --headless --path . --script res://tools/sim_checks.gd -- --report   # + balance report (campaign and Crucible, ~1.5 min)
 & $godot --headless --path . --script res://tools/sim_checks.gd -- --crucible # + the Crucible's balance report alone
 & $godot --path . --script res://tools/capture.gd -- C:\temp\captures        # screenshots of every screen
 ```
