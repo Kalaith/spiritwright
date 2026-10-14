@@ -9,6 +9,7 @@ signal title_requested
 signal new_game_plus_requested
 signal codex_requested
 signal crucible_requested
+signal settings_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
@@ -60,6 +61,7 @@ func _ready() -> void:
 	if progression.crucible_open():
 		bar.add_child(Style.button("Crucible", func(): crucible_requested.emit()))
 	bar.add_child(Style.button("Codex", func(): codex_requested.emit()))
+	bar.add_child(Style.button("Settings", func(): settings_requested.emit()))
 	bar.add_child(Style.button("Title", func(): title_requested.emit()))
 	var body := Style.hbox(12)
 	body.size_flags_vertical = Control.SIZE_EXPAND_FILL

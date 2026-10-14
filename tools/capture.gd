@@ -6,6 +6,7 @@ extends "res://addons/hatchery/testing/capture_runner.gd"
 
 const Challenges = preload("res://scripts/core/challenges.gd")
 const Expect = preload("res://addons/hatchery/testing/expect.gd")
+const GameSettings = preload("res://scripts/ui/game_settings.gd")
 
 var main: Control
 
@@ -13,6 +14,12 @@ var main: Control
 func tour() -> void:
 	main = await open_scene("res://scenes/main.tscn")
 	main.progression.save_path = Expect.scratch_path("capture_save.json")
+	# The tour never touches the player's settings file, and plays silently at
+	# the default size whatever the player chose.
+	main.settings.store.save_enabled = false
+	main.settings.store.values = GameSettings.DEFAULTS.duplicate(true)
+	main.settings.store.values.muted = true
+	main.settings.apply_all()
 	await shot("01_title")
 	main._new_game()
 	await frames(10)
@@ -161,6 +168,7 @@ func tour() -> void:
 	await shot("22_map_new_game_plus")
 	await _crucible()
 	await _gallery()
+	await _settings()
 
 
 ## The Crucible, open now the finale has fallen: scouting both Royales, a run
@@ -250,3 +258,47 @@ func _gallery() -> void:
 	await seconds(0.7)
 	await shot("13_material_gallery")
 	sheet.queue_free()
+
+
+## The settings page over the map, then the largest and smallest interface
+## sizes on the busiest screens.
+func _settings() -> void:
+	main.selected_stage = "ruins_gate"
+	main.show_map()
+	main.open_settings()
+	await seconds(0.5)
+	await shot("32_settings")
+	for size in [["125", 1.0], ["75", 0.0]]:
+		main.close_settings()
+		main.settings.store.values.ui_scale = size[1]
+		main.settings.apply("ui_scale")
+		main.show_map()
+		await seconds(0.5)
+		await shot("33_map_ui_%s" % size[0])
+		main.show_laboratory()
+		await frames(10)
+		await shot("34_laboratory_ui_%s" % size[0])
+		main.start_battle("ruins_gate")
+		await seconds(2.0)
+		await shot("35_battle_ui_%s" % size[0])
+		main.screen._skip()
+		main.screen.finished.emit()
+		await frames(10)
+		await shot("35_result_ui_%s" % size[0])
+		main.show_codex()
+		await frames(10)
+		await shot("35_codex_ui_%s" % size[0])
+		main.show_crucible()
+		await frames(10)
+		await shot("35_crucible_ui_%s" % size[0])
+		main.show_title()
+		await frames(10)
+		await shot("35_title_ui_%s" % size[0])
+		main.start_battle("ruins_gate")
+		await frames(5)
+		main.open_settings()
+		await seconds(0.3)
+		await shot("36_settings_ui_%s" % size[0])
+	main.close_settings()
+	main.settings.store.values.ui_scale = GameSettings.DEFAULTS.ui_scale
+	main.settings.apply("ui_scale")

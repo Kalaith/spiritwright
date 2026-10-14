@@ -1,7 +1,8 @@
 extends Control
 ## Owns the catalog and the persistent progression and swaps between screens:
 ## title, region map, golem laboratory, battle playback and results, the
-## Codex and the Shifting Crucible.
+## Codex and the Shifting Crucible. Also owns the player's settings, the
+## settings page over any screen, and the background sound of each place.
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Progression = preload("res://scripts/core/progression.gd")
@@ -16,6 +17,9 @@ const CodexScreen = preload("res://scripts/ui/codex_screen.gd")
 const CrucibleScreen = preload("res://scripts/ui/crucible_screen.gd")
 const Crucible = preload("res://scripts/core/crucible.gd")
 const ScreenSwitcher = preload("res://addons/hatchery/ui/screen_switcher.gd")
+const GameSettings = preload("res://scripts/ui/game_settings.gd")
+const Ambience = preload("res://addons/hatchery/audio/ambience.gd")
+const AmbienceBeds = preload("res://scripts/ui/ambience_beds.gd")
 
 var catalog := Catalog.new()
 var progression: Progression
@@ -26,11 +30,22 @@ var screen: Control:
 	get:
 		return screens.current as Control
 var selected_stage: String = ""
+var settings: GameSettings
+var ambience: Ambience
+## The settings page while it is open over the current screen.
+var settings_page: Control
+## What had focus when the settings page opened, to return to on close.
+var _focus_before: Control
 
 
 func _ready() -> void:
 	screens.auto_focus = false
 	theme = Style.make_theme()
+	settings = GameSettings.new(get_tree())
+	settings.load_and_apply()
+	ambience = Ambience.new()
+	ambience.bus = StringName(GameSettings.AMBIENCE_BUS)
+	add_child(ambience)
 	if not catalog.load_all():
 		var error := Style.wrapped("Spiritwright could not load its data:\n" + "\n".join(catalog.errors), 16, Style.BAD)
 		error.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -44,8 +59,39 @@ func _unhandled_input(event: InputEvent) -> void:
 	screens.handle_back(event)
 
 
-func _swap(next: Control, back: Callable) -> void:
+## Shows `next` with its Back target, and the background sound of `bed`
+## (a battle scene or "workshop"; see ambience_beds.gd).
+func _swap(next: Control, back: Callable, bed: String = "workshop") -> void:
+	close_settings()
 	screens.show(next, back)
+	if next.has_signal("settings_requested"):
+		next.connect("settings_requested", open_settings)
+	ambience.play_bed(bed, AmbienceBeds.layers(bed))
+
+
+func open_settings() -> void:
+	if is_instance_valid(settings_page):
+		return
+	_focus_before = get_viewport().gui_get_focus_owner()
+	settings_page = settings.make_page()
+	settings_page.close_requested.connect(close_settings)
+	settings_page.applied.connect(_on_setting_applied)
+	add_child(settings_page)
+	settings_page.close_button.grab_focus.call_deferred()
+
+
+func close_settings() -> void:
+	if not is_instance_valid(settings_page):
+		return
+	settings_page.queue_free()
+	settings_page = null
+	if is_instance_valid(_focus_before) and _focus_before.is_visible_in_tree():
+		_focus_before.grab_focus.call_deferred()
+
+
+func _on_setting_applied(key: String) -> void:
+	if key == "screen_shake" and screen is BattleView:
+		screen.shake.enabled = settings.shake_enabled
 
 
 func show_title(notice: String = "") -> void:
@@ -54,7 +100,7 @@ func show_title(notice: String = "") -> void:
 	title.notice = notice
 	title.continue_requested.connect(_continue)
 	title.new_game_requested.connect(_new_game)
-	_swap(title, Callable())
+	_swap(title, Callable(), "ruins")
 
 
 func _continue() -> void:
@@ -146,7 +192,7 @@ func show_crucible() -> void:
 	crucible.fight_requested.connect(start_crucible_battle)
 	crucible.laboratory_requested.connect(func(): show_laboratory(true))
 	crucible.map_requested.connect(show_map)
-	_swap(crucible, show_map)
+	_swap(crucible, show_map, "crucible")
 
 
 ## Fights the Crucible run's next encounter: the locked team and every enemy
@@ -164,8 +210,9 @@ func start_crucible_battle() -> void:
 	view.stage = {"id": entry.id, "name": "%s (%d of %d)" % [entry.name, index + 1, run.sequence.size()]}
 	view.scene = "crucible"
 	view.outcome = outcome
+	view.shake.enabled = settings.shake_enabled
 	view.finished.connect(func(): _show_crucible_result(view.stage, outcome))
-	_swap(view, func(): _show_crucible_result(view.stage, outcome))
+	_swap(view, func(): _show_crucible_result(view.stage, outcome), "crucible")
 
 
 func _show_crucible_result(stage: Dictionary, outcome: Dictionary) -> void:
@@ -185,7 +232,7 @@ func _show_crucible_result(stage: Dictionary, outcome: Dictionary) -> void:
 	result.map_requested.connect(show_crucible)
 	result.laboratory_requested.connect(func(): show_laboratory(true))
 	result.next_requested.connect(start_crucible_battle)
-	_swap(result, show_crucible)
+	_swap(result, show_crucible, "crucible")
 
 
 func start_battle(stage_id: String) -> void:
@@ -199,8 +246,9 @@ func start_battle(stage_id: String) -> void:
 	view.stage = stage
 	view.scene = catalog.region_of(stage_id).id
 	view.outcome = outcome
+	view.shake.enabled = settings.shake_enabled
 	view.finished.connect(func(): _show_result(stage, outcome))
-	_swap(view, func(): _show_result(stage, outcome))
+	_swap(view, func(): _show_result(stage, outcome), view.scene)
 
 
 func _show_result(stage: Dictionary, outcome: Dictionary) -> void:
@@ -217,4 +265,4 @@ func _show_result(stage: Dictionary, outcome: Dictionary) -> void:
 	result.map_requested.connect(show_map)
 	result.laboratory_requested.connect(show_laboratory)
 	result.retry_requested.connect(func(): start_battle(stage.id))
-	_swap(result, show_map)
+	_swap(result, show_map, result.scene)

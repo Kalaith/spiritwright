@@ -2,13 +2,17 @@ extends Control
 ## Replays a finished simulation. The outcome is already decided; this view
 ## only presents the event log, one golem's turn per beat, so every hit,
 ## trigger and status can be read. Speed, pause and skip are always available.
+## Heavy hits and falls shake the scene (not the controls) unless the player
+## has turned screen shake off.
 
 signal finished
+signal settings_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
 const Backdrop = preload("res://scripts/ui/battle_backdrop.gd")
 const Weather = preload("res://scripts/ui/battle_weather.gd")
+const Shake = preload("res://addons/hatchery/fx/shake.gd")
 const BEAT_SECONDS: float = 0.85
 const IMPACT: float = 0.4
 const ART_SCALE: float = 0.85
@@ -21,6 +25,8 @@ var stage: Dictionary = {}
 ## Which region's scene the battle is fought in (see battle_backdrop.gd).
 var scene: String = "ruins"
 var outcome: Dictionary = {}
+## Set `shake.enabled` from the player's screen shake setting.
+var shake := Shake.new()
 ## id -> display state; the view never reads the simulation's final numbers.
 var units: Dictionary = {}
 var _beats: Array = []
@@ -40,6 +46,8 @@ var _pause_button: Button
 var _speed_button: Button
 var _skip_button: Button
 var _continue_button: Button
+## The backdrop and weather, moved with the shake.
+var _scenery: Array[Control] = []
 
 
 func _ready() -> void:
@@ -49,6 +57,7 @@ func _ready() -> void:
 		layer.scene = scene
 		layer.show_behind_parent = true
 		add_child(layer)
+		_scenery.append(layer)
 	_build_ui()
 	for unit in outcome.units:
 		units[unit.id] = {
@@ -89,7 +98,8 @@ func _build_ui() -> void:
 	_skip_button = Style.button("Skip to end", _skip)
 	_continue_button = Style.button("Continue", func(): finished.emit(), 20)
 	_continue_button.hide()
-	for node in [_pause_button, _speed_button, _skip_button, _continue_button]:
+	var settings_button := Style.button("Settings", func(): settings_requested.emit())
+	for node in [_pause_button, _speed_button, _skip_button, _continue_button, settings_button]:
 		top.add_child(node)
 	var log_panel := Style.panel(10)
 	log_panel.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
@@ -157,6 +167,9 @@ func _process(delta: float) -> void:
 			unit.alpha = max(0.25, unit.alpha - delta * 1.5)
 	if not _done and not _paused:
 		_advance(delta * SPEEDS[_speed_index])
+	shake.step(delta)
+	for layer in _scenery:
+		layer.position = shake.offset
 	queue_redraw()
 
 
@@ -227,6 +240,9 @@ func _apply(event: Dictionary) -> void:
 			elif event.cause == "effect":
 				color = Style.GOLD
 			_float(unit, "-%d" % int(event.amount), color)
+			# A blow jolts the scene in proportion to how much of the golem it took.
+			if not _quiet and event.cause != "burn":
+				shake.add(0.12 + 0.8 * float(event.amount) / float(unit.max_hp))
 			if int(event.absorbed) > 0:
 				_float(unit, "WARD -%d" % int(event.absorbed), Style.STATUS_COLORS.ward)
 		"heal":
@@ -254,6 +270,8 @@ func _apply(event: Dictionary) -> void:
 		"resist":
 			_float(unit, "RESIST", Style.MUTED)
 		"death":
+			if not _quiet:
+				shake.add(0.45)
 			unit.alive = false
 			unit.hp = 0
 			for status in ["ward", "burn", "soaked", "taunt", "regen", "stun", "weaken", "expose"]:
@@ -294,6 +312,8 @@ func _home(unit: Dictionary) -> Vector2:
 
 
 func _draw() -> void:
+	# The golems and everything over them move with the scenery.
+	draw_set_transform(shake.offset)
 	var horizon: float = Backdrop.horizon_for(size)
 	draw_line(Vector2(size.x / 2.0, horizon), Vector2(size.x / 2.0, Backdrop.floor_bottom_for(size)), Color(1, 1, 1, 0.06), 2.0)
 	var order: Array = units.values()
@@ -319,6 +339,7 @@ func _draw() -> void:
 		var pos: Vector2 = floater.pos - Vector2(0, floater.t * 26.0)
 		draw_string_outline(font, pos, floater.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, 4, Color(0, 0, 0, alpha))
 		draw_string(font, pos, floater.text, HORIZONTAL_ALIGNMENT_LEFT, -1, 20, Color(floater.color, alpha))
+	draw_set_transform(Vector2.ZERO)
 	if _done:
 		_draw_banner(font)
 

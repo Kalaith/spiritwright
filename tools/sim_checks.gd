@@ -17,7 +17,8 @@ func modules() -> Array[String]:
 	if not CheckModule.shared_catalog().errors.is_empty():
 		return ["res://tools/checks/checks_progression.gd"]
 	return ["res://tools/checks/checks_progression.gd", "res://tools/checks/checks_battle.gd",
-		"res://tools/checks/checks_collection.gd", "res://tools/checks/checks_crucible.gd"]
+		"res://tools/checks/checks_collection.gd", "res://tools/checks/checks_crucible.gd",
+		"res://tools/checks/checks_settings.gd"]
 
 
 func after_all() -> void:

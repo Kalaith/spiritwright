@@ -1,9 +1,10 @@
 extends Control
-## Title: continue, start fresh (asks first when a save would be lost), and a
-## short primer on what the player is doing.
+## Title: continue, start fresh (asks first when a save would be lost), the
+## settings, and a short primer on what the player is doing.
 
 signal continue_requested
 signal new_game_requested
+signal settings_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
@@ -62,6 +63,7 @@ func _ready() -> void:
 	buttons.add_child(_new_button)
 	if not has_save:
 		_new_button.call_deferred("grab_focus")
+	buttons.add_child(Style.button("Settings", func(): settings_requested.emit(), 18))
 	_confirm = Style.hbox(10)
 	_confirm.alignment = BoxContainer.ALIGNMENT_CENTER
 	_confirm.add_child(Style.label("Erase your laboratory?", 15, Style.BAD))
