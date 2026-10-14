@@ -8,6 +8,7 @@ signal finished
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
 const Backdrop = preload("res://scripts/ui/battle_backdrop.gd")
+const Weather = preload("res://scripts/ui/battle_weather.gd")
 const BEAT_SECONDS: float = 0.85
 const IMPACT: float = 0.4
 const ART_SCALE: float = 0.85
@@ -17,6 +18,8 @@ const SPEEDS: Array[float] = [1.0, 2.0, 4.0]
 
 var catalog: RefCounted
 var stage: Dictionary = {}
+## Which region's scene the battle is fought in (see battle_backdrop.gd).
+var scene: String = "ruins"
 var outcome: Dictionary = {}
 ## id -> display state; the view never reads the simulation's final numbers.
 var units: Dictionary = {}
@@ -41,6 +44,11 @@ var _continue_button: Button
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	# Behind this view's own drawing, so the golems stand in front of the scene.
+	for layer in [Backdrop.new(), Weather.new()]:
+		layer.scene = scene
+		layer.show_behind_parent = true
+		add_child(layer)
 	_build_ui()
 	for unit in outcome.units:
 		units[unit.id] = {
@@ -286,9 +294,8 @@ func _home(unit: Dictionary) -> Vector2:
 
 
 func _draw() -> void:
-	var horizon: float = 70.0 + (size.y - 220.0) * 0.25
-	Backdrop.draw(self, size, horizon, size.y - 150.0)
-	draw_line(Vector2(size.x / 2.0, horizon), Vector2(size.x / 2.0, size.y - 150.0), Color(1, 1, 1, 0.06), 2.0)
+	var horizon: float = Backdrop.horizon_for(size)
+	draw_line(Vector2(size.x / 2.0, horizon), Vector2(size.x / 2.0, Backdrop.floor_bottom_for(size)), Color(1, 1, 1, 0.06), 2.0)
 	var order: Array = units.values()
 	order.sort_custom(func(a, b): return a.lane < b.lane or (a.lane == b.lane and a.side < b.side))
 	for unit in order:

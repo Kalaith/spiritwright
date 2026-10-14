@@ -158,6 +158,7 @@ func start_crucible_battle() -> void:
 	var view := BattleView.new()
 	view.catalog = catalog
 	view.stage = {"id": entry.id, "name": "%s (%d of %d)" % [entry.name, index + 1, run.sequence.size()]}
+	view.scene = "crucible"
 	view.outcome = outcome
 	view.finished.connect(func(): _show_crucible_result(view.stage, outcome))
 	_swap(view, func(): _show_crucible_result(view.stage, outcome))
@@ -170,6 +171,7 @@ func _show_crucible_result(stage: Dictionary, outcome: Dictionary) -> void:
 	result.outcome = outcome
 	result.report = progression.apply_crucible(outcome.result)
 	result.crucible = true
+	result.scene = "crucible"
 	result.back_text = "Crucible"
 	var run: Dictionary = progression.crucible.run
 	if not run.is_empty():
@@ -191,6 +193,7 @@ func start_battle(stage_id: String) -> void:
 	var view := BattleView.new()
 	view.catalog = catalog
 	view.stage = stage
+	view.scene = catalog.region_of(stage_id).id
 	view.outcome = outcome
 	view.finished.connect(func(): _show_result(stage, outcome))
 	_swap(view, func(): _show_result(stage, outcome))
@@ -204,6 +207,7 @@ func _show_result(stage: Dictionary, outcome: Dictionary) -> void:
 	result.outcome = outcome
 	result.report = report
 	result.progression_challenges = progression.challenges
+	result.scene = catalog.region_of(stage.id).id
 	if not progression.save_game():
 		result.save_error = progression.last_error
 	result.map_requested.connect(show_map)

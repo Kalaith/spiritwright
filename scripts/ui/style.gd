@@ -126,6 +126,20 @@ static func stat_line(stats: Dictionary) -> String:
 	return ", ".join(parts)
 
 
+## A soft round light: full `color` at the centre, nearly half by half the
+## radius, nothing at the rim. Smooth gradients, so no rings show.
+static func radial(ci: CanvasItem, centre: Vector2, radius: float, color: Color) -> void:
+	var mid := Color(color, color.a * 0.45)
+	var clear := Color(color, 0.0)
+	for i in range(16):
+		var a := Vector2(cos(TAU * i / 16.0), sin(TAU * i / 16.0))
+		var b := Vector2(cos(TAU * (i + 1) / 16.0), sin(TAU * (i + 1) / 16.0))
+		ci.draw_polygon(PackedVector2Array([centre, centre + a * radius * 0.5, centre + b * radius * 0.5]),
+			PackedColorArray([color, mid, mid]))
+		ci.draw_polygon(PackedVector2Array([centre + a * radius * 0.5, centre + a * radius, centre + b * radius,
+			centre + b * radius * 0.5]), PackedColorArray([mid, clear, clear, mid]))
+
+
 ## Fills a full-rect screen background so each screen owns its backdrop.
 static func backdrop(parent: Control, color: Color = BG) -> void:
 	var rect := ColorRect.new()
@@ -133,6 +147,21 @@ static func backdrop(parent: Control, color: Color = BG) -> void:
 	rect.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	parent.add_child(rect)
+	# A soft pool of light high in the middle, falling off to dark corners.
+	var light := GradientTexture2D.new()
+	light.fill = GradientTexture2D.FILL_RADIAL
+	light.fill_from = Vector2(0.5, 0.3)
+	light.fill_to = Vector2(1.15, 1.1)
+	light.gradient = Gradient.new()
+	light.gradient.set_color(0, Color(color.lightened(0.07), 1.0))
+	light.gradient.set_color(1, Color(color.darkened(0.45), 1.0))
+	var glow := TextureRect.new()
+	glow.texture = light
+	glow.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	glow.stretch_mode = TextureRect.STRETCH_SCALE
+	glow.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	glow.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(glow)
 
 
 ## "Spirit: Sefa the Zephra" / "Arms: Spirit Cannon" plus what it does.

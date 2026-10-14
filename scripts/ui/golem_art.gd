@@ -9,6 +9,7 @@ extends RefCounted
 
 const GolemFx = preload("res://scripts/ui/golem_fx.gd")
 const GolemParts = preload("res://scripts/ui/golem_parts.gd")
+const Style = preload("res://scripts/ui/style.gd")
 const OUTLINE := Color("17151e")
 ## base: main surface; trim: joints, bands and rims; fill_alpha: translucency.
 const MATERIALS: Dictionary = {
@@ -138,12 +139,10 @@ func _mark(points: Array, color: Color, width: float = 1.5) -> void:
 	ci.draw_polyline(packed, _c(color), width * s, true)
 
 
-## A soft light: stacked discs, faint at the rim and strongest at the centre.
+## A soft light fading smoothly from the centre to nothing at the rim.
 ## `color.a` is the opacity at the centre.
 func glow(at: Vector2, radius: float, color: Color) -> void:
-	for i in range(10):
-		var k: float = 1.0 - i / 10.0
-		ci.draw_circle(_p(at.x, at.y), radius * k * s, _c(Color(color, color.a / 10.0)))
+	Style.radial(ci, _p(at.x, at.y), radius * s, _c(color))
 
 
 ## Bilinear point inside a quad (bottom-left, bottom-right, top-right, top-left).

@@ -1,85 +1,111 @@
-extends RefCounted
-## The Ancient Ruins behind a battle: a dim sky, broken columns and arches on
-## the horizon, and a mossy flagstone floor in perspective. Every shape comes
-## from fixed tables so the scene is identical each time it is drawn.
+extends Control
+## The place a battle is fought: each region (and the Crucible) has its own sky,
+## horizon and ground. Drawn once behind the battle view and again only on a
+## resize; the moving weather lives in battle_weather.gd. Every shape comes from
+## fixed tables or a fixed seed, so a scene is identical each time it is drawn.
 
-const SKY_TOP := Color("0d1018")
-const SKY_LOW := Color("1a2130")
-const RUIN := Color("232a38")
-const RUIN_EDGE := Color("2e3647")
-const FLOOR := Color("1d2219")
-const FLOOR_FAR := Color("161b16")
-const SEAM := Color(1, 1, 1, 0.045)
-const MOSS := Color("232f1d")
-## [x as a fraction of the width, width, height, broken-top tilt]
-const COLUMNS: Array = [[0.05, 34, 120, 8], [0.17, 26, 70, -6], [0.31, 30, 140, 0], [0.44, 22, 52, 10],
-	[0.58, 28, 96, -9], [0.7, 34, 150, 0], [0.83, 24, 64, 7], [0.95, 30, 110, -5]]
-## [left column index, right column index]: arches spring from the shorter column.
-const ARCHES: Array = [[0, 1], [6, 7]]
-## [x fraction, depth fraction, radius x, radius y]
-const MOSS_PATCHES: Array = [[0.12, 0.25, 70, 12], [0.36, 0.6, 90, 16], [0.62, 0.35, 60, 10],
-	[0.86, 0.75, 110, 18], [0.22, 0.9, 80, 14], [0.75, 0.1, 50, 8]]
+const Horizons = preload("res://scripts/ui/battle_horizons.gd")
+const Grounds = preload("res://scripts/ui/battle_grounds.gd")
+const Style = preload("res://scripts/ui/style.gd")
 
+## sky: [zenith, horizon]; far / near: silhouette layers; edge: rims and highlights;
+## floor: [at the horizon, at the viewer]; patch: ground detail; haze: the light along the horizon.
+const SCENES: Dictionary = {
+	"ruins": {"sky": ["0b0e16", "222b3c"], "far": "171c28", "near": "232a38", "edge": "333c50",
+		"floor": ["151a15", "20271c"], "patch": "26331f", "haze": "6f8f9f"},
+	"fen": {"sky": ["081214", "21403a"], "far": "10221d", "near": "15241f", "edge": "2e4a40",
+		"floor": ["0f1a16", "1a2b22"], "patch": "143038", "haze": "7fc8b0"},
+	"steppe": {"sky": ["160a12", "7a2f1a"], "far": "3c1b16", "near": "24120f", "edge": "5a3020",
+		"floor": ["1f1410", "33231a"], "patch": "3c2819", "haze": "ff8a4a"},
+	"frost": {"sky": ["0a1222", "345077"], "far": "2b3f5c", "near": "1b283d", "edge": "dfeaf7",
+		"floor": ["223246", "34485e"], "patch": "4b6280", "haze": "bfe4ff"},
+	"storm": {"sky": ["08060f", "2c2648"], "far": "1d1931", "near": "141221", "edge": "3d3666",
+		"floor": ["121119", "1e1d29"], "patch": "202a3a", "haze": "9d8cff"},
+	"crucible": {"sky": ["0e0808", "35201a"], "far": "2a1b16", "near": "1d1310", "edge": "5a3a24",
+		"floor": ["251b14", "3e2f22"], "patch": "4a3826", "haze": "ffb347"},
+}
 
-static func draw(ci: CanvasItem, size: Vector2, horizon: float, floor_bottom: float) -> void:
-	var bands: int = 8
-	for i in range(bands):
-		var y0: float = horizon * i / bands
-		ci.draw_rect(Rect2(0, y0, size.x, horizon / bands + 1.0), SKY_TOP.lerp(SKY_LOW, float(i) / (bands - 1)))
-	_ruins(ci, size, horizon)
-	ci.draw_rect(Rect2(0, horizon, size.x, size.y - horizon), FLOOR)
-	var depth: float = floor_bottom - horizon
-	# Floor darkens toward the horizon.
-	for i in range(6):
-		var y: float = horizon + depth * i / 12.0
-		ci.draw_rect(Rect2(0, y, size.x, depth / 12.0 + 1.0), FLOOR_FAR.lerp(FLOOR, i / 6.0))
-	for patch in MOSS_PATCHES:
-		_ellipse(ci, Vector2(size.x * patch[0], horizon + depth * patch[1]), patch[2], patch[3], MOSS)
-	# Flagstones: rows widen toward the viewer, joints converge on a vanishing point.
-	var vanish := Vector2(size.x / 2.0, horizon - depth * 1.4)
-	for i in range(1, 10):
-		var y: float = horizon + pow(i / 9.0, 1.6) * depth
-		ci.draw_line(Vector2(0, y), Vector2(size.x, y), SEAM, 1.0)
-	for i in range(-12, 13):
-		var foot := Vector2(size.x / 2.0 + i * 120.0, floor_bottom)
-		var top: Vector2 = vanish.lerp(foot, (horizon - vanish.y) / (floor_bottom - vanish.y))
-		ci.draw_line(top, foot, SEAM, 1.0)
-	ci.draw_line(Vector2(0, horizon), Vector2(size.x, horizon), Color(RUIN_EDGE, 0.8), 2.0)
+var scene: String = "ruins"
 
 
-static func _ruins(ci: CanvasItem, size: Vector2, horizon: float) -> void:
-	for arch in ARCHES:
-		var left: Array = COLUMNS[arch[0]]
-		var right: Array = COLUMNS[arch[1]]
-		var x0: float = size.x * left[0]
-		var x1: float = size.x * right[0]
-		var top: float = horizon - min(left[2], right[2]) + 6.0
-		var centre := Vector2((x0 + x1) / 2.0, top)
-		ci.draw_arc(centre, (x1 - x0) / 2.0, PI, TAU, 40, RUIN, 22.0, true)
-		ci.draw_arc(centre, (x1 - x0) / 2.0 + 11.0, PI + 0.05, TAU - 0.05, 40, RUIN_EDGE, 2.0, true)
-	for column in COLUMNS:
-		var x: float = size.x * column[0]
-		var w: float = column[1]
-		var h: float = column[2]
-		var tilt: float = column[3]
-		var shape := PackedVector2Array([Vector2(x - w / 2.0, horizon), Vector2(x + w / 2.0, horizon),
-			Vector2(x + w / 2.0, horizon - h + tilt), Vector2(x - w / 2.0, horizon - h - tilt)])
-		ci.draw_colored_polygon(shape, RUIN)
-		ci.draw_line(shape[3], shape[0], RUIN_EDGE, 2.0)
-		ci.draw_line(shape[2], shape[3], RUIN_EDGE, 2.0)
-		# Fluting and a base block.
-		ci.draw_line(Vector2(x - w / 6.0, horizon - 8), Vector2(x - w / 6.0, horizon - h + 14), Color(RUIN_EDGE, 0.6), 1.0)
-		ci.draw_line(Vector2(x + w / 6.0, horizon - 8), Vector2(x + w / 6.0, horizon - h + 14), Color(RUIN_EDGE, 0.6), 1.0)
-		ci.draw_rect(Rect2(x - w / 2.0 - 5.0, horizon - 10.0, w + 10.0, 10.0), RUIN_EDGE)
-		# Ivy trailing down the column.
-		for k in range(int(h / 22.0)):
-			var at := Vector2(x + (w / 3.0) * sin(k * 1.9 + x), horizon - h + 10.0 + k * 20.0)
-			ci.draw_circle(at, 4.0, MOSS)
+static func palette(scene_id: String) -> Dictionary:
+	return SCENES.get(scene_id, SCENES.ruins)
 
 
-static func _ellipse(ci: CanvasItem, centre: Vector2, rx: float, ry: float, color: Color) -> void:
+## Where the sky meets the ground, and where the ground ends above the log.
+static func horizon_for(area: Vector2) -> float:
+	return 70.0 + (area.y - 220.0) * 0.25
+
+
+static func floor_bottom_for(area: Vector2) -> float:
+	return area.y - 150.0
+
+
+## A scene and its weather behind a whole screen, dimmed by `dim` so panels read over it.
+static func scenery(parent: Control, scene_id: String, dim: float) -> void:
+	var Weather: GDScript = load("res://scripts/ui/battle_weather.gd")
+	for layer in [new(), Weather.new()]:
+		layer.scene = scene_id
+		parent.add_child(layer)
+	var shade := ColorRect.new()
+	shade.color = Color(0.03, 0.03, 0.05, dim)
+	shade.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	shade.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	parent.add_child(shade)
+
+
+func _ready() -> void:
+	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	mouse_filter = Control.MOUSE_FILTER_IGNORE
+	resized.connect(queue_redraw)
+
+
+func _draw() -> void:
+	paint(self, size, scene)
+
+
+## The whole static scene onto any canvas item (the title and result screens borrow it).
+static func paint(ci: CanvasItem, area: Vector2, scene_id: String) -> void:
+	var pal: Dictionary = palette(scene_id)
+	var horizon: float = horizon_for(area)
+	gradient(ci, Rect2(0, 0, area.x, horizon), Color(pal.sky[0]), Color(pal.sky[1]))
+	Horizons.draw(ci, area, horizon, scene_id, pal)
+	gradient(ci, Rect2(0, horizon, area.x, area.y - horizon), Color(pal.floor[0]), Color(pal.floor[1]))
+	Grounds.draw(ci, area, horizon, floor_bottom_for(area), scene_id, pal)
+	# Light pooling where the sky meets the ground gives the scene its depth.
+	var haze: Color = Color(pal.haze)
+	gradient(ci, Rect2(0, horizon - 60.0, area.x, 60.0), Color(haze, 0.0), Color(haze, 0.1))
+	gradient(ci, Rect2(0, horizon, area.x, 40.0), Color(haze, 0.08), Color(haze, 0.0))
+	ci.draw_line(Vector2(0, horizon), Vector2(area.x, horizon), Color(pal.edge, 0.5), 2.0)
+	vignette(ci, area)
+
+
+## A vertical blend from `top` to `bottom` across a rectangle.
+static func gradient(ci: CanvasItem, rect: Rect2, top: Color, bottom: Color) -> void:
+	ci.draw_polygon(PackedVector2Array([rect.position, Vector2(rect.end.x, rect.position.y), rect.end,
+		Vector2(rect.position.x, rect.end.y)]), PackedColorArray([top, top, bottom, bottom]))
+
+
+## Darkened edges so the eye settles on the golems in the middle.
+static func vignette(ci: CanvasItem, area: Vector2) -> void:
+	var dark := Color(0, 0, 0, 0.5)
+	var clear := Color(0, 0, 0, 0)
+	var w: float = area.x * 0.16
+	ci.draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(w, 0), Vector2(w, area.y), Vector2(0, area.y)]),
+		PackedColorArray([dark, clear, clear, dark]))
+	ci.draw_polygon(PackedVector2Array([Vector2(area.x - w, 0), Vector2(area.x, 0), area, Vector2(area.x - w, area.y)]),
+		PackedColorArray([clear, dark, dark, clear]))
+	gradient(ci, Rect2(0, 0, area.x, 70.0), Color(0, 0, 0, 0.45), clear)
+
+
+static func ellipse(ci: CanvasItem, centre: Vector2, rx: float, ry: float, color: Color) -> void:
 	var points := PackedVector2Array()
-	for i in range(18):
-		var angle: float = TAU * i / 18.0
+	for i in range(20):
+		var angle: float = TAU * i / 20.0
 		points.append(centre + Vector2(cos(angle) * rx, sin(angle) * ry))
 	ci.draw_colored_polygon(points, color)
+
+
+## A soft round glow; `strength` 1 is a gentle light, 2 a bright one.
+static func glow(ci: CanvasItem, centre: Vector2, radius: float, color: Color, strength: float = 1.0) -> void:
+	Style.radial(ci, centre, radius, Color(color, clampf(0.4 * strength, 0.0, 1.0)))

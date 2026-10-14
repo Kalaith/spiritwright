@@ -27,7 +27,17 @@ func setup(new_look: Dictionary, new_scale: float, new_facing: float = 1.0) -> v
 
 func _draw() -> void:
 	if backdrop.a > 0.0:
-		draw_rect(Rect2(Vector2.ZERO, size), backdrop)
+		# A little stage: light from above, a pool of it on the floor under the golem.
+		var top: Color = backdrop.lightened(0.06)
+		var low: Color = backdrop.darkened(0.35)
+		draw_polygon(PackedVector2Array([Vector2.ZERO, Vector2(size.x, 0), size, Vector2(0, size.y)]),
+			PackedColorArray([top, top, low, low]))
+		var feet := Vector2(size.x / 2.0, size.y - 14.0 * art_scale)
+		var pool: PackedVector2Array = PackedVector2Array()
+		for i in range(20):
+			var a: float = TAU * i / 20.0
+			pool.append(feet + Vector2(cos(a) * size.x * 0.32, sin(a) * 16.0 * art_scale))
+		draw_colored_polygon(pool, Color(1, 1, 1, 0.04))
 	if look.is_empty():
 		return
 	GolemArt.draw(self, Vector2(size.x / 2.0, size.y - 14.0 * art_scale), art_scale, facing, look,

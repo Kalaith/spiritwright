@@ -106,6 +106,11 @@ func _run() -> void:
 	main.start_battle(regions[1].stages[2].id)
 	await _seconds(6.0)
 	await _shot("15_fen_battle")
+	# Each later region fights in its own scene.
+	for index in [2, 3]:
+		main.start_battle(regions[index].stages[1].id)
+		await _seconds(3.0)
+		await _shot("15_%s_battle" % regions[index].id)
 	# The late arsenal: six golems in the newer parts, in the last region.
 	for kind in main.catalog.part_order:
 		main.progression.unlocks[kind] = main.catalog.part_order[kind].duplicate()

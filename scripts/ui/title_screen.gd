@@ -7,6 +7,7 @@ signal new_game_requested
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
+const Backdrop = preload("res://scripts/ui/battle_backdrop.gd")
 
 var has_save: bool = false
 var notice: String = ""
@@ -16,7 +17,7 @@ var _new_button: Button
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	Style.backdrop(self)
+	Backdrop.scenery(self, "ruins", 0.5)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
@@ -38,6 +39,13 @@ func _ready() -> void:
 		golems.add_child(preview)
 	var title := Style.label("SPIRITWRIGHT", 54, Style.GOLD)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	# A dark edge and a faint gold halo lift the name off the scene behind it.
+	title.add_theme_constant_override("outline_size", 8)
+	title.add_theme_color_override("font_outline_color", Color(0.05, 0.04, 0.06, 0.9))
+	title.add_theme_color_override("font_shadow_color", Color(Style.GOLD, 0.28))
+	title.add_theme_constant_override("shadow_offset_x", 0)
+	title.add_theme_constant_override("shadow_offset_y", 0)
+	title.add_theme_constant_override("shadow_outline_size", 22)
 	column.add_child(title)
 	var pitch := Style.wrapped("Collect spirits. Build them vessels of stone, wood, ice and stranger things. Arrange your team and watch the battle play out on its own: the fight is decided in the laboratory.", 17, Style.MUTED)
 	pitch.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER

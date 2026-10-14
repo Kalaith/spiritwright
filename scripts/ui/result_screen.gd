@@ -13,9 +13,12 @@ signal next_requested
 const Style = preload("res://scripts/ui/style.gd")
 const CodexText = preload("res://scripts/ui/codex_text.gd")
 const CrucibleLines = preload("res://scripts/ui/crucible_result.gd")
+const Backdrop = preload("res://scripts/ui/battle_backdrop.gd")
 
 var catalog: RefCounted
 var stage: Dictionary = {}
+## The battle's scene, shown dimmed behind the report.
+var scene: String = "ruins"
 var outcome: Dictionary = {}
 ## Progression.apply_battle's report, or Progression.apply_crucible's when `crucible`.
 var report: Dictionary = {}
@@ -30,7 +33,7 @@ var save_error: String = ""
 
 func _ready() -> void:
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	Style.backdrop(self)
+	Backdrop.scenery(self, scene, 0.6)
 	var center := CenterContainer.new()
 	center.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
