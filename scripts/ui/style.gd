@@ -128,12 +128,12 @@ static func stat_line(stats: Dictionary) -> String:
 
 ## A soft round light: full `color` at the centre, nearly half by half the
 ## radius, nothing at the rim. Smooth gradients, so no rings show.
-static func radial(ci: CanvasItem, centre: Vector2, radius: float, color: Color) -> void:
+static func radial(ci: CanvasItem, centre: Vector2, radius: float, color: Color, squash: Vector2 = Vector2.ONE) -> void:
 	var mid := Color(color, color.a * 0.45)
 	var clear := Color(color, 0.0)
 	for i in range(16):
-		var a := Vector2(cos(TAU * i / 16.0), sin(TAU * i / 16.0))
-		var b := Vector2(cos(TAU * (i + 1) / 16.0), sin(TAU * (i + 1) / 16.0))
+		var a := Vector2(cos(TAU * i / 16.0), sin(TAU * i / 16.0)) * squash
+		var b := Vector2(cos(TAU * (i + 1) / 16.0), sin(TAU * (i + 1) / 16.0)) * squash
 		ci.draw_polygon(PackedVector2Array([centre, centre + a * radius * 0.5, centre + b * radius * 0.5]),
 			PackedColorArray([color, mid, mid]))
 		ci.draw_polygon(PackedVector2Array([centre + a * radius * 0.5, centre + a * radius, centre + b * radius,

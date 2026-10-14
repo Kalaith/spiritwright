@@ -40,5 +40,8 @@ func _draw() -> void:
 		draw_colored_polygon(pool, Color(1, 1, 1, 0.04))
 	if look.is_empty():
 		return
-	GolemArt.draw(self, Vector2(size.x / 2.0, size.y - 14.0 * art_scale), art_scale, facing, look,
+	# A tall frame shrinks just enough that its head stays inside the control.
+	var height: float = GolemArt.HEIGHT.get(String(look.get("frame", "")), 120.0) + 16.0
+	var fit: float = minf(art_scale, (size.y - 2.0) / height)
+	GolemArt.draw(self, Vector2(size.x / 2.0, size.y - 14.0 * fit), fit, facing, look,
 		{"time": Time.get_ticks_msec() / 1000.0 if animated else 0.0, "alpha": alpha})

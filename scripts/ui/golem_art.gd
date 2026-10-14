@@ -8,6 +8,8 @@ extends RefCounted
 ## animated aura drawn by golem_fx.gd.
 
 const GolemFx = preload("res://scripts/ui/golem_fx.gd")
+const GolemFrames = preload("res://scripts/ui/golem_frames.gd")
+const GolemLegs = preload("res://scripts/ui/golem_legs.gd")
 const GolemParts = preload("res://scripts/ui/golem_parts.gd")
 const Style = preload("res://scripts/ui/style.gd")
 const OUTLINE := Color("17151e")
@@ -24,6 +26,8 @@ const MATERIALS: Dictionary = {
 }
 const HIP_Y: float = -34.0
 const SHOULDER_Y: Dictionary = {"bulwark": -84.0, "strider": -86.0, "conduit": -80.0, "colossus": -96.0}
+## How far each frame's head (crest, antenna or crown) rises above the feet.
+const HEIGHT: Dictionary = {"bulwark": 117.0, "strider": 122.0, "conduit": 124.0, "colossus": 140.0}
 ## Torso quads (bottom-left, bottom-right, top-right, top-left) that surface
 ## detail is laid out in, so grain and cracks always stay on the body.
 const TORSO: Dictionary = {
@@ -32,8 +36,6 @@ const TORSO: Dictionary = {
 	"conduit": [Vector2(-17, -45), Vector2(17, -45), Vector2(17, -79), Vector2(-17, -79)],
 	"colossus": [Vector2(-34, -38), Vector2(34, -38), Vector2(41, -96), Vector2(-41, -96)],
 }
-const HEAD: Dictionary = {"bulwark": Vector2(0, -102), "strider": Vector2(13, -102), "conduit": Vector2(0, -104),
-	"colossus": Vector2(0, -116)}
 
 var ci: CanvasItem
 var origin: Vector2
@@ -160,85 +162,23 @@ func _paint(look: Dictionary, opts: Dictionary) -> void:
 		ci.draw_colored_polygon(shadow, Color(team.r, team.g, team.b, 0.28 * alpha))
 		shadow.append(shadow[0])
 		ci.draw_polyline(shadow, Color(team.r, team.g, team.b, 0.8 * alpha), 2.0 * s, true)
+		# A darker contact shadow right under the feet, so the golem stands on the ground.
+		Style.radial(ci, origin, 34.0 * s, Color(0, 0, 0, 0.45 * alpha), Vector2(1.0, 0.2))
 	frame = String(look.get("frame", "bulwark"))
 	torso = TORSO[frame]
 	var arms: String = look.get("arms", "hammer")
 	var reaction: String = String(look.get("reaction", ""))
 	var breath: float = sin(time * 2.2 + origin.x * 0.013)
 	lift = 0.0
-	_legs(String(look.get("legs", "pillar")))
+	GolemLegs.draw(self, String(look.get("legs", "pillar")))
 	lift = breath * 1.3
 	GolemFx.draw(self, reaction, false)
-	_back_arm(arms)
-	_body()
+	GolemParts.back_arm(self, arms, SHOULDER_Y[frame])
+	GolemFrames.body(self)
 	_core(String(look.get("glyph", "")))
-	_front_arm(arms)
+	GolemParts.front_arm(self, arms, SHOULDER_Y[frame])
 	GolemFx.draw(self, reaction, true)
 	lift = 0.0
-
-
-func _legs(kind: String) -> void:
-	if GolemParts.legs(self, kind):
-		return
-	var dark: Color = base.darkened(0.2)
-	if kind == "spider":
-		for side in [-1.0, 1.0]:
-			for spread in [0.6, 1.0]:
-				var hip := Vector2(10.0 * side * spread, HIP_Y + 4.0)
-				var knee := Vector2(34.0 * side * spread, HIP_Y - 10.0)
-				var foot := Vector2(42.0 * side * spread, 0.0)
-				_line(hip, knee, 5.0, dark)
-				_line(knee, foot, 4.0, dark)
-				_circle(knee.x, knee.y, 3.8, trim)
-				_poly([foot + Vector2(-3, -6), foot + Vector2(3, -6), foot], trim)
-		_rect(-14, HIP_Y - 2, 28, 10, trim)
-		return
-	for x in [-20.0, 6.0]:
-		_rect(x, HIP_Y + 6.0, 14.0, -HIP_Y - 14.0, dark)
-		_rect(x - 2.0, HIP_Y + 2.0, 18.0, 6.0, trim)
-		_rect(x - 4.0, -9.0, 22.0, 9.0, trim)
-		_mark([Vector2(x + 4.0, HIP_Y + 10.0), Vector2(x + 4.0, -12.0)], base.lightened(0.15), 1.2)
-
-
-func _body() -> void:
-	match frame:
-		"colossus":
-			GolemParts.colossus(self)
-		"strider":
-			_rect(-12, HIP_Y - 4, 24, 8, trim)
-			_poly(TORSO.strider, base)
-			_texture(TORSO.strider)
-			_poly([Vector2(-8, -88), Vector2(26, -84), Vector2(22, -78), Vector2(-6, -80)], trim)
-			_head(Rect2(2, -113, 22, 21), Vector2(12, -106))
-		"conduit":
-			_rect(-10, HIP_Y - 6, 20, 10, trim)
-			_circle(0, -62, 26, base)
-			_texture(TORSO.conduit)
-			for i in range(3):
-				var swing: float = 0.5 + 0.15 * sin(time * 1.6 + i * 2.1)
-				ci.draw_arc(_p(0, -62), (34.0 + i * 4.0) * s, -swing, PI + swing, 28,
-					_c(Color(element, 0.55 - i * 0.15)), 2.5 * s, true)
-			_head(Rect2(-11, -115, 22, 21), Vector2(2, -107))
-		_:
-			_rect(-26, HIP_Y - 4, 52, 9, trim)
-			_poly([Vector2(-30, HIP_Y), Vector2(30, HIP_Y), Vector2(36, -88), Vector2(-36, -88)], base)
-			_texture(TORSO.bulwark)
-			_poly([Vector2(-44, -84), Vector2(-40, -98), Vector2(-20, -98), Vector2(-18, -80)], base.lightened(0.05))
-			_poly([Vector2(18, -80), Vector2(20, -98), Vector2(40, -98), Vector2(44, -84)], base.lightened(0.05))
-			_mark([Vector2(-40, -90), Vector2(-21, -90)], trim, 2.0)
-			_mark([Vector2(21, -90), Vector2(40, -90)], trim, 2.0)
-			_head(Rect2(-12, -114, 24, 22), Vector2(1, -106))
-
-
-## The head is a block of the material with a glowing slit where the spirit
-## looks out, in its element's colour.
-func _head(box: Rect2, eye: Vector2) -> void:
-	_rect(box.position.x, box.position.y, box.size.x, box.size.y, base.lightened(0.06))
-	_mark([Vector2(box.position.x + 2, box.end.y - 3), Vector2(box.end.x - 2, box.end.y - 3)], trim, 2.0)
-	var glow: float = 0.75 + 0.25 * sin(time * 3.0)
-	glow(Vector2(eye.x + 4, eye.y + 2), 9.0, Color(element, 0.45 * glow))
-	_poly([Vector2(eye.x - 2, eye.y), Vector2(eye.x + 11, eye.y), Vector2(eye.x + 11, eye.y + 5), Vector2(eye.x - 2, eye.y + 5)],
-		element.lerp(Color.WHITE, 0.35), false)
 
 
 ## Surface detail that tells the material apart at a glance.
@@ -305,7 +245,13 @@ func _core(glyph: String) -> void:
 	if finish.a > 0.0:
 		glow(Vector2(0, y), 30.0 + pulse * 6.0, Color(finish, 0.4))
 	glow(Vector2(0, y), 15.0 + pulse * 4.0, Color(element, 0.45 + pulse * 0.15))
-	_circle(0, y, 10, trim)
+	# The socket the spirit sits in: a trim ring set into the body with four clasps.
+	for angle in [0.25, 0.75, 1.25, 1.75]:
+		var dir := Vector2(cos(angle * PI), sin(angle * PI))
+		_poly([Vector2(0, y) + dir * 9.0 + dir.orthogonal() * 3.0, Vector2(0, y) + dir * 14.0,
+			Vector2(0, y) + dir * 9.0 - dir.orthogonal() * 3.0], trim.darkened(0.1), false)
+	_circle(0, y, 10.5, trim)
+	ci.draw_arc(_p(0, y), 9.5 * s, PI * 1.1, PI * 1.6, 8, _c(Color(trim.lightened(0.45), 0.8)), 1.2 * s, true)
 	ci.draw_circle(_p(0, y), 8.0 * s, _c(element))
 	ci.draw_circle(_p(-2.5, y - 2.5), 3.0 * s, _c(Color(element.lerp(Color.WHITE, 0.7), 0.8)))
 	if glyph.is_empty():
@@ -314,48 +260,6 @@ func _core(glyph: String) -> void:
 	var size: int = int(13 * s)
 	var width: float = font.get_string_size(glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, size).x
 	ci.draw_string(font, _p(0, y) + Vector2(-width / 2.0, size * 0.36), glyph, HORIZONTAL_ALIGNMENT_LEFT, -1, size, _c(OUTLINE))
-
-
-func _back_arm(arms: String) -> void:
-	if arms == "cannon":
-		return
-	var shoulder := Vector2(-18.0, SHOULDER_Y[frame] + 6.0)
-	var elbow := Vector2(-24.0, SHOULDER_Y[frame] + 24.0)
-	var dark: Color = base.darkened(0.35)
-	_line(shoulder, elbow, 7.0, dark)
-	_line(elbow, Vector2(-22.0, SHOULDER_Y[frame] + 40.0), 6.0, dark)
-	_circle(elbow.x, elbow.y, 4.0, trim.darkened(0.2))
-
-
-func _front_arm(arms: String) -> void:
-	var sy: float = SHOULDER_Y[frame]
-	if GolemParts.front_arm(self, arms, sy):
-		return
-	match arms:
-		"shield":
-			_line(Vector2(18, sy + 4), Vector2(34, sy + 26), 7.0, base.darkened(0.1))
-			_poly([Vector2(31, sy - 12), Vector2(52, sy - 5), Vector2(52, sy + 46), Vector2(31, sy + 58)], trim)
-			_poly([Vector2(35, sy - 6), Vector2(48, sy - 1), Vector2(48, sy + 42), Vector2(35, sy + 51)], base.lightened(0.08))
-			_poly([Vector2(41.5, sy + 10), Vector2(46, sy + 22), Vector2(41.5, sy + 34), Vector2(37, sy + 22)],
-				element.lerp(Color.WHITE, 0.2), false)
-		"cannon":
-			_rect(2, sy, 20, 20, trim)
-			_poly([Vector2(18, sy + 3), Vector2(62, sy + 4), Vector2(62, sy + 18), Vector2(18, sy + 19)], base)
-			for x in [30.0, 44.0]:
-				_rect(x, sy + 1, 5, 20, trim)
-			_rect(60, sy, 9, 22, trim.darkened(0.15))
-			var charge: float = 0.6 + 0.4 * sin(time * 4.0)
-			glow(Vector2(70, sy + 11), 7.0 + charge * 4.0, Color(element, 0.6 * charge))
-			ci.draw_circle(_p(70, sy + 11), 4.0 * s, _c(element.lerp(Color.WHITE, 0.4)))
-		_:
-			var hand := Vector2(40, sy + 30)
-			_line(Vector2(18, sy + 4), Vector2(28, sy + 20), 8.0, base.darkened(0.1))
-			_line(Vector2(28, sy + 20), hand, 7.0, base.darkened(0.1))
-			_circle(28, sy + 20, 4.5, trim)
-			_line(hand + Vector2(-2, 6), Vector2(47, sy - 12), 4.0, Color("5b4a3a"))
-			_poly([Vector2(33, sy - 28), Vector2(61, sy - 26), Vector2(61, sy - 6), Vector2(33, sy - 8)], base.lightened(0.1))
-			_rect(43, sy - 29, 6, 24, trim)
-			_circle(hand.x, hand.y, 5.0, trim)
 
 
 ## Builds the `look` for any loadout or resolved golem (both carry these keys).
