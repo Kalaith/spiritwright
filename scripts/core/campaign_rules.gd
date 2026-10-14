@@ -5,6 +5,7 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Challenges = preload("res://scripts/core/challenges.gd")
+const DataRules = preload("res://addons/hatchery/core/data_rules.gd")
 
 
 static func _validate_loadout(catalog: Catalog, owner: String, loadout: Variant, wild: bool) -> void:
@@ -109,7 +110,7 @@ static func _validate_region(catalog: Catalog, index: int) -> int:
 			catalog.errors.append("Stage %s needs a map_pos and a landmark (%s)" % [id, ", ".join(Catalog.LANDMARKS)])
 		for kind in stage.get("rewards", {}):
 			if kind == "cores":
-				if not (stage.rewards.cores is float or stage.rewards.cores is int) or int(stage.rewards.cores) < 1:
+				if not DataRules.finite(stage.rewards.cores) or int(stage.rewards.cores) < 1:
 					catalog.errors.append("Stage %s rewards cores as a positive count" % id)
 				else:
 					golems += int(stage.rewards.cores)
@@ -167,7 +168,7 @@ static func _add_challenge(catalog: Catalog, owner: String, entry: Variant, stag
 ## A region's map ground: colours, a fixed seed, and optional stream, walls and woods.
 static func _validate_terrain(catalog: Catalog, region_id: String, terrain: Variant) -> void:
 	var owner: String = "Region %s terrain" % region_id
-	if not terrain is Dictionary or not (terrain.get("seed") is float or terrain.get("seed") is int):
+	if not terrain is Dictionary or not DataRules.finite(terrain.get("seed")):
 		catalog.errors.append(owner + " needs an object with a seed")
 		return
 	for key in Catalog.TERRAIN_COLORS:
@@ -181,12 +182,12 @@ static func _validate_terrain(catalog: Catalog, region_id: String, terrain: Vari
 	if not stream is Array or stream.size() == 1 or not stream.all(_is_point):
 		catalog.errors.append(owner + " stream must be a list of points (empty for none)")
 	var walls: Variant = terrain.get("walls")
-	if not walls is Array or not walls.all(func(w): return w is Array and w.size() == 3 and _is_point(w[0]) 			and _is_point(w[1]) and (w[2] is float or w[2] is int)):
+	if not walls is Array or not walls.all(func(w): return w is Array and w.size() == 3 and _is_point(w[0]) 			and _is_point(w[1]) and DataRules.finite(w[2])):
 		catalog.errors.append(owner + " walls must be [start, end, height] entries")
 	var woods: Variant = terrain.get("woods")
-	if not woods is Array or not woods.all(func(w): return w is Array and w.size() == 2 and _is_point(w[0]) 			and (w[1] is float or w[1] is int)):
+	if not woods is Array or not woods.all(func(w): return w is Array and w.size() == 2 and _is_point(w[0]) 			and DataRules.finite(w[1])):
 		catalog.errors.append(owner + " woods must be [centre, radius] entries")
 
 
 static func _is_point(value: Variant) -> bool:
-	return value is Array and value.size() == 2 and value.all(func(v): return v is float or v is int)
+	return DataRules.is_vec2(value)

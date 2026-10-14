@@ -6,7 +6,7 @@ extends RefCounted
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
 const SaveSchema = preload("res://scripts/core/save_schema.gd")
-const SaveFile = preload("res://scripts/core/save_file.gd")
+const JsonSave = preload("res://addons/hatchery/storage/json_save.gd")
 const Challenges = preload("res://scripts/core/challenges.gd")
 const Experience = preload("res://scripts/core/experience.gd")
 const Crucible = preload("res://scripts/core/crucible.gd")
@@ -37,13 +37,27 @@ var challenges: Array = []
 var feats: Array = []
 ## The Shifting Crucible: the run in progress, records and milestones.
 var crucible := CrucibleRecord.new()
-var save_path: String = "user://spiritwright_save.json"
-var save_enabled: bool = true
+## The save on disk: staged writes, a backup, recovery from it, and a damaged
+## or newer save kept rather than overwritten (the toolkit's JsonSave).
+var storage: JsonSave
+var save_path: String:
+	get:
+		return storage.path
+	set(value):
+		storage.path = value
+var save_enabled: bool:
+	get:
+		return storage.enabled
+	set(value):
+		storage.enabled = value
 var last_error: String = ""
 
 
 func _init(data: Catalog) -> void:
 	catalog = data
+	storage = JsonSave.new("user://spiritwright_save.json", SAVE_SCHEMA, valid)
+	storage.migrate = migrate
+	storage.noun = "your laboratory"
 
 
 func new_game() -> void:
@@ -75,24 +89,25 @@ func _reset_run() -> void:
 
 
 func has_save() -> bool:
-	return save_enabled and (FileAccess.file_exists(save_path) or FileAccess.file_exists(save_path + ".bak"))
+	return save_enabled and storage.exists()
 
 
 func load_game() -> bool:
-	var found: Dictionary = SaveFile.read(save_path, migrate, valid)
+	var found: Dictionary = storage.load_data()
 	if found.is_empty():
-		last_error = "The save could not be read."
+		last_error = storage.last_error if not storage.last_error.is_empty() else "The save could not be read."
 		return false
-	_apply(found.data)
-	last_error = "Recovered your laboratory from the backup save." if found.backup else ""
+	_apply(found)
+	last_error = storage.last_error
 	return true
 
 
 func save_game() -> bool:
-	if not save_enabled:
+	if storage.save_data(to_dict()):
+		last_error = ""
 		return true
-	last_error = SaveFile.write(save_path, to_dict(), valid)
-	return last_error.is_empty()
+	last_error = storage.last_error
+	return false
 
 
 func to_dict() -> Dictionary:

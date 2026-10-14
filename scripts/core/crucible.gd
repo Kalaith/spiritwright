@@ -10,6 +10,7 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Builds = preload("res://scripts/core/builds.gd")
+const Det = preload("res://addons/hatchery/core/det.gd")
 
 const MODES: Array[String] = ["classic", "shifting"]
 const MODE_NAMES: Dictionary = {"classic": "Classic Royale", "shifting": "Shifting Royale"}
@@ -28,15 +29,11 @@ static func sequence(catalog: Catalog, mode: String, seed: int) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = seed
 	var pool: Array = data.encounters.map(func(entry): return entry.id)
-	for i in range(pool.size() - 1, 0, -1):
-		var j: int = rng.randi_range(0, i)
-		var swap: Variant = pool[i]
-		pool[i] = pool[j]
-		pool[j] = swap
+	Det.shuffle(rng, pool)
 	var steps: Array = []
 	for id in pool.slice(0, int(data.encounters_per_run)):
 		steps.append({"encounter": id, "variant": rng.randi_range(0, catalog.crucible_encounters[id].variants.size() - 1)})
-	var final: Dictionary = data.finals[rng.randi_range(0, data.finals.size() - 1)]
+	var final: Dictionary = Det.pick(rng, data.finals)
 	steps.append({"encounter": final.id, "variant": rng.randi_range(0, final.variants.size() - 1)})
 	return steps
 

@@ -6,6 +6,7 @@ extends RefCounted
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Crucible = preload("res://scripts/core/crucible.gd")
 const CrucibleRecord = preload("res://scripts/core/crucible_record.gd")
+const DataRules = preload("res://addons/hatchery/core/data_rules.gd")
 const VERSION: int = 8
 ## The playthrough record's counters (see Progression.run).
 const RUN_KEYS: Array[String] = ["falls", "losses", "most_golems"]
@@ -103,20 +104,20 @@ static func valid(catalog: Catalog, data: Variant) -> bool:
 		for id in data.unlocks[kind]:
 			if catalog.part(kind, String(id)).is_empty():
 				return false
-	if not data.get("cleared") is Array or not (data.get("battles") is int or data.get("battles") is float):
+	if not data.get("cleared") is Array or not DataRules.finite(data.get("battles")):
 		return false
 	for id in data.cleared:
 		if not catalog.stages.has(id):
 			return false
-	if not (data.get("cores") is int or data.get("cores") is float) or int(data.cores) < 0:
+	if not DataRules.finite(data.get("cores")) or int(data.cores) < 0:
 		return false
-	if not (data.get("cycle") is int or data.get("cycle") is float) or int(data.cycle) < 0:
+	if not DataRules.finite(data.get("cycle")) or int(data.cycle) < 0:
 		return false
 	if not data.get("run") is Dictionary:
 		return false
 	for key in RUN_KEYS:
 		var count: Variant = data.run.get(key)
-		if not (count is int or count is float) or int(count) < 0:
+		if not DataRules.finite(count) or int(count) < 0:
 			return false
 	for key in ["challenges", "feats"]:
 		var known: Dictionary = catalog.challenges if key == "challenges" else catalog.feats
@@ -207,4 +208,4 @@ static func _valid_crucible(catalog: Catalog, data: Dictionary, block: Dictionar
 
 
 static func _count(value: Variant) -> bool:
-	return (value is int or value is float) and int(value) == value and int(value) >= 0
+	return DataRules.whole(value) and int(value) >= 0

@@ -15,15 +15,21 @@ const ResultScreen = preload("res://scripts/ui/result_screen.gd")
 const CodexScreen = preload("res://scripts/ui/codex_screen.gd")
 const CrucibleScreen = preload("res://scripts/ui/crucible_screen.gd")
 const Crucible = preload("res://scripts/core/crucible.gd")
+const ScreenSwitcher = preload("res://addons/hatchery/ui/screen_switcher.gd")
 
 var catalog := Catalog.new()
 var progression: Progression
-var screen: Control
+## Swaps whole screens and remembers where Back (Esc or gamepad B) goes from each.
+var screens: ScreenSwitcher = ScreenSwitcher.new(self) as ScreenSwitcher
+## The screen on show.
+var screen: Control:
+	get:
+		return screens.current as Control
 var selected_stage: String = ""
-var _back: Callable = Callable()
 
 
 func _ready() -> void:
+	screens.auto_focus = false
 	theme = Style.make_theme()
 	if not catalog.load_all():
 		var error := Style.wrapped("Spiritwright could not load its data:\n" + "\n".join(catalog.errors), 16, Style.BAD)
@@ -35,17 +41,11 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("ui_cancel") and _back.is_valid():
-		get_viewport().set_input_as_handled()
-		_back.call()
+	screens.handle_back(event)
 
 
 func _swap(next: Control, back: Callable) -> void:
-	if is_instance_valid(screen):
-		screen.queue_free()
-	screen = next
-	_back = back
-	add_child(next)
+	screens.show(next, back)
 
 
 func show_title(notice: String = "") -> void:
@@ -65,6 +65,10 @@ func _continue() -> void:
 
 
 func _new_game() -> void:
+	# The old laboratory is kept beside the save as .previous before it is replaced.
+	if not progression.storage.keep_previous():
+		show_title(progression.storage.last_error)
+		return
 	progression.new_game()
 	selected_stage = ""
 	if not progression.save_game():

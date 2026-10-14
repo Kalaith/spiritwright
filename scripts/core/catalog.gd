@@ -3,6 +3,10 @@ extends RefCounted
 ## data is reported in `errors` and the game refuses to start; there are no
 ## silent defaults in code.
 
+const JsonIO = preload("res://addons/hatchery/core/json_io.gd")
+const DataRules = preload("res://addons/hatchery/core/data_rules.gd")
+const DotTable = preload("res://addons/hatchery/core/dot_table.gd")
+
 const STATS: Array[String] = ["hp", "str", "mag", "spd", "def", "res"]
 const PART_KINDS: Array[String] = ["frames", "arms", "legs", "sigils", "materials"]
 ## Catalog kind -> the key a loadout uses for it.
@@ -38,6 +42,8 @@ const RECEIVERS: Array[String] = ["self", "target", "attacker", "team", "allies"
 const RECEIVER_TRIGGERS: Dictionary = {"target": ["hit"], "attacker": ["hurt"]}
 
 var balance: Dictionary = {}
+## balance.json read by dot-separated paths (see num).
+var balance_table: DotTable = DotTable.from_dictionary({}) as DotTable
 var elements: Dictionary = {}
 var temperaments: Dictionary = {}
 ## id -> definition, for player spirits and wild spirits alike.
@@ -69,13 +75,14 @@ var errors: Array[String] = []
 
 func load_all() -> bool:
 	errors.clear()
-	balance = _read("res://data/balance.json")
-	var spirit_data: Dictionary = _read("res://data/spirits.json")
-	var part_data: Dictionary = _read("res://data/parts.json")
-	campaign = _read("res://data/campaign.json")
-	crucible = _read("res://data/crucible.json")
+	balance = JsonIO.read_object("res://data/balance.json", errors, 1)
+	var spirit_data: Dictionary = JsonIO.read_object("res://data/spirits.json", errors, 1)
+	var part_data: Dictionary = JsonIO.read_object("res://data/parts.json", errors, 1)
+	campaign = JsonIO.read_object("res://data/campaign.json", errors, 1)
+	crucible = JsonIO.read_object("res://data/crucible.json", errors, 1)
 	if not errors.is_empty():
 		return false
+	balance_table = DotTable.from_dictionary(balance, "res://data/balance.json") as DotTable
 	elements = spirit_data.get("elements", {})
 	temperaments = spirit_data.get("temperaments", {})
 	for entry in spirit_data.get("spirits", []):
@@ -132,26 +139,10 @@ func region_of(stage_id: String) -> Dictionary:
 	return campaign.regions[int(stage_region.get(stage_id, 0))]
 
 
-## Dot-separated lookup into balance.json, e.g. "battle.gauge_threshold".
+## Dot-separated lookup into balance.json, e.g. "battle.gauge_threshold". A
+## missing path is a data error (the toolkit's DotTable reports it).
 func num(path: String) -> float:
-	var node: Variant = balance
-	for key in path.split("."):
-		if not node is Dictionary or not node.has(key):
-			push_error("Balance data has no value at " + path)
-			return 0.0
-		node = node[key]
-	return float(node)
-
-
-func _read(path: String) -> Dictionary:
-	if not FileAccess.file_exists(path):
-		errors.append("Missing " + path)
-		return {}
-	var parsed: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
-	if not parsed is Dictionary or int(parsed.get("schema_version", 0)) != 1:
-		errors.append("Unreadable or unsupported " + path)
-		return {}
-	return parsed
+	return balance_table.number(path)
 
 
 func _add_spirit(entry: Variant, playable: bool) -> void:
@@ -170,7 +161,7 @@ func _add_spirit(entry: Variant, playable: bool) -> void:
 			errors.append("Spirit %s needs %s stats" % [id, block])
 			continue
 		for stat in STATS:
-			if not (entry[block].get(stat) is float or entry[block].get(stat) is int):
+			if not DataRules.finite(entry[block].get(stat)):
 				errors.append("Spirit %s %s is missing %s" % [id, block, stat])
 	if not entry.get("trait") is Dictionary or not entry["trait"].get("name") is String:
 		errors.append("Spirit %s needs a named trait" % id)
@@ -187,8 +178,7 @@ func _add_spirit(entry: Variant, playable: bool) -> void:
 		else:
 			_validate_effects("spirit %s awakening" % id, awakening.get("effects"))
 	# Optional whole-number percentage on top of balance.xp.gain_percent.
-	if entry.has("xp_percent") and (not (entry.xp_percent is float or entry.xp_percent is int)
-			or int(entry.xp_percent) != entry.xp_percent or int(entry.xp_percent) < 0):
+	if entry.has("xp_percent") and (not DataRules.whole(entry.xp_percent) or int(entry.xp_percent) < 0):
 		errors.append("Spirit %s xp_percent must be a whole number of at least 0" % id)
 	entry["playable"] = playable
 	spirits[id] = entry
@@ -226,20 +216,20 @@ func _add_part(kind: String, entry: Variant) -> void:
 		_validate_effects("arms " + id, entry.get("effects", []))
 		if attack is Dictionary:
 			for key in ATTACK_FRACTIONS:
-				if attack.has(key) and (not (attack[key] is float or attack[key] is int) or float(attack[key]) <= 0.0):
+				if attack.has(key) and (not DataRules.finite(attack[key]) or float(attack[key]) <= 0.0):
 					errors.append("Arms %s %s must be a positive fraction" % [id, key])
-			if attack.has("strikes") and (not (attack.strikes is float or attack.strikes is int) or int(attack.strikes) < 1):
+			if attack.has("strikes") and (not DataRules.finite(attack.strikes) or int(attack.strikes) < 1):
 				errors.append("Arms %s strikes must be at least 1" % id)
 	if kind in ["frames", "legs"]:
 		_validate_effects(kind + " " + id, entry.get("effects", []))
 	if kind == "legs" and entry.has("perch"):
-		if not (entry.perch is float or entry.perch is int) or float(entry.perch) <= 0.0:
+		if not DataRules.finite(entry.perch) or float(entry.perch) <= 0.0:
 			errors.append("Legs %s perch must be a positive fraction" % id)
 	if kind in ["frames", "legs"] and entry.has("immune"):
 		if not entry.immune is Array or entry.immune.any(func(status): return not status in STATUSES):
 			errors.append("%s %s immune must list statuses" % [kind.capitalize(), id])
 	if kind == "legs" and entry.has("brace"):
-		if not (entry.brace is float or entry.brace is int) or float(entry.brace) <= 0.0 or float(entry.brace) >= 1.0:
+		if not DataRules.finite(entry.brace) or float(entry.brace) <= 0.0 or float(entry.brace) >= 1.0:
 			errors.append("Legs %s brace must be a fraction between 0 and 1" % id)
 	if kind == "sigils":
 		_validate_effects("sigil " + id, entry.get("effects", []))
@@ -292,10 +282,10 @@ func _validate_effects(owner: String, effects: Variant) -> void:
 					or conditions.any(func(status): return not status in ["burn", "soaked", "taunt", "regen", "weaken", "expose"]):
 				errors.append(owner + " if_target needs on hit and lasting statuses")
 		if effect.do in ["chain", "drain"]:
-			if effect.on != "hit" or not (effect.get("fraction") is float or effect.get("fraction") is int):
+			if effect.on != "hit" or not DataRules.finite(effect.get("fraction")):
 				errors.append("%s %s needs on hit and a fraction" % [owner, effect.do])
 			continue
-		if effect.do == "revive" and (effect.on != "fatal" or effect.get("to") != "self" 				or not (effect.get("fraction") is float or effect.get("fraction") is int)):
+		if effect.do == "revive" and (effect.on != "fatal" or effect.get("to") != "self" 				or not DataRules.finite(effect.get("fraction"))):
 			errors.append(owner + " revive needs on fatal, to self and a fraction")
 		var receiver: Variant = effect.get("to")
 		if not receiver in RECEIVERS:
@@ -311,7 +301,7 @@ func _validate_effects(owner: String, effects: Variant) -> void:
 
 
 static func valid_lane(lane: Variant) -> bool:
-	return (lane is int or lane is float) and int(lane) == lane and int(lane) >= 0 and int(lane) < LANES
+	return DataRules.integer_in(lane, 0, LANES - 1)
 
 
 ## "front:1" style key for the cell a loadout stands in.
@@ -339,11 +329,8 @@ func _validate_balance() -> void:
 			"battle.max_ticks", "battle.damage_variance", "battle.armour_factor", "battle.min_damage_fraction", "battle.back_row_melee_factor", "status.burn_damage_per_stack",
 			"status.burn_max_stacks", "status.soaked_magic_bonus", "status.soaked_speed_multiplier",
 			"status.regen_heal", "status.weaken_fraction", "status.expose_fraction", "new_game_plus.level_step"]:
-		var node: Variant = balance
-		for key in path.split("."):
-			node = node.get(key) if node is Dictionary else null
-		if not (node is float or node is int):
+		if not balance_table.has(path) or not DataRules.finite(balance_table.value(path)):
 			errors.append("Balance is missing " + path)
 	var gain: Variant = balance.get("xp", {}).get("gain_percent")
-	if (gain is float or gain is int) and (int(gain) != gain or int(gain) < 0):
+	if DataRules.finite(gain) and (not DataRules.whole(gain) or int(gain) < 0):
 		errors.append("Balance xp.gain_percent must be a whole number of at least 0")

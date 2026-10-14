@@ -6,6 +6,7 @@ extends RefCounted
 
 const Catalog = preload("res://scripts/core/catalog.gd")
 const CampaignRules = preload("res://scripts/core/campaign_rules.gd")
+const DataRules = preload("res://addons/hatchery/core/data_rules.gd")
 
 ## Milestone rules, judged on one Crucible run (see Crucible.milestone_met):
 ## reach: encounters won in the run; complete: the final fell; mode, tier: which
@@ -22,7 +23,7 @@ static func validate(catalog: Catalog) -> void:
 	if not unlock is Dictionary or not catalog.stages.has(String(unlock.get("stage", ""))) or not unlock.get("text") is String:
 		catalog.errors.append("Crucible unlock needs a known stage and text")
 	var per_run: Variant = data.get("encounters_per_run")
-	if not (per_run is int or per_run is float) or int(per_run) < 1:
+	if not DataRules.finite(per_run) or int(per_run) < 1:
 		catalog.errors.append("Crucible encounters_per_run must be at least 1")
 		return
 	for key in ["encounters", "finals"]:
@@ -82,7 +83,7 @@ static func _validate_encounter(catalog: Catalog, entry: Variant, final: bool) -
 			continue
 		for enemy in enemies:
 			CampaignRules._validate_loadout(catalog, owner, enemy, true)
-			if not enemy is Dictionary or not (enemy.get("offset") is int or enemy.get("offset") is float) \
+			if not enemy is Dictionary or not DataRules.finite(enemy.get("offset")) \
 					or int(enemy.offset) != enemy.offset:
 				catalog.errors.append(owner + " enemies need a whole-number level offset")
 		if enemies.all(func(e): return e is Dictionary) and not Catalog.distinct_cells(enemies):
@@ -134,7 +135,7 @@ static func _index(catalog: Catalog, key: String, entries: Variant) -> void:
 
 
 static func _whole(value: Variant, minimum: int) -> bool:
-	return (value is int or value is float) and int(value) == value and int(value) >= minimum
+	return DataRules.whole(value) and int(value) >= minimum
 
 
 static func _distinct(items: Array) -> Array:
