@@ -1,56 +1,47 @@
-extends SceneTree
+extends "res://addons/hatchery/testing/capture_runner.gd"
 ## Drives the real game through every screen and saves a PNG of each, using a
-## throwaway save file. Needs a rendering window (not --headless):
-##   godot --path . --script res://tools/capture.gd -- <output dir>
+## throwaway save file, on the toolkit's capture runner. Needs a rendering
+## window (not --headless):
+##   godot --path . --script res://tools/capture.gd -- <output dir> [--size=1280x720]
 
 const Challenges = preload("res://scripts/core/challenges.gd")
+const Expect = preload("res://addons/hatchery/testing/expect.gd")
 
 var main: Control
-var out_dir: String = "user://captures"
 
 
-func _init() -> void:
-	var args: PackedStringArray = OS.get_cmdline_user_args()
-	if not args.is_empty():
-		out_dir = args[0]
-	DirAccess.make_dir_recursive_absolute(out_dir)
-	_run.call_deferred()
-
-
-func _run() -> void:
-	main = load("res://scenes/main.tscn").instantiate()
-	root.add_child(main)
-	main.progression.save_path = "user://capture_save.json"
-	await _frames(10)
-	await _shot("01_title")
+func tour() -> void:
+	main = await open_scene("res://scenes/main.tscn")
+	main.progression.save_path = Expect.scratch_path("capture_save.json")
+	await shot("01_title")
 	main._new_game()
-	await _frames(10)
-	await _shot("02_map")
+	await frames(10)
+	await shot("02_map")
 	main.selected_stage = "ruins_gate"
 	main.show_laboratory()
-	await _frames(10)
-	await _shot("03_laboratory")
+	await frames(10)
+	await shot("03_laboratory")
 	main.start_battle("ruins_gate")
 	for i in range(4):
-		await _seconds(1.6)
-		await _shot("04_battle_%d" % i)
+		await seconds(1.6)
+		await shot("04_battle_%d" % i)
 	main.screen._skip()
-	await _frames(5)
-	await _shot("05_battle_end")
+	await frames(5)
+	await shot("05_battle_end")
 	main.screen.finished.emit()
-	await _frames(10)
-	await _shot("06_result")
+	await frames(10)
+	await shot("06_result")
 	# The gate's golem core waits in the laboratory.
 	main.selected_stage = "ruins_court"
 	main.show_map()
-	await _seconds(1.0)
-	await _shot("06b_map_core_ready")
+	await seconds(1.0)
+	await shot("06b_map_core_ready")
 	main.show_laboratory()
-	await _frames(10)
-	await _shot("06c_laboratory_core_ready")
+	await frames(10)
+	await shot("06c_laboratory_core_ready")
 	main.screen._on_build()
-	await _frames(10)
-	await _shot("06d_laboratory_built")
+	await frames(10)
+	await shot("06d_laboratory_built")
 	# A later stage with more systems on screen.
 	for id in ["ruins_court", "ruins_stair", "ruins_vault"]:
 		main.progression.apply_battle(main.catalog.stages[id], "win")
@@ -58,14 +49,14 @@ func _run() -> void:
 		pass
 	main.selected_stage = "ruins_heart"
 	main.show_map()
-	await _seconds(2.5)
-	await _shot("07_map_late")
+	await seconds(2.5)
+	await shot("07_map_late")
 	main.show_laboratory()
-	await _frames(10)
-	await _shot("08_laboratory_late")
+	await frames(10)
+	await shot("08_laboratory_late")
 	main.start_battle("ruins_heart")
-	await _seconds(6.0)
-	await _shot("09_boss_battle")
+	await seconds(6.0)
+	await shot("09_boss_battle")
 	# The newer spirits, one win away from awakening.
 	# Volta, Sefa, the aegis and the tower legs come from the region bosses.
 	for id in ["ruins_cloister", "ruins_vault", "fen_mother", "steppe_tyrant"]:
@@ -82,15 +73,15 @@ func _run() -> void:
 		main.progression.spirits[build[0]].level = 4
 		main.progression.spirits[build[0]].xp = 90
 	main.start_battle("ruins_stair")
-	await _seconds(7.0)
-	await _shot("10_spirits_battle")
+	await seconds(7.0)
+	await shot("10_spirits_battle")
 	main.screen._skip()
 	main.screen.finished.emit()
-	await _frames(10)
-	await _shot("11_spirits_result")
+	await frames(10)
+	await shot("11_spirits_result")
 	main.show_laboratory()
-	await _frames(10)
-	await _shot("12_laboratory_materials")
+	await frames(10)
+	await shot("12_laboratory_materials")
 	# Every later region, partway through: two stages cleared, the rest open or fogged.
 	var regions: Array = main.catalog.regions()
 	for index in range(1, regions.size()):
@@ -101,16 +92,16 @@ func _run() -> void:
 			main.progression.cleared.append(stage.id)
 		main.selected_stage = regions[index].stages[2].id
 		main.show_map()
-		await _seconds(2.0)
-		await _shot("14_region_%d_%s" % [index + 1, regions[index].id])
+		await seconds(2.0)
+		await shot("14_region_%d_%s" % [index + 1, regions[index].id])
 	main.start_battle(regions[1].stages[2].id)
-	await _seconds(6.0)
-	await _shot("15_fen_battle")
+	await seconds(6.0)
+	await shot("15_fen_battle")
 	# Each later region fights in its own scene.
 	for index in [2, 3]:
 		main.start_battle(regions[index].stages[1].id)
-		await _seconds(3.0)
-		await _shot("15_%s_battle" % regions[index].id)
+		await seconds(3.0)
+		await shot("15_%s_battle" % regions[index].id)
 	# The late arsenal: six golems in the newer parts, in the last region.
 	for kind in main.catalog.part_order:
 		main.progression.unlocks[kind] = main.catalog.part_order[kind].duplicate()
@@ -130,70 +121,67 @@ func _run() -> void:
 		for key in fields:
 			main.progression.set_slot(slot, key, fields[key])
 	main.show_laboratory()
-	await _frames(10)
-	await _shot("16_laboratory_arsenal")
+	await frames(10)
+	await shot("16_laboratory_arsenal")
 	main.start_battle(regions[regions.size() - 1].stages[2].id)
 	for i in range(3):
-		await _seconds(3.0)
-		await _shot("17_arsenal_battle_%d" % i)
+		await seconds(3.0)
+		await shot("17_arsenal_battle_%d" % i)
 	# The Codex: the collection, the challenges and the feats.
 	main.progression.spirits["cinder_mote"] = main.progression._fresh_spirit(8)
 	# Every Ruins challenge, so the Codex shows one region mastered.
 	main.progression.challenges.append_array(Challenges.region_ids(main.catalog.regions()[0]) + ["crossing_dry"])
 	main.show_codex()
-	await _frames(10)
-	await _shot("18_codex_spirits")
+	await frames(10)
+	await shot("18_codex_spirits")
 	main.screen._show("Challenges")
-	await _frames(10)
-	await _shot("19_codex_challenges")
+	await frames(10)
+	await shot("19_codex_challenges")
 	main.screen._show("Feats")
-	await _frames(10)
-	await _shot("20_codex_feats")
+	await frames(10)
+	await shot("20_codex_feats")
 	main.selected_stage = "ruins_stair"
 	main.show_map()
-	await _seconds(1.0)
-	await _shot("21_map_challenges")
+	await seconds(1.0)
+	await shot("21_map_challenges")
 	# The finale has fallen: the map offers New Game+ at the foot of the scouting report.
 	for id in main.catalog.stages:
 		if not id in main.progression.cleared:
 			main.progression.cleared.append(id)
 	main.selected_stage = main.catalog.finale_id
 	main.show_map()
-	await _frames(10)
+	await frames(10)
 	main.screen._details.get_parent().scroll_vertical = 100000
-	await _seconds(1.0)
-	await _shot("22_map_new_game_plus")
+	await seconds(1.0)
+	await shot("22_map_new_game_plus")
 	await _crucible()
 	await _gallery()
-	for suffix in ["", ".bak", ".tmp"]:
-		DirAccess.remove_absolute(main.progression.save_path + suffix)
-	quit()
 
 
 ## The Crucible, open now the finale has fallen: scouting both Royales, a run
 ## under way, a battle and its result, the records and the finishes they bring.
 func _crucible() -> void:
 	main.show_crucible()
-	await _seconds(1.0)
-	await _shot("23_crucible_classic")
+	await seconds(1.0)
+	await shot("23_crucible_classic")
 	main.screen._select(4)
-	await _seconds(0.5)
-	await _shot("24_crucible_scout")
+	await seconds(0.5)
+	await shot("24_crucible_scout")
 	main.screen._set_mode("shifting")
-	await _seconds(0.5)
-	await _shot("25_crucible_shifting")
+	await seconds(0.5)
+	await shot("25_crucible_shifting")
 	main.screen._set_mode("classic")
 	main.screen._begin()
 	main.start_crucible_battle()
-	await _seconds(5.0)
-	await _shot("26_crucible_battle")
+	await seconds(5.0)
+	await shot("26_crucible_battle")
 	main.screen._skip()
 	main.screen.finished.emit()
-	await _frames(10)
-	await _shot("27_crucible_result")
+	await frames(10)
+	await shot("27_crucible_result")
 	main.show_crucible()
-	await _seconds(0.5)
-	await _shot("28_crucible_run")
+	await seconds(0.5)
+	await shot("28_crucible_run")
 	main.progression.crucible.abandon()
 	main.progression.crucible.milestones = main.catalog.crucible_index.milestones.keys()
 	main.progression.spirits["vesper"] = main.progression._fresh_spirit(20)
@@ -204,15 +192,15 @@ func _crucible() -> void:
 	main.progression.set_slot(0, "spirit", "vesper")
 	main.show_crucible()
 	main.screen._select(-1)
-	await _seconds(0.5)
-	await _shot("29_crucible_records")
+	await seconds(0.5)
+	await shot("29_crucible_records")
 	main.show_laboratory(true)
-	await _frames(10)
-	await _shot("30_laboratory_finishes")
+	await frames(10)
+	await shot("30_laboratory_finishes")
 	main.show_codex()
 	main.screen._show("Crucible")
-	await _frames(10)
-	await _shot("31_codex_crucible")
+	await frames(10)
+	await shot("31_codex_crucible")
 
 
 ## Every material in every frame, then every element reaction, side by side.
@@ -254,22 +242,6 @@ func _gallery() -> void:
 		caption.add_theme_font_size_override("font_size", 12)
 		cell.add_child(caption)
 		grid.add_child(cell)
-	await _seconds(0.7)
-	await _shot("13_material_gallery")
+	await seconds(0.7)
+	await shot("13_material_gallery")
 	sheet.queue_free()
-
-
-func _frames(count: int) -> void:
-	for i in range(count):
-		await process_frame
-
-
-func _seconds(seconds: float) -> void:
-	await create_timer(seconds).timeout
-
-
-func _shot(name: String) -> void:
-	await RenderingServer.frame_post_draw
-	var image: Image = root.get_texture().get_image()
-	image.save_png(out_dir.path_join(name + ".png"))
-	print("captured ", name)

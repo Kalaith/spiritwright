@@ -9,8 +9,8 @@ A 2D, browser-playable PvE auto-battler built in Godot 4.2.2. Collect spirits, b
   - **8 from challenges** (30%): Cinder Mote, Brine Sprite, Root Warden, Spark Newt, Fen Mother, Slag Brute, Rime Ogre and Volt Shade, each from one stage challenge where it is fought.
   - **4 from extreme feats** (14%): the Kiln Tyrant (Trial by Fire: beat the Great Kiln with a single golem), the Crag Sovereign (Skeleton Crew: a whole playthrough never fielding more than three golems), the Storm Sovereign (Unbroken: a whole playthrough, every stage, boss and the Storm Crown, without a golem of yours ever falling) and Vesper (Boss Royale: complete the Crucible's Classic Royale).
   - **Vesper, the Crucible Spirit** (Echo, Restless) has no home material: the Echo element reacts a little with every material (Echoing Stone, Grove, Frost, Bell, Prism, Mire, Shard and Spark). Its trait, Adaptation, gives a modest stat bonus that depends on its frame (a trait's `by_frame`), and Restless spirits prefer a golem built differently from their last battle (`prefers_new_build`, judged on each spirit's remembered `last_build`).
-- **Codex challenges**: two on every stage (60), in `campaign.json` as a stage's `challenges` list (`id`, `name`, `text`, `rules`, `rewards`, optional `"extreme": true`). Any win whose golems keep every rule meets one, first clear or replay, and it stays met across playthroughs. Rules are a fixed vocabulary checked against the finished battle's golems (`challenges.gd`): `no_falls`, `front_stands` (no front-row golem falls), `max_golems`, `forbid_elements`, `only_elements`, `only_materials`, `forbid_arms`, `attack_kind`, `empty_row`, `no_sigils`, `require` (some golem matches every given field: spirit, element, frame, arms, legs, material, sigil, row), `max_level` and `min_cycle`. The scouting report lists a stage's challenges, the result screen names the ones met and the ones still open.
-- **Region mastery**: meeting every challenge in a region (Trial by Fire included on the Steppe) masters it and unlocks that region's sigil, found nowhere else: Warden's Seal (Ruins: team Ward at the start, team Regen when hurt), Mire Lantern (Fen: Soak and arc), Kiln Heart (Steppe: deep Burn, kills hurry the team), Rime Crown (Frostspine: slows every enemy at the start, attacks chill) and Tempest Eye (Storm Crown: lightning on every enemy each turn, attacks Expose). A region's optional `mastery` in `campaign.json` holds `name`, `text` and part `rewards`; a save that already met them all gets the reward on load.
+- **Codex challenges**: two on every stage (60), in each region file (`data/regions/<id>.json`) as a stage's `challenges` list (`id`, `name`, `text`, `rules`, `rewards`, optional `"extreme": true`). Any win whose golems keep every rule meets one, first clear or replay, and it stays met across playthroughs. Rules are a fixed vocabulary checked against the finished battle's golems (`challenges.gd`): `no_falls`, `front_stands` (no front-row golem falls), `max_golems`, `forbid_elements`, `only_elements`, `only_materials`, `forbid_arms`, `attack_kind`, `empty_row`, `no_sigils`, `require` (some golem matches every given field: spirit, element, frame, arms, legs, material, sigil, row), `max_level` and `min_cycle`. The scouting report lists a stage's challenges, the result screen names the ones met and the ones still open.
+- **Region mastery**: meeting every challenge in a region (Trial by Fire included on the Steppe) masters it and unlocks that region's sigil, found nowhere else: Warden's Seal (Ruins: team Ward at the start, team Regen when hurt), Mire Lantern (Fen: Soak and arc), Kiln Heart (Steppe: deep Burn, kills hurry the team), Rime Crown (Frostspine: slows every enemy at the start, attacks chill) and Tempest Eye (Storm Crown: lightning on every enemy each turn, attacks Expose). A region's optional `mastery` in its region file holds `name`, `text` and part `rewards`; a save that already met them all gets the reward on load.
 - **Feats**: rules on a whole playthrough (`feats` in `campaign.json`), judged the moment its last stage is cleared, against the playthrough record: `no_falls`, `no_losses`, `max_golems` (most fielded in one battle) and `min_cycle`. The result screen says when a battle puts a feat out of reach for the rest of the playthrough.
 - **The Codex** (from the map): every spirit with how to find it, every challenge by region (pick a stage to go there), and the feats with this playthrough's record.
 - **Resting spirits learn by watching**: spirits not in a golem earn `xp.resting` (half) of what a battle would give them, so the bench keeps pace and any recruit can be fielded without grinding.
@@ -48,7 +48,7 @@ Effect vocabulary (traits, awakenings, sigils, reactions and parts, validated by
 
 ## Adding regions and stages
 
-The campaign is all data in `data/campaign.json`; `catalog.gd` validates it at startup and refuses to run with a readable error if anything is wrong.
+The campaign is all data: `data/campaign.json` holds the start, the feats and the regions in order, and each region (its terrain, stages, challenges and mastery) lives in `data/regions/<id>.json`; `catalog.gd` validates it at startup and refuses to run with a readable error if anything is wrong.
 
 - **A region** is an entry in `regions` (shown in list order): `id`, `name`, `text`, a `laboratory` (`name`, `map_pos`: the start of its trails, and a button into the laboratory) and a `terrain` block: `seed`, hex colours `ground`, `dirt`, `rock`, `wall`, `water`, colour lists `patches` and `canopy`, and layout lists `stream` (points; `[]` for none), `walls` (`[start, end, height]`) and `woods` (`[centre, radius]`).
 - **A stage** goes in its region's `stages`: unique `id`, `name`, `text`, `map_pos`, `landmark`, `requires` (stage ids, from any region), `seed`, 1-6 `enemies` (loadouts with a `level` and a `row` + `lane` 0-2, each in its own cell; any spirit from `spirits.json`), `rewards` (`{}` for XP only), optional `"boss": true` and optional `clear_text` shown on the first win.
@@ -70,7 +70,7 @@ The Crucible is all data in `data/crucible.json`, validated by `crucible_rules.g
 ## Layout
 
 ```
-data/                 catalogs: spirits, parts, campaign, balance, crucible
+data/                 catalogs: spirits, parts, campaign (+ regions/, one file per region), balance, crucible
 scenes/main.tscn      single scene; scripts/main.gd swaps screens
 scripts/core/         catalog (load + validate), campaign_rules (campaign.json validation), builds (stat resolution, growth),
                       experience (XP and levels), challenges (challenge and feat rules), progression (save state),
@@ -80,8 +80,10 @@ scripts/sim/          battle_sim.gd: deterministic simulation and event log
 scripts/ui/           title, campaign map (terrain, landmarks, wild landmarks), golem laboratory, battle playback and backdrop, results, the Codex, the Crucible (screen, records, results), enemy cards, golem art and reaction fx
 addons/hatchery/      the shared WebHatchery Godot toolkit, linked from ../godot_toolkit (not committed): saves,
                       JSON and data rules, balance lookups, seeded picks, screen switching, check and capture runners
-tools/                sim_checks.gd (headless checks + balance report; checks_collection.gd holds the New Game+,
-                      collection, challenge and feat checks, checks_crucible.gd the Crucible's), capture.gd (screenshots)
+tools/                sim_checks.gd (headless checks on the toolkit's check runner, + balance report), capture.gd
+                      (screenshots, on the toolkit's capture runner), checks/ (check_module: the shared catalog and
+                      battle helpers; checks_progression, checks_battle, checks_collection, checks_crucible: the
+                      scenarios; balance_report: the campaign report)
 ```
 
 ## Running and checking
@@ -96,6 +98,7 @@ The game loads the shared toolkit (`../godot_toolkit`) as `res://addons/hatchery
 .\Run.ps1                                     # run in the editor's game window
 $godot = '..\small_following\exports\tooling\Godot_v4.2.2-stable_win64_console.exe'
 & $godot --headless --path . --script res://tools/sim_checks.gd               # checks
+& $godot --headless --path . --script res://tools/sim_checks.gd -- --only=save # scenarios whose name contains "save"
 & $godot --headless --path . --script res://tools/sim_checks.gd -- --report   # + balance report (campaign and Crucible)
 & $godot --headless --path . --script res://tools/sim_checks.gd -- --crucible # + the Crucible's balance report alone
 & $godot --path . --script res://tools/capture.gd -- C:\temp\captures        # screenshots of every screen

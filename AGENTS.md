@@ -24,15 +24,16 @@ Read before working:
 - Exports and headless tooling use the standard (non-mono) editor at `..\small_following\exports\tooling\Godot_v4.2.2-stable_win64_console.exe`, or `GODOT_EXE`.
 - Base resolution 1280×720 with `canvas_items` stretch and `expand` aspect. Layouts must work with mouse and touch; do not rely on hover alone for anything essential.
 - UI text is ASCII only: the web build's default font lacks arrows, bullets and similar glyphs.
-- Data lives in `data/` (`spirits.json`, `parts.json`, `campaign.json`, `balance.json`, `crucible.json`) with `schema_version`, validated at startup by `scripts/core/catalog.gd`.
+- Data lives in `data/` (`spirits.json`, `parts.json`, `campaign.json` with one `regions/<id>.json` per region, `balance.json`, `crucible.json`) with `schema_version`, validated at startup by `scripts/core/catalog.gd`.
 - Combat effects are data-driven (`{"on": "hit", "do": "status", ...}`) rather than bespoke code per spirit.
-- `scripts/core/progression.gd` is the single owner of persistent state and validates every change. Saves go to `user://spiritwright_save.json`.
+- `scripts/core/progression.gd` is the single owner of persistent state and validates every change. Saves go to `user://spiritwright_save.json` through the toolkit's `storage/json_save.gd`; what a valid save is and how old saves migrate stay in `scripts/core/save_schema.gd`.
+- The shared WebHatchery Godot toolkit (`../godot_toolkit`) is linked in as `res://addons/hatchery/` by `..\godot_toolkit\tools\Link-Toolkit.ps1 -ProjectDir .` (a junction, ignored by Git). Spiritwright uses its JSON and data-rule helpers and `DotTable` (catalog loading and validation, `catalog.num`), `JsonSave`, `Det` (the Crucible's seeded draws), `ScreenSwitcher` (`main.gd`'s screens and Back), and the check and capture runners. The game keeps its own UI style (`scripts/ui/style.gd`) and drawing. Reach for the toolkit before writing new save, data, seeded-pick or screen plumbing; change toolkit code in `../godot_toolkit` under its own AGENTS.md.
 
 ## Project checks
 
-- The checks live in `tools/sim_checks.gd`, a headless runner for the data, growth, progression and simulation (`--headless --path . --script res://tools/sim_checks.gd`). It prints PASS/FAIL and exits non-zero on failure. Add a check when a simulation or progression rule lands.
+- The checks live in `tools/sim_checks.gd` (on the toolkit's `testing/check_runner.gd`), a headless runner for the data, growth, progression and simulation (`--headless --path . --script res://tools/sim_checks.gd`, `-- --only=<text>` to run some). It prints PASS/FAIL per scenario and exits non-zero on failure. Scenarios are `check_*` methods in `tools/checks/` modules extending `check_module.gd`; each gathers `_check` assertions and ends with `return verdict()`. Add one when a simulation or progression rule lands.
 - `-- --report` on the same command prints a balance report: the win rate of random legal builds for each stage in campaign order. Use it when retuning data.
-- `tools/capture.gd` drives the real game through every screen and saves PNGs (needs a window, not `--headless`). Use it alongside running the game to verify visuals.
+- `tools/capture.gd` (on the toolkit's `testing/capture_runner.gd`) drives the real game through every screen and saves PNGs (needs a window, not `--headless`). Use it alongside running the game to verify visuals.
 
 ## Commit voice
 
@@ -44,7 +45,7 @@ Neris raises a ward whenever she is struck (spirit trait)
 
 ## Publishing
 
-Publishing (`publish.ps1`, `publish-itch.ps1`) requires separate authorisation. `.\publish.ps1 -BuildOnly` (export only, no deploy) is fine for verification.
+Publishing (`publish.ps1`, `publish-itch.ps1`) requires separate authorisation. Both are the toolkit's templates; the work lives in `../godot_toolkit/publishing/Publisher.ps1`, and the web build's headers come from its `web.htaccess`. `.\publish.ps1 -BuildOnly` (export only, no deploy) is fine for verification.
 
 ## Shared WebHatchery Godot standards
 
