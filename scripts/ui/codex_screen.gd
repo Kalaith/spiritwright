@@ -1,6 +1,6 @@
 extends Control
 ## The Codex: the whole collection at a glance. Spirits (found and still to
-## find, and exactly how), every stage's challenges, the feats with this
+## find, and exactly how, each with a Journal page), every stage's challenges, the feats with this
 ## playthrough's record, and the Crucible's encounters and milestones, so the
 ## player always has several goals in view.
 
@@ -10,13 +10,17 @@ signal stage_requested(stage_id: String)
 const Style = preload("res://scripts/ui/style.gd")
 const CodexText = preload("res://scripts/ui/codex_text.gd")
 const SpiritCard = preload("res://scripts/ui/codex_spirit_card.gd")
+const Journal = preload("res://scripts/ui/codex_journal.gd")
 const Challenges = preload("res://scripts/core/challenges.gd")
 const TABS: Array[String] = ["Spirits", "Challenges", "Feats", "Crucible"]
 
 var catalog: RefCounted
 var progression: RefCounted
 var tab: String = "Spirits"
+## The spirit whose Journal page is open in the Spirits tab, or "" for the grid.
+var journal_id: String = ""
 var _content: VBoxContainer
+var _scroll: ScrollContainer
 var _tab_buttons: Dictionary = {}
 var _sources: Dictionary = {}
 
@@ -44,13 +48,13 @@ func _ready() -> void:
 		_tab_buttons[tab_name] = button
 		bar.add_child(button)
 	bar.add_child(Style.button("Map", func(): map_requested.emit()))
-	var scroll := ScrollContainer.new()
-	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	column.add_child(scroll)
+	_scroll = ScrollContainer.new()
+	_scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	column.add_child(_scroll)
 	_content = Style.vbox(10)
 	_content.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	scroll.add_child(_content)
+	_scroll.add_child(_content)
 	_show(tab)
 
 
@@ -68,12 +72,16 @@ func _summary() -> String:
 		progression.challenges.size(), catalog.challenges.size(), progression.feats.size(), catalog.feats.size()]
 
 
+## Back (Esc or gamepad B) from a Journal page returns to the spirits, not the map.
+func _unhandled_input(event: InputEvent) -> void:
+	var back: bool = event.is_action_pressed("ui_cancel") or 		(event is InputEventJoypadButton and event.pressed and event.button_index == JOY_BUTTON_B)
+	if back and not journal_id.is_empty():
+		get_viewport().set_input_as_handled()
+		_show("Spirits")
+
+
 func _show(tab_name: String) -> void:
-	tab = tab_name
-	for key in _tab_buttons:
-		_tab_buttons[key].add_theme_color_override("font_color", Style.GOLD if key == tab_name else Style.TEXT)
-	for child in _content.get_children():
-		child.queue_free()
+	_clear(tab_name)
 	match tab_name:
 		"Spirits":
 			_spirits()
@@ -101,7 +109,44 @@ func _spirits() -> void:
 		card.source = _sources[id][0]
 		card.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		card.custom_minimum_size.x = 290
+		card.opened.connect(open_journal)
 		grid.add_child(card)
+
+
+## Empties the page for `tab_name` and lights its button.
+func _clear(tab_name: String) -> void:
+	tab = tab_name
+	journal_id = ""
+	for key in _tab_buttons:
+		_tab_buttons[key].add_theme_color_override("font_color", Style.GOLD if key == tab_name else Style.TEXT)
+	for child in _content.get_children():
+		child.queue_free()
+	_scroll.scroll_vertical = 0
+
+
+## One spirit's Journal page, with the spirits before and after it a tap away.
+func open_journal(id: String) -> void:
+	_clear("Spirits")
+	journal_id = id
+	var ids: Array[String] = catalog.player_spirit_ids
+	var at: int = ids.find(id)
+	var bar := Style.hbox(10)
+	_content.add_child(bar)
+	bar.add_child(Style.button("< " + catalog.spirit(ids[at - 1]).name, func(): open_journal(ids[at - 1]), 15))
+	bar.add_child(Style.button("All spirits", func(): _show("Spirits"), 15))
+	bar.add_child(Style.button(catalog.spirit(ids[(at + 1) % ids.size()]).name + " >",
+		func(): open_journal(ids[(at + 1) % ids.size()]), 15))
+	var label := Style.label("Journal  %d of %d" % [at + 1, ids.size()], 14, Style.MUTED)
+	label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	bar.add_child(label)
+	var page := Journal.new()
+	page.catalog = catalog
+	page.progression = progression
+	page.spirit_id = id
+	page.source = _sources[id][0]
+	page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_content.add_child(page)
 
 
 func _challenges() -> void:

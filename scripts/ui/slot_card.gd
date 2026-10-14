@@ -8,6 +8,7 @@ signal changed(slot: int, key: String, value: String)
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
 const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
+const SpiritPortrait = preload("res://scripts/ui/spirit_portrait.gd")
 const Catalog = preload("res://scripts/core/catalog.gd")
 const Crucible = preload("res://scripts/core/crucible.gd")
 
@@ -28,12 +29,19 @@ func _ready() -> void:
 	title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(title)
 	head.add_child(_cell_picker(loadout))
+	# The spirit beside the body it wears.
+	var stage := Style.hbox(0)
+	column.add_child(stage)
+	var portrait: Control = SpiritPortrait.make(loadout.spirit, 96, catalog.element_color(String(golem.element)))
+	portrait.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	stage.add_child(portrait)
 	var preview := GolemPreview.new()
 	preview.custom_minimum_size = Vector2(0, 128)
+	preview.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	preview.backdrop = Color("16151f")
 	preview.animated = true
 	preview.setup(GolemArt.look_for(catalog, golem, Style.ALLY), 0.9)
-	column.add_child(preview)
+	stage.add_child(preview)
 	var grid := GridContainer.new()
 	grid.columns = 2
 	grid.add_theme_constant_override("h_separation", 8)

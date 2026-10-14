@@ -1,10 +1,11 @@
 extends RefCounted
-## One enemy golem for a scouting report: its picture, level, element, build,
-## cell, reaction, trait and sigil. Shared by the campaign map and the Crucible.
+## One enemy golem for a scouting report: its body, the spirit inside, level,
+## element, build, cell, reaction, trait and sigil. Shared by the campaign map and the Crucible.
 
 const Style = preload("res://scripts/ui/style.gd")
 const GolemArt = preload("res://scripts/ui/golem_art.gd")
 const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
+const SpiritPortrait = preload("res://scripts/ui/spirit_portrait.gd")
 
 
 ## `golem` is a resolved golem (Builds.resolve).
@@ -15,6 +16,10 @@ static func make(catalog: RefCounted, golem: Dictionary) -> Control:
 	preview.animated = true
 	preview.setup(GolemArt.look_for(catalog, golem, Style.ENEMY), 0.62, -1.0)
 	row.add_child(preview)
+	var portrait: Control = SpiritPortrait.make(golem.spirit, 56, catalog.element_color(golem.element))
+	portrait.flip = true
+	portrait.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	row.add_child(portrait)
 	var info := Style.vbox(1)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(info)

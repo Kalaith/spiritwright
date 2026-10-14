@@ -1,10 +1,11 @@
 extends PanelContainer
 ## One spirit in the Codex: how it looks, who it is, whether it has joined
-## and, if not, exactly how to bring it in.
+## and, if not, exactly how to bring it in. Tapping it opens its Journal page.
+
+signal opened(spirit_id: String)
 
 const Style = preload("res://scripts/ui/style.gd")
-const GolemArt = preload("res://scripts/ui/golem_art.gd")
-const GolemPreview = preload("res://scripts/ui/golem_preview.gd")
+const SpiritPortrait = preload("res://scripts/ui/spirit_portrait.gd")
 const CodexText = preload("res://scripts/ui/codex_text.gd")
 
 var catalog: RefCounted
@@ -12,6 +13,8 @@ var progression: RefCounted
 var spirit_id: String = ""
 ## Challenges.spirit_sources entry: {tier, kind, id}.
 var source: Dictionary = {}
+## Where a press began, so a drag that scrolls the Codex does not open a page.
+var _press_at: Vector2 = Vector2.INF
 
 
 func _ready() -> void:
@@ -24,15 +27,11 @@ func _ready() -> void:
 	add_child(column)
 	var top := Style.hbox(8)
 	column.add_child(top)
-	var preview := GolemPreview.new()
-	preview.custom_minimum_size = Vector2(84, 96)
-	preview.alpha = 1.0 if owned else 0.3
-	preview.setup(GolemArt.look_for(catalog, _look_loadout(), Style.ALLY if owned else Style.MUTED), 0.6)
-	top.add_child(preview)
+	var element_color: Color = catalog.element_color(spirit.element)
+	top.add_child(SpiritPortrait.make(spirit_id, 96, element_color, owned))
 	var info := Style.vbox(1)
 	info.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	top.add_child(info)
-	var element_color: Color = catalog.element_color(spirit.element)
 	info.add_child(Style.label(spirit.name, 17, element_color if owned else Style.MUTED))
 	info.add_child(Style.wrapped(String(spirit.title), 12))
 	info.add_child(Style.label("%s - %s" % [catalog.element_label(spirit.element), catalog.temperaments[spirit.temperament].label], 13,
@@ -48,15 +47,16 @@ func _ready() -> void:
 	else:
 		column.add_child(Style.wrapped(CodexText.source_text(catalog, source), 12, Style.TEXT))
 
+	column.add_child(Style.label("Tap for its journal", 11, Style.MUTED))
+	mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	tooltip_text = "Open %s's journal page." % spirit.name
 
-## The body the card shows: the spirit's own golem if it has one, else how it
-## stands in the wild, else a plain stone bulwark.
-func _look_loadout() -> Dictionary:
-	for loadout in progression.team:
-		if loadout.spirit == spirit_id:
-			return loadout
-	for stage in catalog.stages.values():
-		for enemy in stage.enemies:
-			if enemy.spirit == spirit_id:
-				return enemy
-	return {"spirit": spirit_id, "frame": "bulwark", "arms": "shield", "legs": "pillar", "material": "stone"}
+
+func _gui_input(event: InputEvent) -> void:
+	if not event is InputEventMouseButton or event.button_index != MOUSE_BUTTON_LEFT:
+		return
+	if event.pressed:
+		_press_at = event.position
+	elif _press_at.distance_to(event.position) < 12.0:
+		_press_at = Vector2.INF
+		opened.emit(spirit_id)

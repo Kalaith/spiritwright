@@ -11,6 +11,7 @@ const Style = preload("res://scripts/ui/style.gd")
 const SlotCard = preload("res://scripts/ui/slot_card.gd")
 const CradleCard = preload("res://scripts/ui/cradle_card.gd")
 const Catalog = preload("res://scripts/core/catalog.gd")
+const SpiritPortrait = preload("res://scripts/ui/spirit_portrait.gd")
 
 var catalog: RefCounted
 var progression: RefCounted
@@ -153,7 +154,15 @@ func _on_build() -> void:
 func _roster_entry(id: String) -> Control:
 	var spirit: Dictionary = catalog.spirit(id)
 	var entry: Dictionary = progression.spirits[id]
+	var outer := Style.vbox(4)
+	var row := Style.hbox(8)
+	outer.add_child(row)
+	var portrait: Control = SpiritPortrait.make(id, 72, catalog.element_color(spirit.element))
+	portrait.size_flags_vertical = Control.SIZE_SHRINK_BEGIN
+	row.add_child(portrait)
 	var box := Style.vbox(2)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(box)
 	var in_team: bool = progression.team.any(func(l): return l.spirit == id)
 	var head := Style.hbox(6)
 	var name_label := Style.label("%s %s" % [spirit.name, spirit.title], 16, Style.TEXT)
@@ -194,5 +203,5 @@ func _roster_entry(id: String) -> Control:
 		reactions.append("%d material(s) not yet found" % hidden)
 	if not reactions.is_empty():
 		box.add_child(Style.wrapped("Reacts with: " + ", ".join(reactions), 12, element_color.lerp(Style.TEXT, 0.35)))
-	box.add_child(HSeparator.new())
-	return box
+	outer.add_child(HSeparator.new())
+	return outer

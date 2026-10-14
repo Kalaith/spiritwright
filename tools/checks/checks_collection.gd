@@ -3,6 +3,7 @@ extends "res://tools/checks/check_module.gd"
 ## region masteries and feats, and the challenge part of the balance report.
 
 const Challenges = preload("res://scripts/core/challenges.gd")
+const SpiritPortrait = preload("res://scripts/ui/spirit_portrait.gd")
 ## Conforming teams tried per challenge and level band in the balance report.
 const CHALLENGE_SAMPLES: int = 60
 
@@ -67,6 +68,8 @@ func check_collection():
 	progression.set_slot(0, "spirit", "root_warden")
 	_check("a wild spirit fights without its awakening", not wild[0].awakened and not wild[0].preference.active)
 	_check("the same spirit awakens once recruited", progression.resolve_slot(0).awakened)
+	var faceless: Array = catalog.spirits.keys().filter(func(id): return not SpiritPortrait.has_portrait(id))
+	_check("every spirit has a portrait for its journal", faceless.is_empty(), str(faceless))
 	return verdict()
 
 

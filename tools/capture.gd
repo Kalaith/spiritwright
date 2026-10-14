@@ -134,6 +134,11 @@ func tour() -> void:
 	main.show_codex()
 	await frames(10)
 	await shot("18_codex_spirits")
+	# Journal pages: a spirit in a golem, one resting, and one not yet found.
+	for id in ["odo", "cinder_mote", "storm_sovereign"]:
+		main.screen.open_journal(id)
+		await frames(10)
+		await shot("18_journal_%s" % id)
 	main.screen._show("Challenges")
 	await frames(10)
 	await shot("19_codex_challenges")
