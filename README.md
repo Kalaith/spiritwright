@@ -79,7 +79,7 @@ scripts/core/         catalog (load + validate), campaign_rules (campaign.json v
 scripts/sim/          battle_sim.gd: deterministic simulation and event log
 scripts/ui/           title, campaign map (terrain, landmarks, wild landmarks), golem laboratory, battle playback and backdrop, results, the Codex, the Crucible (screen, records, results), enemy cards, golem art and reaction fx
 tools/                sim_checks.gd (headless checks + balance report; checks_collection.gd holds the New Game+,
-                      collection, challenge and feat checks, checks_crucible.gd the Crucible's), capture.gd (screenshots), publishing/
+                      collection, challenge and feat checks, checks_crucible.gd the Crucible's), capture.gd (screenshots)
 ```
 
 ## Running and checking
@@ -95,4 +95,4 @@ $godot = '..\small_following\exports\tooling\Godot_v4.2.2-stable_win64_console.e
 
 ## Publishing
 
-Same flow as `small_following`: `.\publish.ps1 -BuildOnly` exports Web and Windows builds into `builds/publish/`; `.\publish.ps1` also copies the web build to `PREVIEW_ROOT/games/spiritwright` (served at `http://127.0.0.1/games/spiritwright/`) and records the deployment in Project Roost; `-Production` / `-FTP` target production; `publish-itch.ps1` pushes to itch.io. The web build needs the COOP/COEP headers in `tools/publishing/web.htaccess`.
+`publish.ps1` and `publish-itch.ps1` are thin wrappers around the shared publisher in `../godot_toolkit/publishing/`. `.\publish.ps1 -BuildOnly` exports Web and Windows builds into `builds/publish/`; `.\publish.ps1` also copies the web build to `PREVIEW_ROOT/games/spiritwright` (served at `http://127.0.0.1/games/spiritwright/`) and records the deployment in Project Roost; `-Production` / `-FTP` target production; `publish-itch.ps1` pushes to itch.io. The web build needs the COOP/COEP headers in the toolkit's `web.htaccess`, deployed beside it; a game's own `tools/publishing/web.htaccess` would override it. `-DryRun` changes nothing.
