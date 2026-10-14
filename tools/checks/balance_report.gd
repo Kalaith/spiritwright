@@ -4,6 +4,9 @@ extends "res://tools/checks/check_module.gd"
 ## best one fights and the campaign moves on.
 
 const CollectionChecks = preload("res://tools/checks/checks_collection.gd")
+## Random builds tried per stage: enough to read a win rate to a few percent
+## while the whole report (campaign and Crucible) runs in a few minutes.
+const STAGE_SAMPLES: int = 200
 
 
 ## Plays the campaign in order. For each stage it samples random legal builds
@@ -26,7 +29,7 @@ func run() -> void:
 			pass
 		var enemies: Array = progression.enemy_team(stage)
 		var wins: int = 0
-		var samples: int = 500
+		var samples: int = STAGE_SAMPLES
 		var best: Array = []
 		var best_margin: int = -1
 		var hits: int = 0

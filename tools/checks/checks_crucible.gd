@@ -6,6 +6,8 @@ extends "res://tools/checks/check_module.gd"
 
 const Crucible = preload("res://scripts/core/crucible.gd")
 const Expect = preload("res://addons/hatchery/testing/expect.gd")
+## Random six-golem teams the Crucible's balance report fights with.
+const REPORT_TEAMS: int = 150
 
 
 func check_rules():
@@ -255,7 +257,7 @@ func report() -> void:
 	var progression := veteran()
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 5
-	var samples: int = 300
+	var samples: int = REPORT_TEAMS
 	var teams: Array = []
 	for i in range(samples):
 		teams.append(_random_team(progression, rng))

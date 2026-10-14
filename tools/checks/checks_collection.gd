@@ -3,6 +3,8 @@ extends "res://tools/checks/check_module.gd"
 ## region masteries and feats, and the challenge part of the balance report.
 
 const Challenges = preload("res://scripts/core/challenges.gd")
+## Conforming teams tried per challenge and level band in the balance report.
+const CHALLENGE_SAMPLES: int = 60
 
 
 func check_new_game_plus():
@@ -226,7 +228,7 @@ func _clear_all(progression: Progression) -> void:
 func challenge_report(progression: Progression, stage: Dictionary, rng: RandomNumberGenerator) -> void:
 	var team: Array = progression.team
 	var enemies: Array = progression.enemy_team(stage)
-	var samples: int = 150
+	var samples: int = CHALLENGE_SAMPLES
 	for challenge in stage.get("challenges", []):
 		var rates: Array = []
 		var bonuses: Array = [0, 10, 25] if challenge.get("extreme", false) else [0, 10]
